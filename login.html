@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stiga Finance</title>
+    <link rel="icon" href="logo-stiga.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="login-style.css">
+</head>
+<body>
+    <div class="particles">
+        <span class="particle" style="left:5%;animation-delay:0s;animation-duration:8s"></span>
+        <span class="particle" style="left:15%;animation-delay:1.5s;animation-duration:6s"></span>
+        <span class="particle" style="left:25%;animation-delay:3s;animation-duration:9s"></span>
+        <span class="particle" style="left:35%;animation-delay:0.5s;animation-duration:7s"></span>
+        <span class="particle" style="left:45%;animation-delay:2s;animation-duration:10s"></span>
+        <span class="particle" style="left:55%;animation-delay:4s;animation-duration:6s"></span>
+        <span class="particle" style="left:65%;animation-delay:1s;animation-duration:8s"></span>
+        <span class="particle" style="left:75%;animation-delay:2.5s;animation-duration:7s"></span>
+        <span class="particle" style="left:85%;animation-delay:3.5s;animation-duration:9s"></span>
+        <span class="particle" style="left:92%;animation-delay:0.8s;animation-duration:6s"></span>
+    </div>
+
+    <div class="login-container">
+        <!-- LADO ESQUERDO - BRANDING -->
+        <div class="login-left">
+            <div class="left-content">
+                <div class="logo-wrap">
+                    <img src="logo-stiga.png" alt="Stiga Finance" class="logo-img">
+                </div>
+                <h1 class="brand-name">STIGA FINANCE</h1>
+                <p class="brand-sub">Gestão Financeira Inteligente</p>
+                <div class="brand-divider"></div>
+                <div class="brand-features">
+                    <div class="brand-feature">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>Controle total sobre seus investimentos</span>
+                    </div>
+                    <div class="brand-feature">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span>Segurança de nível empresarial</span>
+                    </div>
+                    <div class="brand-feature">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>Relatórios e análises em tempo real</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LADO DIREITO - FORMULÁRIOS -->
+        <div class="login-right">
+            <div class="login-box">
+                <!-- FORMULÁRIO DE LOGIN ÚNICO -->
+                <form id="loginForm" class="auth-form active">
+                    <h2 class="form-title">Bem-vindo ao Stiga Finance</h2>
+                    <p class="form-subtitle">Faça login com suas credenciais enviadas por email</p>
+                    
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <input type="email" id="loginUsername" placeholder="Seu email" required autocomplete="username">
+                    </div>
+                    
+                    <div class="input-wrap">
+                        <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <input type="password" id="loginPassword" placeholder="Sua senha" required autocomplete="current-password">
+                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="rememberMe">
+                            <span>Lembrar-me neste dispositivo</span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn-submit">
+                        <span>Entrar no Sistema</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                            <polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                    </button>
+                    
+                    <div class="form-footer">
+                        <p class="help-text">
+                            Não recebeu suas credenciais? 
+                            <a href="mailto:suporte@stigafinance.com" class="link-primary">Entre em contato</a>
+                        </p>
+                        <p class="help-text" style="margin-top:8px">
+                            Ainda não tem acesso? 
+                            <a href="https://pay.kiwify.com.br/SEU_LINK_AQUI" target="_blank" class="link-primary">Adquira agora por R$ 9,90</a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div><!-- /login-right -->
+    </div><!-- /login-container -->
+
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <script src="login-script.js"></script>
+</body>
+</html>

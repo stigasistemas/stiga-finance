@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/kiwify-webhook.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/kiwify-webhook",
+      "dest": "/api/kiwify-webhook.js"
+    }
+  ],
+  "env": {
+    "FIREBASE_PROJECT_ID": "@firebase-project-id",
+    "FIREBASE_CLIENT_EMAIL": "@firebase-client-email",
+    "FIREBASE_PRIVATE_KEY": "@firebase-private-key",
+    "EMAIL_USER": "@email-user",
+    "EMAIL_PASS": "@email-pass"
+  }
+}
