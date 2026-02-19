@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stiga Finance</title>
+    
+    <!-- FAVICON -->
+    <link rel="icon" href="logo-stiga.png" type="image/svg+xml">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="diamond-spinner"></div>
+            <p>Carregando...</p>
+        </div>
+    </div>
+    <!-- NOTIFICAÇÃO TOAST -->
+    <div id="toast" class="toast"></div>
+    <!-- CENTRAL DE NOTIFICAÇÕES -->
+    <div id="notificationCenter" class="notification-center">
+        <div class="notification-header">
+            <h3>Notificações</h3>
+            <button onclick="clearAllNotifications()" class="clear-all-btn">Limpar tudo</button>
+            <span class="close-notifications" onclick="toggleNotificationCenter()" style="cursor:pointer; font-size:1.5em;">×</span>
+        </div>
+        <div id="notificationList" class="notification-list">
+            <p class="no-notifications">Nenhuma notificação</p>
+        </div>
+    </div>
+    <div class="container">
+        <header>
+            <!-- Div só para a imagem, alinhada à esquerda -->
+            <div class="logo-imagem">
+                <!-- Imagem da logo SVG -->
+                <img src="logo-stiga.png" alt="Stiga Finance" style="width: 250px; height: 250px; object-fit: contain;">
+            </div>
+            
+            <!-- Div só para o texto, centralizada -->
+            <div class="logo-texto">
+                <h1>STIGA FINANCE</h1>
+                <p class="subtitle">Gestão Financeira Inteligente</p>
+            </div>
+            
+            <div class="header-controls">
+                <span id="welcomeUser" class="welcome-text"></span>
+                
+                <!-- SELETOR DE VISUALIZAÇÃO (NOVO) -->
+                
+                
+                
+                <!-- BOTÃO CALENDÁRIO no header -->
+                <button onclick="openCalendarModal()" class="header-svg-btn cal-header-btn" title="Calendário e Lembretes">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Calendário
+                    <span id="reminderCount" class="reminder-header-badge" style="display:none">0</span>
+                </button>
+
+                <!-- SELETOR DE CONTA -->
+                <select id="accountSelector" class="account-selector" onchange="switchAccount()">
+                    <option value="main">Conta Principal</option>
+                </select>
+                
+                <button onclick="toggleNotificationCenter()" class="notification-btn header-svg-btn" title="Notificações" style="position:relative">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    Alertas
+                    <span id="notificationBadge" class="notification-badge" style="display:none">0</span>
+                </button>
+                
+                <button onclick="toggleSettings()" class="settings-btn header-svg-btn" title="Configurações">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Config
+                </button>
+                
+                <!-- TOGGLE TEMA -->
+                <button onclick="toggleTheme()" id="themeBtn" class="theme-btn header-svg-btn" title="Alternar tema">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    Tema
+                </button>
+                
+                <button onclick="togglePrivacy()" id="privacyBtn" class="privacy-btn header-svg-btn" title="Modo privacidade">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Privado
+                </button>
+                <button onclick="logout()" class="logout-btn header-svg-btn" style="border-color:var(--danger);color:var(--danger)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Sair
+                </button>
+            </div>
+        </header>
+        <!-- PAINEL DE CONFIGURAÇÕES -->
+        <div id="settingsPanel" class="settings-panel">
+            <div class="settings-content">
+                <span class="close" onclick="toggleSettings()">×</span>
+                <h2>Configurações</h2>
+                
+                <div class="settings-tabs">
+                    <button class="settings-tab active" data-tab="notifications-settings">Notificações</button>
+                    <button class="settings-tab" data-tab="accounts-settings">Contas</button>
+                    <button class="settings-tab" data-tab="categories-settings">Categorias</button>
+                    <button class="settings-tab" data-tab="recurring-settings">Recorrentes</button>
+                    <button class="settings-tab" data-tab="budget-settings">Orçamentos</button>
+                    <button class="settings-tab" data-tab="goals-settings">Metas</button>
+                </div>
+                <!-- ABA NOTIFICAÇÕES -->
+                <div id="notifications-settings" class="settings-tab-content active">
+                    <h3>Alertas de Vencimento</h3>
+                    
+                    <label class="switch-label">
+                        <input type="checkbox" id="enableNotifications" checked onchange="saveSettings()">
+                        <span>Ativar notificações</span>
+                    </label>
+                    
+                    <label class="switch-label">
+                        <input type="checkbox" id="enableSound" checked onchange="saveSettings()">
+                        <span>Sons de alerta</span>
+                    </label>
+                    
+                    <label class="switch-label">
+                        <input type="checkbox" id="enablePushNotifications" onchange="togglePushNotifications()">
+                        <span>Notificações do navegador</span>
+                    </label>
+                    
+                    <div class="form-group">
+                        <label>Alertar quando faltar:</label>
+                        <select id="notificationDays" onchange="saveSettings()">
+                            <option value="1">1 dia</option>
+                            <option value="3" selected>3 dias</option>
+                            <option value="5">5 dias</option>
+                            <option value="7">7 dias</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="testNotification()" class="btn-secondary">Testar Alerta</button>
+                </div>
+                <!-- ABA CONTAS -->
+                <div id="accounts-settings" class="settings-tab-content">
+                    <h3>Gerenciar Contas</h3>
+                    <div id="accountsList"></div>
+                    
+                    <div class="add-account-form form-group">
+                        <input type="text" id="newAccountName" placeholder="Nome da nova conta" maxlength="30">
+                        <button onclick="addAccount()" class="btn-primary" style="margin-top:10px">Adicionar Conta</button>
+                    </div>
+                </div>
+                <!-- ABA CATEGORIAS -->
+                <div id="categories-settings" class="settings-tab-content">
+                    <h3>Categorias Personalizadas</h3>
+                    
+                    <div class="category-type-tabs">
+                        <button class="cat-tab active" data-type="credit">Créditos</button>
+                        <button class="cat-tab" data-type="debit">Débitos</button>
+                    </div>
+                    
+                    <div id="customCategoriesList" style="margin: 15px 0;"></div>
+                    
+                    <div class="add-category-form form-group">
+                        <input type="text" id="newCategoryName" placeholder="Nova categoria" maxlength="20">
+                        <button onclick="addCustomCategory()" class="btn-primary" style="margin-top:10px">Adicionar</button>
+                    </div>
+                </div>
+                <!-- ABA RECORRENTES -->
+                <div id="recurring-settings" class="settings-tab-content">
+                    <h3>Transações Recorrentes</h3>
+                    <p class="hint-text">Configure transações que se repetem automaticamente</p>
+                    
+                    <div id="recurringList"></div>
+                    
+                    <button onclick="showAddRecurring()" class="btn-primary">Nova Recorrente</button>
+                </div>
+                <!-- ABA ORÇAMENTOS -->
+                <div id="budget-settings" class="settings-tab-content">
+                    <h3>Orçamentos Mensais</h3>
+                    <p class="hint-text">Defina limites de gastos por categoria</p>
+                    
+                    <div class="add-budget-form">
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <select id="budgetCategory"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Limite Mensal</label>
+                            <input type="number" id="budgetAmount" step="0.01" placeholder="R$ 0,00">
+                        </div>
+                        <button onclick="addBudget()" class="btn-primary">Definir Orçamento</button>
+                    </div>
+                    
+                    <div id="budgetList" style="margin-top: 20px;"></div>
+                </div>
+                <!-- ABA METAS -->
+                <div id="goals-settings" class="settings-tab-content">
+                    <h3>Metas Financeiras</h3>
+                    <p class="hint-text">Crie metas e acompanhe seu progresso</p>
+                    
+                    <div id="goalsList"></div>
+                    
+                    <button onclick="showAddGoal()" class="btn-primary">Nova Meta</button>
+                </div>
+            </div>
+        </div>
+        <!-- CARDS DE RESUMO -->
+        <div class="summary-cards">
+            <div class="summary-card credit">
+                <h3>Total de Créditos</h3>
+                <div class="summary-value" id="totalCredits">R$ 0,00</div>
+                <small id="accountCredit" class="account-info"></small>
+            </div>
+            <div class="summary-card debit">
+                <h3>Total de Débitos</h3>
+                <div class="summary-value" id="totalDebits">R$ 0,00</div>
+                <small id="accountDebit" class="account-info"></small>
+            </div>
+            <div class="summary-card balance">
+                <h3>Saldo Atual</h3>
+                <div class="summary-value" id="currentBalance">R$ 0,00</div>
+                <small id="accountBalance" class="account-info"></small>
+            </div>
+            <div class="summary-card future">
+                <h3>Compras Futuras</h3>
+                <div class="summary-value" id="futurePurchases">R$ 0,00</div>
+                <small id="accountFuture" class="account-info"></small>
+            </div>
+        </div>
+        <!-- SEÇÃO DE GRÁFICOS E DASHBOARD -->
+        <div class="summary-cards" style="grid-template-columns: 1fr 1fr;">
+            <div class="summary-card chart-container">
+                <h3>Distribuição de Gastos</h3>
+                <canvas id="expenseChart" style="max-height: 300px;"></canvas>
+            </div>
+            <div class="summary-card chart-container">
+                <h3>Evolução do Saldo — Últimos 30 Dias</h3>
+                <canvas id="balanceEvolutionChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+        <!-- PAINEL DE CONTROLE E AÇÕES -->
+        <div class="dashboard-panels">
+
+            <!-- PAINEL: Alertas + Categorias -->
+            <div class="summary-card control-panel">
+                <h3>Painel de Controle</h3>
+                <div id="vencimentoAlert"></div>
+                <div id="categoryTotals"></div>
+                <div id="monthComparison" style="margin-top:12px"></div>
+            </div>
+
+            <!-- PAINEL: Orçamentos + Metas -->
+            <div class="summary-card control-panel">
+                <h3>Orçamentos &amp; Metas</h3>
+                <div id="dashBudgets"></div>
+                <div id="dashGoals" style="margin-top:8px"></div>
+            </div>
+
+            <!-- PAINEL: Ações Rápidas -->
+            <div class="summary-card control-panel qa-card">
+                <h3>Ações Rápidas</h3>
+                <div class="quick-actions-grid">
+
+                    <button onclick="showExportModal()" class="quick-action-btn">
+                        <div class="qa-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </div>
+                        <span class="qa-label">Exportar</span>
+                        <span class="qa-desc">Por período</span>
+                    </button>
+
+                    <button onclick="showImportModal()" class="quick-action-btn">
+                        <div class="qa-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <span class="qa-label">Importar</span>
+                        <span class="qa-desc">Extrato CSV</span>
+                    </button>
+
+                    <button onclick="exportToCSV()" class="quick-action-btn">
+                        <div class="qa-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                        </div>
+                        <span class="qa-label">CSV</span>
+                        <span class="qa-desc">Todos os dados</span>
+                    </button>
+
+                    <button onclick="generatePDFReport()" class="quick-action-btn">
+                        <div class="qa-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="9" y1="15" x2="15" y2="15"/>
+                                <line x1="9" y1="18" x2="12" y2="18"/>
+                            </svg>
+                        </div>
+                        <span class="qa-label">PDF</span>
+                        <span class="qa-desc">Relatório mensal</span>
+                    </button>
+
+                    <button onclick="backupData()" class="quick-action-btn">
+                        <div class="qa-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26">
+                                <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                            </svg>
+                        </div>
+                        <span class="qa-label">Backup</span>
+                        <span class="qa-desc">Salvar dados</span>
+                    </button>
+
+                    <button onclick="restoreData()" class="quick-action-btn">
+                        <div class="qa-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26">
+                                <polyline points="1 4 1 10 7 10"/>
+                                <path d="M3.51 15a9 9 0 1 0 .49-3.45"/>
+                            </svg>
+                        </div>
+                        <span class="qa-label">Restaurar</span>
+                        <span class="qa-desc">Carregar backup</span>
+                    </button>
+
+                </div>
+            </div>
+
+        </div>
+        
+        <!-- ABAS -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="credits">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Créditos
+            </button>
+            <button class="tab-button" data-tab="debits">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Débitos
+            </button>
+            <button class="tab-button" data-tab="future">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Compras Futuras
+            </button>
+
+        </div>
+        
+        <!-- CONTEÚDO (CONTROLADO PELO MODO) -->
+        <div class="content-wrapper">
+
+            <!-- ABA CRÉDITOS -->
+            <div id="credits" class="tab-content active">
+                <div class="form-section">
+                    <h2>Adicionar Crédito</h2>
+                    <form id="creditForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Valor</label>
+                                <input type="number" id="creditAmount" step="0.01" required placeholder="R$ 0,00">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select id="creditCategory" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input type="date" id="creditDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tags (opcional)</label>
+                                <input type="text" id="creditTags" placeholder="Ex: urgente, importante">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>Descrição</label>
+                            <textarea id="creditDescription" placeholder="Detalhes sobre esta entrada..."></textarea>
+                        </div>
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>📎 Anexar Comprovante (opcional)</label>
+                            <input type="file" id="creditAttachment" accept="image/*,.pdf">
+                        </div>
+                        <button type="submit" class="btn-primary" style="margin-top: 15px;">Adicionar Crédito</button>
+                    </form>
+                </div>
+                <div class="filter-section" style="margin-top: 20px; margin-bottom: 20px;">
+                    <div class="filter-row" style="display: flex; gap: 10px;">
+                        <select id="filterCreditCategory" class="filter-select" style="padding: 10px;">
+                            <option value="">📁 Todas as categorias</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="transactions-list">
+                    <h2 style="margin: 20px 0;">Histórico de Créditos</h2>
+                    <div id="creditsList"></div>
+                </div>
+            </div>
+            
+            <!-- ABA DÉBITOS -->
+            <div id="debits" class="tab-content">
+                <div class="form-section">
+                    <h2>Adicionar Débito</h2>
+                    <form id="debitForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Valor</label>
+                                <input type="number" id="debitAmount" step="0.01" required placeholder="R$ 0,00">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select id="debitCategory" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input type="date" id="debitDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tags (opcional)</label>
+                                <input type="text" id="debitTags" placeholder="Ex: parcelado, cartão">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>Motivo da Compra</label>
+                            <textarea id="debitDescription" placeholder="Detalhes sobre este débito..." required></textarea>
+                        </div>
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>📎 Anexar Comprovante (opcional)</label>
+                            <input type="file" id="debitAttachment" accept="image/*,.pdf">
+                        </div>
+                        <button type="submit" class="btn-primary" style="margin-top: 15px;">Adicionar Débito</button>
+                    </form>
+                </div>
+                <div class="filter-section" style="margin-top: 20px; margin-bottom: 20px;">
+                    <div class="filter-row" style="display: flex; gap: 10px;">
+                        <select id="filterDebitCategory" class="filter-select" style="padding: 10px;">
+                            <option value="">📁 Todas as categorias</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="transactions-list">
+                    <h2 style="margin: 20px 0;">Histórico de Débitos</h2>
+                    <div id="debitsList"></div>
+                </div>
+            </div>
+            
+            <!-- ABA COMPRAS FUTURAS -->
+            <div id="future" class="tab-content">
+                <div class="form-section">
+                    <h2>Adicionar Compra Futura / Parcelamento</h2>
+                    <form id="futureForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Valor Total</label>
+                                <input type="number" id="futureAmount" step="0.01" required placeholder="R$ 0,00">
+                            </div>
+                            <div class="form-group">
+                                <label>Número de Parcelas</label>
+                                <input type="number" id="futureInstallments" min="1" value="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>1º Vencimento</label>
+                                <input type="date" id="futureDueDate" required>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label>Descrição da Compra</label>
+                            <textarea id="futureDescription" placeholder="Ex: Notebook novo" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary" style="margin-top: 15px;">Gerar Parcelamento</button>
+                    </form>
+                </div>
+                <div class="transactions-list">
+                    <h2 style="margin: 20px 0;">Compras Programadas</h2>
+                    <div id="futureList"></div>
+                </div>
+            </div>
+
+            
+        </div><!-- /content-wrapper -->
+    </div><!-- /container -->
+    <!-- MODAL DE EDIÇÃO -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">×</span>
+            <h2 id="modalTitle">Editar Transação</h2>
+            <form id="editForm">
+                <input type="hidden" id="editType">
+                <input type="hidden" id="editIndex">
+                
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" id="editAmount" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="editCategory" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="editDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tags</label>
+                    <input type="text" id="editTags" placeholder="Ex: urgente, importante">
+                </div>
+                
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="editDescription" required></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+    <!-- MODAL TRANSAÇÃO RECORRENTE -->
+    <div id="recurringModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRecurringModal()">×</span>
+            <h2>🔄 Nova Transação Recorrente</h2>
+            <form id="recurringForm">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="recurringType" required>
+                        <option value="credit">Crédito</option>
+                        <option value="debit">Débito</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" id="recurringAmount" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="recurringCategory" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <input type="text" id="recurringDescription" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Frequência</label>
+                    <select id="recurringFrequency" required>
+                        <option value="daily">Diária</option>
+                        <option value="weekly">Semanal</option>
+                        <option value="monthly" selected>Mensal</option>
+                        <option value="yearly">Anual</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Dia do mês (1-31)</label>
+                    <input type="number" id="recurringDay" min="1" max="31" value="1" required>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="margin-top:10px">Criar Recorrente</button>
+            </form>
+        </div>
+    </div>
+    <!-- CHATBOT FINANCEIRO -->
+    <div id="chatbot" class="chatbot">
+        <div class="chatbot-header">
+            <h3>Assistente Stiga</h3>
+            <button onclick="toggleChatbot()" class="chatbot-close" style="background:none; border:none; font-size:1.2em; cursor:pointer;">×</button>
+        </div>
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Digite sua pergunta..." 
+                   onkeypress="if(event.key==='Enter') sendChatMessage()">
+            <button onclick="sendChatMessage()" style="background:var(--gold-primary); border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">📤</button>
+        </div>
+    </div>
+    <!-- BOTÃO DO CHATBOT -->
+    <button class="chatbot-button" onclick="toggleChatbot()" title="Assistente Financeiro"></button>
+
+    <!-- ============================================
+         MODAL CALENDÁRIO - ABRE DO HEADER
+         ============================================ -->
+    <div id="calendarModal" class="cal-modal-overlay" onclick="closeCalendarModalOverlay(event)">
+        <div class="cal-modal-box">
+            <!-- Header do modal -->
+            <div class="cal-modal-header">
+                <div class="cal-modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="20" height="20"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <h2>Calendário Financeiro</h2>
+                </div>
+                <button onclick="closeCalendarModal()" class="cal-modal-close" title="Fechar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <div class="cal-modal-body">
+                <!-- COLUNA ESQUERDA: Calendário -->
+                <div class="cal-modal-left">
+                    <div class="calendar-nav">
+                        <button type="button" onclick="calPrevMonth()" class="cal-nav-btn">&#8249;</button>
+                        <span id="calMonthYear" class="cal-month-title"></span>
+                        <button type="button" onclick="calNextMonth()" class="cal-nav-btn">&#8250;</button>
+                    </div>
+                    <div class="cal-grid-header">
+                        <span>Dom</span><span>Seg</span><span>Ter</span>
+                        <span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                    </div>
+                    <div id="calGrid" class="cal-grid"></div>
+                    
+                    <!-- Legenda -->
+                    <div class="cal-legend">
+                        <span class="cal-legend-item"><span class="cal-dot credit"></span> Crédito</span>
+                        <span class="cal-legend-item"><span class="cal-dot debit"></span> Débito</span>
+                        <span class="cal-legend-item"><span class="cal-dot reminder"></span> Lembrete</span>
+                    </div>
+                </div>
+
+                <!-- COLUNA DIREITA: Lembretes -->
+                <div class="cal-modal-right">
+                    <div class="cal-reminder-form-wrap">
+                        <h3 class="cal-section-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            Novo Lembrete
+                        </h3>
+                        <form id="reminderForm" onsubmit="addReminder(event)">
+                            <div class="cal-form-row">
+                                <div class="form-group">
+                                    <label>Data</label>
+                                    <input type="date" id="reminderDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Hora</label>
+                                    <input type="time" id="reminderTime" required>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top:12px">
+                                <label>Tipo</label>
+                                <select id="reminderType">
+                                    <option value="vencimento">Vencimento</option>
+                                    <option value="pagamento">Pagamento</option>
+                                    <option value="meta">Meta</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-top:12px">
+                                <label>Descrição</label>
+                                <input type="text" id="reminderDescription" required placeholder="Ex: Pagar conta de energia">
+                            </div>
+                            <button type="submit" class="btn-primary" style="margin-top:14px;width:100%">Adicionar Lembrete</button>
+                        </form>
+                    </div>
+
+                    <div class="cal-reminders-list-wrap">
+                        <h3 class="cal-section-title" style="margin-top:20px">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                            Próximos Lembretes
+                        </h3>
+                        <div id="remindersList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL METAS -->
+    <div id="goalModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <span class="close" onclick="closeGoalModal()">×</span>
+            <h2 style="color:var(--gold-primary);font-family:'Cinzel',serif;margin-bottom:20px">Nova Meta Financeira</h2>
+            <form id="goalForm">
+                <div class="form-group">
+                    <label>Nome da Meta</label>
+                    <input type="text" id="goalName" required placeholder="Ex: Reserva de emergência">
+                </div>
+                <div class="form-group" style="margin-top:12px">
+                    <label>Valor Alvo</label>
+                    <input type="number" id="goalTarget" step="0.01" required placeholder="R$ 0,00">
+                </div>
+                <div class="form-group" style="margin-top:12px">
+                    <label>Prazo (opcional)</label>
+                    <input type="date" id="goalDeadline">
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top:16px">Criar Meta</button>
+            </form>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
