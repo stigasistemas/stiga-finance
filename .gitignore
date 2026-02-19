@@ -1,5 +1,9 @@
-firebase-key.json
+# Dependências
 node_modules/
+
+# Chave do Firebase — NUNCA suba isso pro GitHub!
+firebase-key.json
+
+# Arquivos do sistema
+.DS_Store
 .env
-.vercel
-*.log
