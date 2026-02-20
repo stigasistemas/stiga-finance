@@ -1115,18 +1115,33 @@ function renderLists() {
         </div>`).join('') : '<p class="no-data">Nenhum débito registrado</p>';
 
     const futList = document.getElementById('futureList');
-    if (futList) futList.innerHTML = futurePurchases.length > 0 ? futurePurchases.map((f, i) => `
+    if (futList) {
+        // Ordenar por vencimento mais próximo, mantendo índice original para deletar/pagar corretamente
+        const futIndexed = futurePurchases.map((f, i) => ({ ...f, _origIdx: i }));
+        futIndexed.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        const hoje2 = new Date(); hoje2.setHours(0,0,0,0);
+        futList.innerHTML = futIndexed.length > 0 ? futIndexed.map(f => {
+            const venc = new Date(f.dueDate + 'T00:00:00');
+            const diffDias = Math.ceil((venc - hoje2) / 86400000);
+            let urgLabel = '';
+            if (diffDias < 0)       urgLabel = `<span style="color:#E74C3C;font-size:0.75em;font-weight:bold;"> ⚠️ VENCIDA</span>`;
+            else if (diffDias === 0) urgLabel = `<span style="color:#E74C3C;font-size:0.75em;font-weight:bold;"> 🔴 HOJE</span>`;
+            else if (diffDias <= 3)  urgLabel = `<span style="color:#F39C12;font-size:0.75em;font-weight:bold;"> 🟡 ${diffDias}d</span>`;
+            else                     urgLabel = `<span style="color:#8A95A3;font-size:0.75em;"> ${diffDias}d</span>`;
+            return `
         <div class="transaction-item">
             <div style="flex:1">
-                <b>Vencimento: ${formatDate(f.dueDate)}</b><br>
+                <b>Vencimento: ${formatDate(f.dueDate)}</b>${urgLabel}<br>
                 ${f.description}
             </div>
             <div class="summary-value ${privClass}" style="color:#F39C12">${formatCurrency(f.amount)}</div>
             <div class="action-btns">
-                <button class="btn btn-small pay-btn" onclick="payItem(${i})">💳 Pagar</button>
-                <button class="delete-btn" onclick="deleteItem('futurePurchases',${i})">×</button>
+                <button class="btn btn-small pay-btn" onclick="payItem(${f._origIdx})">💳 Pagar</button>
+                <button class="delete-btn" onclick="deleteItem('futurePurchases',${f._origIdx})">×</button>
             </div>
-        </div>`).join('') : '<p class="no-data">Nenhuma compra futura</p>';
+        </div>`;
+        }).join('') : '<p class="no-data">Nenhuma compra futura</p>';
+    }
 }
 function togglePrivacy() {
     privacyMode = !privacyMode;
