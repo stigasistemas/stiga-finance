@@ -1599,3 +1599,236 @@ function showImportModal() {
     };
     input.click();
 }
+
+// ================================================================
+// CORREÇÃO: VISUALIZAÇÃO DE COMPROVANTES
+// Adicionado automaticamente
+// ================================================================
+
+// Remover função antiga se existir
+if (typeof viewAttachment !== 'undefined') {
+    console.log('⚠️ Substituindo viewAttachment antiga');
+}
+
+// FUNÇÃO CORRIGIDA
+function viewAttachment(type, index) {
+    console.log('🔍 viewAttachment chamado:', {type, index});
+    
+    // Buscar o item correto
+    let item;
+    if (type === 'credits' || type === 'credit') {
+        item = credits[index];
+    } else if (type === 'debits' || type === 'debit') {
+        item = debits[index];
+    } else if (type === 'future') {
+        item = futurePurchases[index];
+    }
+    
+    // Verificar se existe
+    if (!item) {
+        console.error('❌ Item não encontrado:', {type, index});
+        showToast('Erro: item não encontrado', 'error');
+        return;
+    }
+    
+    // Verificar se tem anexo
+    if (!item.attachment || !item.attachment.data) {
+        console.warn('⚠️ Sem anexo:', item);
+        showToast('Nenhum comprovante anexado neste item', 'info');
+        return;
+    }
+    
+    console.log('✅ Anexo encontrado:', {
+        type: item.attachment.type,
+        name: item.attachment.name,
+        size: item.attachment.data.length
+    });
+    
+    // Remover modal anterior
+    const oldModal = document.getElementById('attachmentModal');
+    if (oldModal) oldModal.remove();
+    
+    // Verificar se é imagem
+    const isImage = item.attachment.type && item.attachment.type.startsWith('image/');
+    
+    // Criar modal
+    const modal = document.createElement('div');
+    modal.id = 'attachmentModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 999999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: var(--bg-card, #1a1f2e);
+        border: 1px solid var(--glass-border, rgba(212,175,55,0.2));
+        border-radius: 16px;
+        padding: 24px;
+        max-width: min(90vw, 800px);
+        max-height: 90vh;
+        overflow: auto;
+        position: relative;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+    `;
+    
+    // Header
+    const header = document.createElement('div');
+    header.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--glass-border, rgba(212,175,55,0.2));
+    `;
+    
+    const title = document.createElement('h2');
+    title.textContent = '📎 Comprovante';
+    title.style.cssText = `
+        font-family: 'Cinzel', serif;
+        color: var(--gold-primary, #D4AF37);
+        font-size: 1.1em;
+        letter-spacing: 1px;
+        margin: 0;
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = `
+        background: transparent;
+        border: 1px solid var(--glass-border, rgba(212,175,55,0.2));
+        color: var(--text-secondary, #A0A0A0);
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1.5em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: all 0.3s;
+    `;
+    closeBtn.onmouseover = () => {
+        closeBtn.style.background = 'rgba(212,175,55,0.1)';
+        closeBtn.style.borderColor = 'var(--gold-primary, #D4AF37)';
+    };
+    closeBtn.onmouseout = () => {
+        closeBtn.style.background = 'transparent';
+        closeBtn.style.borderColor = 'var(--glass-border, rgba(212,175,55,0.2))';
+    };
+    closeBtn.onclick = () => modal.remove();
+    
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    
+    // Body
+    const body = document.createElement('div');
+    body.style.cssText = 'text-align: center;';
+    
+    if (isImage) {
+        // Mostrar imagem
+        const img = document.createElement('img');
+        img.src = item.attachment.data;
+        img.alt = 'Comprovante';
+        img.style.cssText = `
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        `;
+        body.appendChild(img);
+        
+        console.log('✅ Imagem renderizada');
+    } else {
+        // Arquivo não-imagem
+        const fileInfo = document.createElement('p');
+        fileInfo.textContent = `📄 ${item.attachment.name || 'Arquivo anexado'}`;
+        fileInfo.style.cssText = `
+            color: var(--text-primary, #FFF);
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        `;
+        
+        const downloadBtn = document.createElement('a');
+        downloadBtn.href = item.attachment.data;
+        downloadBtn.download = item.attachment.name || 'comprovante';
+        downloadBtn.textContent = '⬇️ Download';
+        downloadBtn.style.cssText = `
+            background: linear-gradient(135deg, var(--gold-primary, #D4AF37), var(--gold-dark, #B8942A));
+            color: #0A0E17;
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-family: 'Cinzel', serif;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+            font-weight: bold;
+            display: inline-block;
+            transition: transform 0.3s;
+        `;
+        downloadBtn.onmouseover = () => {
+            downloadBtn.style.transform = 'translateY(-2px)';
+        };
+        downloadBtn.onmouseout = () => {
+            downloadBtn.style.transform = 'translateY(0)';
+        };
+        
+        body.appendChild(fileInfo);
+        body.appendChild(downloadBtn);
+        
+        console.log('✅ Link de download renderizado');
+    }
+    
+    content.appendChild(header);
+    content.appendChild(body);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Fechar ao clicar no fundo
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Fechar com ESC
+    const handleEsc = (e) => {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', handleEsc);
+        }
+    };
+    document.addEventListener('keydown', handleEsc);
+    
+    console.log('✅ Modal de comprovante aberto com sucesso');
+}
+
+// Adicionar CSS de animação
+if (!document.getElementById('attachmentModalStyle')) {
+    const style = document.createElement('style');
+    style.id = 'attachmentModalStyle';
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+console.log('✅ Correção de comprovantes carregada');
