@@ -888,6 +888,7 @@ function renderLists() {
             </div>
             <div class="summary-value ${privClass}" style="color:#2ECC71">${formatCurrency(c.amount)}</div>
             <div class="action-btns">
+                ${c.attachment ? `<button class="edit-btn" title="Ver comprovante" onclick="viewAttachment('credits',${i})">📎</button>` : ''}
                 <button class="edit-btn" onclick="editItem('credits',${i})">✏️</button>
                 <button class="delete-btn" onclick="deleteItem('credits',${i})">×</button>
             </div>
@@ -903,6 +904,7 @@ function renderLists() {
             </div>
             <div class="summary-value ${privClass}" style="color:#E74C3C">-${formatCurrency(d.amount)}</div>
             <div class="action-btns">
+                ${d.attachment ? `<button class="edit-btn" title="Ver comprovante" onclick="viewAttachment('debits',${i})">📎</button>` : ''}
                 <button class="edit-btn" onclick="editItem('debits',${i})">✏️</button>
                 <button class="delete-btn" onclick="deleteItem('debits',${i})">×</button>
             </div>
@@ -986,13 +988,26 @@ function setupForms() {
                 description: document.getElementById('creditDescription')?.value,
                 tags: document.getElementById('creditTags')?.value.split(',').map(t => t.trim()).filter(Boolean)
             };
-            credits.unshift(newCredit);
-            saveAccounts();
-            updateSummary();
-            showToast('✅ Crédito adicionado!', 'success');
-            addNotification('💰 Crédito', 'Novo crédito registrado', 'success');
-            e.target.reset();
-            setTodayAsDefault();
+            const fileInput = document.getElementById('creditAttachment');
+            const file = fileInput && fileInput.files && fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    newCredit.attachment = { data: ev.target.result, type: file.type, name: file.name };
+                    credits.unshift(newCredit);
+                    saveAccounts(); updateSummary();
+                    showToast('✅ Crédito adicionado!', 'success');
+                    addNotification('💰 Crédito', 'Novo crédito registrado', 'success');
+                    creditForm.reset(); setTodayAsDefault(); renderLists();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                credits.unshift(newCredit);
+                saveAccounts(); updateSummary();
+                showToast('✅ Crédito adicionado!', 'success');
+                addNotification('💰 Crédito', 'Novo crédito registrado', 'success');
+                creditForm.reset(); setTodayAsDefault(); renderLists();
+            }
         };
     }
 
@@ -1007,13 +1022,26 @@ function setupForms() {
                 description: document.getElementById('debitDescription')?.value,
                 tags: document.getElementById('debitTags')?.value.split(',').map(t => t.trim()).filter(Boolean)
             };
-            debits.unshift(newDebit);
-            saveAccounts();
-            updateSummary();
-            showToast('✅ Débito adicionado!', 'success');
-            addNotification('💸 Débito', 'Novo débito registrado', 'info');
-            e.target.reset();
-            setTodayAsDefault();
+            const fileInput = document.getElementById('debitAttachment');
+            const file = fileInput && fileInput.files && fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    newDebit.attachment = { data: ev.target.result, type: file.type, name: file.name };
+                    debits.unshift(newDebit);
+                    saveAccounts(); updateSummary();
+                    showToast('✅ Débito adicionado!', 'success');
+                    addNotification('💸 Débito', 'Novo débito registrado', 'info');
+                    debitForm.reset(); setTodayAsDefault(); renderLists();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                debits.unshift(newDebit);
+                saveAccounts(); updateSummary();
+                showToast('✅ Débito adicionado!', 'success');
+                addNotification('💸 Débito', 'Novo débito registrado', 'info');
+                debitForm.reset(); setTodayAsDefault(); renderLists();
+            }
         };
     }
 
