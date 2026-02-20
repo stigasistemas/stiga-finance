@@ -990,23 +990,25 @@ function setupForms() {
             };
             const fileInput = document.getElementById('creditAttachment');
             const file = fileInput && fileInput.files && fileInput.files[0];
+            const doSaveCredit = () => {
+                credits.unshift(newCredit);
+                saveAccounts();
+                updateSummary();
+                renderLists();
+                showToast('✅ Crédito adicionado!', 'success');
+                addNotification('💰 Crédito', 'Novo crédito registrado', 'success');
+                e.target.reset();
+                setTodayAsDefault();
+            };
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(ev) {
                     newCredit.attachment = { data: ev.target.result, type: file.type, name: file.name };
-                    credits.unshift(newCredit);
-                    saveAccounts(); updateSummary();
-                    showToast('✅ Crédito adicionado!', 'success');
-                    addNotification('💰 Crédito', 'Novo crédito registrado', 'success');
-                    creditForm.reset(); setTodayAsDefault(); renderLists();
+                    doSaveCredit();
                 };
                 reader.readAsDataURL(file);
             } else {
-                credits.unshift(newCredit);
-                saveAccounts(); updateSummary();
-                showToast('✅ Crédito adicionado!', 'success');
-                addNotification('💰 Crédito', 'Novo crédito registrado', 'success');
-                creditForm.reset(); setTodayAsDefault(); renderLists();
+                doSaveCredit();
             }
         };
     }
@@ -1024,23 +1026,25 @@ function setupForms() {
             };
             const fileInput = document.getElementById('debitAttachment');
             const file = fileInput && fileInput.files && fileInput.files[0];
+            const doSaveDebit = () => {
+                debits.unshift(newDebit);
+                saveAccounts();
+                updateSummary();
+                renderLists();
+                showToast('✅ Débito adicionado!', 'success');
+                addNotification('💸 Débito', 'Novo débito registrado', 'info');
+                e.target.reset();
+                setTodayAsDefault();
+            };
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(ev) {
                     newDebit.attachment = { data: ev.target.result, type: file.type, name: file.name };
-                    debits.unshift(newDebit);
-                    saveAccounts(); updateSummary();
-                    showToast('✅ Débito adicionado!', 'success');
-                    addNotification('💸 Débito', 'Novo débito registrado', 'info');
-                    debitForm.reset(); setTodayAsDefault(); renderLists();
+                    doSaveDebit();
                 };
                 reader.readAsDataURL(file);
             } else {
-                debits.unshift(newDebit);
-                saveAccounts(); updateSummary();
-                showToast('✅ Débito adicionado!', 'success');
-                addNotification('💸 Débito', 'Novo débito registrado', 'info');
-                debitForm.reset(); setTodayAsDefault(); renderLists();
+                doSaveDebit();
             }
         };
     }
