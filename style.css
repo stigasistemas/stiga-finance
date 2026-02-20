@@ -930,7 +930,7 @@ button:active {
     bottom: 80px;
     right: 20px;
     width: 350px;
-    height: 450px;
+    height: 480px;
     background: var(--bg-card);
     border: 1px solid var(--gold-primary);
     border-radius: 15px;
@@ -944,11 +944,12 @@ button:active {
 }
 .chatbot-header {
     padding: 15px;
-    background: rgba(212, 175, 55, 0.1);
+    background: rgba(212, 175, 55, 0.12);
     border-radius: 15px 15px 0 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid rgba(212,175,55,0.2);
 }
 .chatbot-header h3 {
     font-family: 'Cinzel', serif;
@@ -968,31 +969,36 @@ button:active {
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 15px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 .chat-message {
-    max-width: 80%;
-    padding: 10px 15px;
+    max-width: 85%;
+    padding: 10px 14px;
     border-radius: 15px;
-    font-size: 0.9em;
+    font-size: 0.88em;
+    line-height: 1.5;
 }
 .chat-message.user {
     align-self: flex-end;
     background: var(--gold-primary);
     color: #0A0E17;
+    border-radius: 15px 15px 4px 15px;
+    font-weight: 600;
 }
 .chat-message.bot {
     align-self: flex-start;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.07);
     color: var(--text-primary);
+    border-radius: 15px 15px 15px 4px;
+    border: 1px solid rgba(212,175,55,0.1);
 }
 .chat-input {
-    padding: 15px;
+    padding: 12px;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     border-top: 1px solid var(--glass-border);
 }
 .chat-input input {
@@ -1000,9 +1006,14 @@ button:active {
     background: rgba(0,0,0,0.3);
     border: 1px solid var(--glass-border);
     color: var(--text-primary);
-    padding: 10px 15px;
+    padding: 10px 14px;
     border-radius: 20px;
     font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95em;
+}
+.chat-input input:focus {
+    outline: none;
+    border-color: var(--gold-primary);
 }
 .chat-input button {
     background: var(--gold-primary);
@@ -1013,21 +1024,49 @@ button:active {
     border-radius: 50%;
     cursor: pointer;
     font-size: 1.2em;
+    flex-shrink: 0;
+    transition: transform 0.2s;
 }
+.chat-input button:hover { transform: scale(1.1); }
 .chatbot-button {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 60px;
-    height: 60px;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
-    background: var(--gold-primary);
+    background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
     color: #0A0E17;
     border: none;
     font-size: 1.5em;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.5);
     z-index: 9998;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.chatbot-button:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 28px rgba(212, 175, 55, 0.7);
+}
+
+/* ── MOBILE: chatbot vai para a ESQUERDA ── */
+@media (max-width: 768px) {
+    .chatbot {
+        right: auto;
+        left: 10px;
+        bottom: 80px;
+        width: calc(100vw - 20px);
+        max-width: 380px;
+        height: 420px;
+    }
+    .chatbot-button {
+        right: auto;
+        left: 15px;
+        bottom: 15px;
+        width: 52px;
+        height: 52px;
+        font-size: 1.3em;
+    }
 }
 /* Level badge */
 .level-badge {

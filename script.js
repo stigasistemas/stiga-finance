@@ -681,29 +681,233 @@ function addChatMessage(sender, text) {
     container.scrollTop = container.scrollHeight;
 }
 function processChatMessage(message) {
-    const msg = message.toLowerCase();
-    if (msg.includes('quanto') && (msg.includes('gast') || msg.includes('debit'))) {
-        const category = customCategories.debit.find(c => msg.includes(c.toLowerCase()));
-        if (category) {
-            const total = debits.filter(d => d.category === category).reduce((s, d) => s + parseFloat(d.amount), 0);
-            return `Você gastou ${formatCurrency(total)} em ${category}.`;
-        }
-        const thisMonth = debits.filter(d => new Date(d.date).getMonth() === new Date().getMonth()).reduce((s, d) => s + parseFloat(d.amount), 0);
-        return `Você gastou ${formatCurrency(thisMonth)} este mês.`;
+    const msg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    // ── Utilitários internos ──────────────────────────────────────
+    const totalC = credits.reduce((s, c) => s + parseFloat(c.amount || 0), 0);
+    const totalD = debits.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+    const saldo  = totalC - totalD;
+    const hoje   = new Date();
+    const mesAtual = hoje.getMonth();
+    const anoAtual = hoje.getFullYear();
+
+    const credMes = credits.filter(c => {
+        const d = new Date(c.date + 'T00:00:00');
+        return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+    }).reduce((s, c) => s + parseFloat(c.amount || 0), 0);
+
+    const debitMes = debits.filter(d => {
+        const dt = new Date(d.date + 'T00:00:00');
+        return dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual;
+    }).reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+
+    const proximos = futurePurchases
+        .filter(f => new Date(f.dueDate) >= hoje)
+        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+    const catGastos = {};
+    debits.forEach(d => {
+        const cat = d.category || 'Outro';
+        catGastos[cat] = (catGastos[cat] || 0) + parseFloat(d.amount || 0);
+    });
+    const maiorCat = Object.entries(catGastos).sort((a,b) => b[1]-a[1]);
+
+    const has = (...words) => words.some(w => msg.includes(w));
+
+    // ── SAUDAÇÕES ─────────────────────────────────────────────────
+    if (has('oi', 'ola', 'hello', 'bom dia', 'boa tarde', 'boa noite', 'hey', 'tudo bem', 'tudo bom'))
+        return `Olá! 👋 Sou o Assistente Stiga, seu consultor financeiro pessoal.<br><br>Posso te ajudar com:<br>💰 <b>Saldo e resumo</b><br>📊 <b>Gastos por categoria</b><br>📅 <b>Contas a vencer</b><br>📈 <b>Análise financeira</b><br>💡 <b>Dicas de economia</b><br>🎯 <b>Metas e orçamentos</b><br><br>O que deseja saber?`;
+
+    // ── SALDO ─────────────────────────────────────────────────────
+    if (has('saldo', 'quanto tenho', 'quanto tem', 'meu dinheiro', 'sobrou', 'disponivel', 'disponível')) {
+        const emoji = saldo >= 0 ? '✅' : '⚠️';
+        const status = saldo >= 0 ? 'positivo' : 'negativo';
+        return `${emoji} Seu saldo atual é <b>${formatCurrency(saldo)}</b> (${status}).<br><br>📥 Total de entradas: <b>${formatCurrency(totalC)}</b><br>📤 Total de saídas: <b>${formatCurrency(totalD)}</b>`;
     }
-    if (msg.includes('saldo') || msg.includes('quanto tenho')) {
-        const totalC = credits.reduce((s, c) => s + parseFloat(c.amount), 0);
-        const totalD = debits.reduce((s, d) => s + parseFloat(d.amount), 0);
-        return `Seu saldo atual é ${formatCurrency(totalC - totalD)}.`;
+
+    // ── GASTOS TOTAIS / MÊS ──────────────────────────────────────
+    if (has('quanto gastei', 'total gasto', 'gastei esse mes', 'gastei este mes', 'meus gastos', 'debitos', 'débitos', 'debito', 'débito')) {
+        const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long' });
+        return `📊 Em <b>${nomeMes}</b> você gastou <b>${formatCurrency(debitMes)}</b>.<br><br>💳 Total geral de gastos: <b>${formatCurrency(totalD)}</b>`;
     }
-    if (msg.includes('venc') || msg.includes('conta') || msg.includes('pagar')) {
-        const proximos = futurePurchases.filter(f => new Date(f.dueDate) >= new Date()).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 3);
-        if (!proximos.length) return 'Você não tem contas a vencer nos próximos dias! ✅';
-        return `Próximas contas:\n${proximos.map(f => `📅 ${f.description}: ${formatCurrency(f.amount)} (${formatDate(f.dueDate)})`).join('\n')}`;
+
+    // ── ENTRADAS / RECEITAS ──────────────────────────────────────
+    if (has('receita', 'recebi', 'quanto recebi', 'entradas', 'credito', 'crédito', 'salario', 'salário', 'renda')) {
+        const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long' });
+        return `💰 Em <b>${nomeMes}</b> você recebeu <b>${formatCurrency(credMes)}</b>.<br><br>📥 Total geral de entradas: <b>${formatCurrency(totalC)}</b>`;
     }
-    if (msg.includes('ajuda') || msg.includes('help') || msg.includes('?'))
-        return `Posso ajudar com:\n📊 Gastos\n💰 Saldo\n📅 Vencimentos\n💸 Orçamento\n📈 Economia`;
-    return 'Desculpe, não entendi. Digite "ajuda" para ver o que posso fazer! 🤔';
+
+    // ── CATEGORIAS ────────────────────────────────────────────────
+    if (has('categoria', 'categorias', 'onde gastei mais', 'maior gasto', 'o que mais gastei')) {
+        if (!maiorCat.length) return '📊 Nenhum gasto registrado ainda.';
+        const lista = maiorCat.slice(0, 5).map((c, i) => `${i+1}. <b>${c[0]}</b>: ${formatCurrency(c[1])}`).join('<br>');
+        return `📊 Seus maiores gastos por categoria:<br><br>${lista}`;
+    }
+
+    // ── VENCIMENTOS / CONTAS A PAGAR ─────────────────────────────
+    if (has('venci', 'vencimento', 'vencer', 'conta', 'pagar', 'boleto', 'parcela', 'futuras', 'programadas')) {
+        if (!proximos.length) return '✅ Ótima notícia! Você não tem contas a vencer.';
+        const lista = proximos.slice(0, 5).map(f =>
+            `📅 <b>${f.description}</b>: ${formatCurrency(f.amount)} — ${formatDate(f.dueDate)}`
+        ).join('<br>');
+        const totalFut = proximos.reduce((s, f) => s + parseFloat(f.amount || 0), 0);
+        return `📋 Próximas contas a pagar:<br><br>${lista}<br><br>💳 Total futuro: <b>${formatCurrency(totalFut)}</b>`;
+    }
+
+    // ── PRÓXIMA CONTA ─────────────────────────────────────────────
+    if (has('proxima conta', 'próxima conta', 'qual conta', 'primeira conta', 'mais urgente')) {
+        if (!proximos.length) return '✅ Nenhuma conta urgente! Você está em dia.';
+        const f = proximos[0];
+        const dias = Math.ceil((new Date(f.dueDate) - hoje) / 86400000);
+        return `⚡ Conta mais urgente:<br><br><b>${f.description}</b><br>💰 Valor: ${formatCurrency(f.amount)}<br>📅 Vence em: ${formatDate(f.dueDate)} (<b>${dias} dia${dias !== 1 ? 's' : ''}</b>)`;
+    }
+
+    // ── ANÁLISE / DIAGNÓSTICO ─────────────────────────────────────
+    if (has('analise', 'análise', 'diagnostico', 'diagnóstico', 'como estou', 'minha situacao', 'minha situação', 'financas', 'finanças')) {
+        const pct = totalC > 0 ? ((totalD / totalC) * 100).toFixed(1) : 0;
+        let status, dica;
+        if (pct < 60)  { status = '🟢 Excelente';  dica = 'Continue assim! Você está economizando muito bem.'; }
+        else if (pct < 80) { status = '🟡 Atenção'; dica = 'Seus gastos estão altos. Tente reduzir despesas não essenciais.'; }
+        else { status = '🔴 Crítico'; dica = 'Gastos muito altos! Revise urgentemente seu orçamento.'; }
+        return `📈 <b>Diagnóstico Financeiro</b><br><br>Status: <b>${status}</b><br>📥 Receitas: ${formatCurrency(totalC)}<br>📤 Despesas: ${formatCurrency(totalD)}<br>📊 Comprometimento: <b>${pct}%</b> da renda<br>💰 Saldo: ${formatCurrency(saldo)}<br><br>💡 <i>${dica}</i>`;
+    }
+
+    // ── ECONOMIA / QUANTO ECONOMIZEI ─────────────────────────────
+    if (has('economiz', 'poupei', 'poupa', 'guardar', 'reserva', 'quanto sobrou')) {
+        const pct = totalC > 0 ? ((saldo / totalC) * 100).toFixed(1) : 0;
+        if (saldo <= 0) return `⚠️ Você está no negativo em ${formatCurrency(Math.abs(saldo))}. Reduza os gastos para começar a economizar.`;
+        return `💚 Você economizou <b>${formatCurrency(saldo)}</b>, o equivalente a <b>${pct}%</b> das suas receitas.<br><br>🏆 Meta ideal: poupar pelo menos 20% da renda.`;
+    }
+
+    // ── MÉDIA DE GASTOS ───────────────────────────────────────────
+    if (has('media', 'média', 'gasto medio', 'gasto médio', 'por dia', 'diario', 'diário')) {
+        const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
+        const mediaDia = debitMes / diasNoMes;
+        const mediaTrans = debits.length > 0 ? totalD / debits.length : 0;
+        return `📊 Médias financeiras:<br><br>📅 Gasto médio/dia este mês: <b>${formatCurrency(mediaDia)}</b><br>🧾 Média por transação: <b>${formatCurrency(mediaTrans)}</b><br>💳 Total de transações: <b>${debits.length}</b>`;
+    }
+
+    // ── NÚMERO DE TRANSAÇÕES ──────────────────────────────────────
+    if (has('quantas transacao', 'quantas transações', 'quantos lancamento', 'quantos lançamento', 'historico', 'histórico', 'quantas vezes')) {
+        return `🧾 Histórico de transações:<br><br>📥 Entradas: <b>${credits.length}</b><br>📤 Saídas: <b>${debits.length}</b><br>📋 Contas futuras: <b>${futurePurchases.length}</b><br>📊 Total: <b>${credits.length + debits.length}</b> transações`;
+    }
+
+    // ── DICAS DE ECONOMIA ─────────────────────────────────────────
+    if (has('dica', 'dicas', 'conselho', 'como economizar', 'economizar mais', 'poupar mais')) {
+        const dicas = [
+            '🛒 Faça listas de compras e evite compras por impulso.',
+            '💡 Compare preços antes de comprar qualquer produto.',
+            '🍽️ Cozinhar em casa pode economizar até 60% vs restaurantes.',
+            '📱 Revise assinaturas e cancele as que não usa.',
+            '⛽ Agrupe compromissos para economizar combustível.',
+            '💳 Evite parcelamentos com juros — prefira à vista.',
+            '🎯 Siga a regra 50/30/20: necessidades, desejos, poupança.',
+            '🏦 Crie uma reserva de emergência de 3 a 6 meses de gastos.'
+        ];
+        const d = dicas[Math.floor(Math.random() * dicas.length)];
+        return `💡 <b>Dica financeira:</b><br><br>${d}<br><br>Quer mais dicas? Pergunte de novo! 😊`;
+    }
+
+    // ── ORÇAMENTO ─────────────────────────────────────────────────
+    if (has('orcamento', 'orçamento', 'budget', 'limite', 'meta gasto')) {
+        if (!budgets || !budgets.length) return '📋 Você ainda não configurou orçamentos. Acesse a aba <b>Orçamentos</b> para definir limites por categoria.';
+        const lista = budgets.slice(0, 5).map(b => {
+            const gasto = debits.filter(d => d.category === b.category).reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+            const pct = b.limit > 0 ? ((gasto / b.limit) * 100).toFixed(0) : 0;
+            const emoji = pct >= 100 ? '🔴' : pct >= 80 ? '🟡' : '🟢';
+            return `${emoji} <b>${b.category}</b>: ${formatCurrency(gasto)} / ${formatCurrency(b.limit)} (${pct}%)`;
+        }).join('<br>');
+        return `🎯 <b>Status dos Orçamentos:</b><br><br>${lista}`;
+    }
+
+    // ── METAS ─────────────────────────────────────────────────────
+    if (has('meta', 'metas', 'objetivo', 'objetivos', 'sonho', 'viagem', 'comprar')) {
+        if (!goals || !goals.length) return '🎯 Você ainda não tem metas cadastradas. Acesse a aba <b>Metas</b> para criar seus objetivos financeiros!';
+        const lista = goals.slice(0, 4).map(g => {
+            const pct = g.target > 0 ? Math.min(100, ((g.current / g.target) * 100).toFixed(0)) : 0;
+            return `🎯 <b>${g.name}</b>: ${formatCurrency(g.current)} / ${formatCurrency(g.target)} (${pct}%)`;
+        }).join('<br>');
+        return `🏆 <b>Suas Metas:</b><br><br>${lista}`;
+    }
+
+    // ── ADICIONAR TRANSAÇÃO ───────────────────────────────────────
+    if (has('como adicionar', 'como lancar', 'como lançar', 'como registrar', 'como colocar')) {
+        return `➕ <b>Como registrar transações:</b><br><br>📥 <b>Crédito (entrada):</b> Aba "Créditos" → preencha valor, categoria, data e clique em Adicionar.<br><br>📤 <b>Débito (saída):</b> Aba "Débitos" → mesmo processo.<br><br>📅 <b>Compra futura:</b> Aba "Compras Futuras" → informe valor total e número de parcelas.`;
+    }
+
+    // ── COMPROVANTE ───────────────────────────────────────────────
+    if (has('comprovante', 'anexar', 'arquivo', 'foto', 'nota fiscal', 'recibo')) {
+        return `📎 <b>Como anexar comprovantes:</b><br><br>1. Vá para a aba <b>Créditos</b> ou <b>Débitos</b><br>2. Preencha os dados da transação<br>3. Clique em <b>"Escolher arquivo"</b> no campo de comprovante<br>4. Selecione a imagem ou PDF<br>5. Clique em <b>Adicionar</b><br><br>Para visualizar: clique no ícone 📎 ao lado da transação.`;
+    }
+
+    // ── EXPORTAR / BACKUP ─────────────────────────────────────────
+    if (has('exportar', 'backup', 'baixar', 'relatorio', 'relatório', 'pdf', 'csv')) {
+        return `📄 <b>Exportar dados:</b><br><br>📊 <b>PDF:</b> Clique no botão <b>"Gerar PDF"</b> no menu principal.<br><br>💾 <b>Backup:</b> Menu → <b>Exportar/Importar</b> para salvar todos os seus dados em JSON.<br><br>📋 <b>CSV:</b> Disponível na opção de importação de dados.`;
+    }
+
+    // ── CONTAS BANCÁRIAS ──────────────────────────────────────────
+    if (has('conta bancaria', 'conta corrente', 'conta poupanca', 'minhas contas', 'trocar conta', 'nova conta')) {
+        return `🏦 <b>Gerenciar contas:</b><br><br>Você pode ter múltiplas contas no Stiga Finance (ex: Nubank, Bradesco, Cartão).<br><br>➕ Para adicionar: clique no seletor de contas no topo e selecione <b>"+ Nova Conta"</b>.<br><br>🔄 Para trocar: use o menu suspenso de contas no topo da página.`;
+    }
+
+    // ── RECORRENTES ───────────────────────────────────────────────
+    if (has('recorrente', 'recorrentes', 'automatico', 'automático', 'todo mes', 'todo mês', 'mensal', 'mensal')) {
+        return `🔄 <b>Transações Recorrentes:</b><br><br>Para lançamentos fixos mensais (aluguel, assinaturas etc.), use a aba <b>Recorrentes</b>.<br><br>✅ O sistema lança automaticamente todo mês sem você precisar digitar de novo!`;
+    }
+
+    // ── PRIVACIDADE ───────────────────────────────────────────────
+    if (has('privacidade', 'privado', 'esconder', 'ocultar', 'ninguem ver', 'ninguém ver', 'modo privado')) {
+        return `👁️ <b>Modo Privacidade:</b><br><br>Clique no ícone 👁️ no topo da página para ocultar todos os valores financeiros.<br><br>Útil quando estiver em locais públicos ou não quiser mostrar seus dados.`;
+    }
+
+    // ── PERÍODO / FILTROS ─────────────────────────────────────────
+    if (has('filtrar', 'filtro', 'periodo', 'período', 'mes passado', 'mês passado', 'buscar')) {
+        return `🔍 <b>Filtros disponíveis:</b><br><br>📁 <b>Por conta:</b> Use o seletor de contas no topo.<br><br>📂 <b>Por categoria:</b> Use o filtro de pastas nas listas.<br><br>📅 <b>Por período:</b> Clique no ícone de calendário no topo para filtrar por data.`;
+    }
+
+    // ── TEMA ──────────────────────────────────────────────────────
+    if (has('tema', 'claro', 'escuro', 'dark', 'light', 'cor', 'aparencia', 'aparência')) {
+        return `🎨 <b>Temas:</b><br><br>Clique no ícone ☀️/🌙 no canto superior direito para alternar entre tema claro e escuro.<br><br>A preferência fica salva automaticamente!`;
+    }
+
+    // ── NOTIFICAÇÕES ──────────────────────────────────────────────
+    if (has('notificacao', 'notificação', 'notificacoes', 'notificações', 'alerta', 'aviso')) {
+        return `🔔 <b>Notificações:</b><br><br>O sino no topo mostra alertas sobre:<br>• Contas próximas do vencimento<br>• Orçamentos no limite<br>• Metas atingidas<br>• Novas transações registradas<br><br>Clique no 🔔 para ver todas.`;
+    }
+
+    // ── AJUDA GERAL ───────────────────────────────────────────────
+    if (has('ajuda', 'help', 'o que voce faz', 'o que você faz', 'comandos', 'perguntas', 'menu')) {
+        return `🤖 <b>Tudo que posso responder:</b><br><br>
+💰 <b>Saldo e finanças:</b> "qual meu saldo?", "como estou financeiramente?"<br>
+📊 <b>Gastos:</b> "quanto gastei?", "maiores categorias", "média de gastos"<br>
+📥 <b>Receitas:</b> "quanto recebi?", "minhas entradas"<br>
+📅 <b>Vencimentos:</b> "contas a pagar", "próxima conta"<br>
+🎯 <b>Metas e orçamentos:</b> "minhas metas", "meu orçamento"<br>
+💡 <b>Dicas:</b> "dicas de economia", "como economizar"<br>
+📎 <b>Sistema:</b> "como adicionar", "como exportar", "como usar"<br>
+🏦 <b>Contas:</b> "minhas contas", "trocar conta"<br>
+🔄 <b>Recorrentes:</b> "transações automáticas"<br><br>
+Pode digitar em linguagem natural! 😊`;
+    }
+
+    // ── AGRADECIMENTO ─────────────────────────────────────────────
+    if (has('obrigado', 'obrigada', 'valeu', 'thanks', 'muito bom', 'otimo', 'ótimo', 'excelente', 'perfeito'))
+        return `😊 Fico feliz em ajudar! Se precisar de mais alguma coisa, é só chamar. Boas finanças! 💰`;
+
+    // ── DESPEDIDA ─────────────────────────────────────────────────
+    if (has('tchau', 'ate logo', 'até logo', 'bye', 'xau', 'ate mais', 'até mais', 'fechar'))
+        return `👋 Até logo! Lembre-se: cada centavo conta. Boa sorte nas suas finanças! 💪`;
+
+    // ── NÃO ENTENDEU ──────────────────────────────────────────────
+    const sugestoes = [
+        '"qual meu saldo?"',
+        '"quanto gastei esse mês?"',
+        '"contas a pagar"',
+        '"dicas de economia"',
+        '"como estou financeiramente?"'
+    ];
+    const s = sugestoes[Math.floor(Math.random() * sugestoes.length)];
+    return `🤔 Não entendi bem. Tente perguntar como:<br><br><i>${s}</i><br><br>Ou digite <b>"ajuda"</b> para ver tudo que posso responder!`;
 }
 
 // ========================================
