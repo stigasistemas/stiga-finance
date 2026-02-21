@@ -312,7 +312,7 @@
 
 /* Garantir que nada vaze da tela */
 @media (max-width: 768px) {
-    *:not(.cal-modal-close):not(.cal-modal-close svg):not(.cal-nav-btn) {
+    *:not(.cal-day):not(.cal-grid):not(.cal-grid-header):not(.cal-modal-close):not(.cal-modal-close svg):not(.cal-nav-btn):not(.cal-modal-box):not(.cal-modal-left):not(.cal-modal-body) {
         max-width: 100vw !important;
         overflow-wrap: break-word !important;
     }
