@@ -150,18 +150,13 @@
         margin-bottom: 12px !important;
     }
     
-    .delete-btn {
+    .delete-btn,
+    .delete-btn-small {
         position: static !important;
         margin-top: 10px !important;
         width: 100% !important;
         padding: 8px !important;
         font-size: 0.85em !important;
-    }
-    /* delete-btn-small (×) nunca ocupa 100% */
-    .delete-btn-small {
-        width: 32px !important;
-        height: 32px !important;
-        padding: 0 !important;
     }
     
     /* Assistente (chatbot) - posição corrigida */
@@ -317,7 +312,7 @@
 
 /* Garantir que nada vaze da tela */
 @media (max-width: 768px) {
-    * {
+    *:not(.cal-modal-close):not(.cal-modal-close svg):not(.cal-nav-btn) {
         max-width: 100vw !important;
         overflow-wrap: break-word !important;
     }

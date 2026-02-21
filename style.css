@@ -1626,29 +1626,41 @@ input:focus, select:focus, textarea:focus {
     letter-spacing: 1px;
 }
 .cal-modal-close {
-    background: transparent !important;
-    border: 1px solid var(--glass-border) !important;
-    color: var(--text-secondary) !important;
-    width: 36px !important;
-    height: 36px !important;
-    border-radius: 8px !important;
+    background: rgba(231,76,60,0.1) !important;
+    border: 1px solid rgba(231,76,60,0.35) !important;
+    color: var(--danger) !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    min-height: 38px !important;
+    border-radius: 10px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    cursor: pointer;
+    cursor: pointer !important;
     padding: 0 !important;
     transition: all 0.2s ease;
-    min-width: unset !important;
     font-family: inherit !important;
     box-shadow: none !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 100 !important;
 }
 .cal-modal-close:hover {
-    background: rgba(231,76,60,0.15) !important;
+    background: rgba(231,76,60,0.25) !important;
     border-color: var(--danger) !important;
-    color: var(--danger) !important;
-    transform: rotate(90deg) !important;
+    transform: rotate(90deg) scale(1.1) !important;
 }
-.cal-modal-close svg { stroke: currentColor; }
+.cal-modal-close svg {
+    stroke: var(--danger) !important;
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+}
 
 /* Corpo do modal — 2 colunas */
 .cal-modal-body {
@@ -1976,45 +1988,4 @@ input:focus, select:focus, textarea:focus {
     object-fit: contain;
     margin: 0 auto;
     border-radius: 8px;
-}
-
-/* ================================================================
-   MOBILE FIX — BOTÃO FECHAR CALENDÁRIO
-   ================================================================ */
-@media (max-width: 768px) {
-    .cal-modal-close {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        max-width: 36px !important;
-        padding: 0 !important;
-        border-radius: 8px !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex-shrink: 0 !important;
-        background: rgba(231,76,60,0.1) !important;
-        border: 1px solid rgba(231,76,60,0.3) !important;
-        color: var(--danger) !important;
-        position: relative !important;
-        z-index: 10 !important;
-    }
-    .cal-modal-close svg {
-        stroke: var(--danger) !important;
-        width: 18px !important;
-        height: 18px !important;
-    }
-    .cal-modal-header {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        padding: 14px 16px !important;
-        position: sticky !important;
-        top: 0 !important;
-        background: var(--bg-card) !important;
-        z-index: 5 !important;
-        border-bottom: 1px solid var(--glass-border) !important;
-    }
 }
