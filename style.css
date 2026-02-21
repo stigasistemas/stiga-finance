@@ -1977,3 +1977,44 @@ input:focus, select:focus, textarea:focus {
     margin: 0 auto;
     border-radius: 8px;
 }
+
+/* ================================================================
+   MOBILE FIX — BOTÃO FECHAR CALENDÁRIO
+   ================================================================ */
+@media (max-width: 768px) {
+    .cal-modal-close {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        max-width: 36px !important;
+        padding: 0 !important;
+        border-radius: 8px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        background: rgba(231,76,60,0.1) !important;
+        border: 1px solid rgba(231,76,60,0.3) !important;
+        color: var(--danger) !important;
+        position: relative !important;
+        z-index: 10 !important;
+    }
+    .cal-modal-close svg {
+        stroke: var(--danger) !important;
+        width: 18px !important;
+        height: 18px !important;
+    }
+    .cal-modal-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 14px 16px !important;
+        position: sticky !important;
+        top: 0 !important;
+        background: var(--bg-card) !important;
+        z-index: 5 !important;
+        border-bottom: 1px solid var(--glass-border) !important;
+    }
+}
