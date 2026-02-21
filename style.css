@@ -616,35 +616,7 @@ h1 {
 }
 .goal-actions {
     display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-top: 10px;
-}
-.goal-actions input {
-    flex: 1;
-    min-width: 0;
-}
-.goal-actions button {
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-.goal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-.goal-header .delete-btn {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    padding: 0 !important;
-    font-size: 1em !important;
-    border-radius: 8px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-shrink: 0 !important;
+    gap: 10px;
 }
 /* FILTERS */
 .filter-section {
