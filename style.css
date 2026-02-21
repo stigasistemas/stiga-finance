@@ -1728,10 +1728,62 @@ input:focus, select:focus, textarea:focus {
 
 /* Responsivo modal */
 @media (max-width: 768px) {
-    .cal-modal-body { grid-template-columns: 1fr; }
-    .cal-modal-left { border-right: none; border-bottom: 1px solid var(--glass-border); }
-    .cal-modal-right { max-height: none; }
-    .cal-modal-box { border-radius: 12px; }
+    /* Overlay ocupa a tela toda sem cortar */
+    .cal-modal-overlay {
+        padding: 0 !important;
+        align-items: flex-end !important;
+    }
+    /* Box ocupa 100% da largura */
+    .cal-modal-box {
+        border-radius: 16px 16px 0 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        max-height: 92vh !important;
+        overflow-y: auto !important;
+    }
+    /* Empilhar coluna esquerda e direita */
+    .cal-modal-body {
+        grid-template-columns: 1fr !important;
+        min-height: unset !important;
+    }
+    .cal-modal-left {
+        border-right: none !important;
+        border-bottom: 1px solid var(--glass-border) !important;
+        padding: 16px !important;
+    }
+    .cal-modal-right {
+        max-height: none !important;
+        padding: 16px !important;
+    }
+    /* Header do modal */
+    .cal-modal-header {
+        padding: 14px 16px !important;
+    }
+    /* Dias do calendário menores para caber */
+    .cal-day {
+        min-height: 36px !important;
+        font-size: 0.75em !important;
+        border-radius: 6px !important;
+    }
+    .cal-grid {
+        gap: 3px !important;
+    }
+    .cal-grid-header {
+        gap: 3px !important;
+    }
+    .cal-grid-header span {
+        font-size: 0.62em !important;
+        padding: 4px 0 !important;
+    }
+    /* Formulário de lembrete */
+    .cal-form-row {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+    }
+    /* Mês/ano título */
+    .cal-month-title {
+        font-size: 1em !important;
+    }
 }
 
 /* ========================================
