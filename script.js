@@ -2290,8 +2290,8 @@ function showImportModal() {
                     try {
                         if (!line.trim()) return;
                         
-                        // Separar por ponto e vírgula
-                        const parts = line.split(';').map(p => p.trim().replace(/^"|"$/g, ''));
+                        // Separar por ponto e vírgula — remover \r do Windows
+                        const parts = line.split(';').map(p => p.trim().replace(/\r/g, '').replace(/^"|"$/g, ''));
                         
                         if (parts.length < 4) {
                             console.warn(`⚠️ Linha ${index + 2}: Muito curta - ${parts.length} campos`);
@@ -2307,9 +2307,9 @@ function showImportModal() {
                         console.log(`  Valor: "${valor}"`);
                         console.log(`  Data: "${data}"`);
                         
-                        // Converter valor
-                        const valorLimpo = valor.replace(/[^\d.,-]/g, '').replace(',', '.');
-                        const amount = parseFloat(valorLimpo);
+                        // Converter valor — suporta 782.8, 782,80, 1.000,00
+                        const valorSemMilhar = valor.replace(/\./g, '').replace(',', '.');
+                        const amount = parseFloat(valorSemMilhar) || parseFloat(valor.replace(',', '.'));
                         
                         if (isNaN(amount) || amount === 0) {
                             console.error(`❌ Valor inválido: "${valor}" → ${amount}`);
@@ -2336,7 +2336,7 @@ function showImportModal() {
                         const k = chave(trans);
                         
                         // Detecção de tipo MELHORADA
-                        const tipoLower = tipo.toLowerCase().trim();
+                        const tipoLower = tipo.toLowerCase().trim().replace(/\r/g, '');
                         
                         // Verificar se é CRÉDITO
                         const isCredito = 
