@@ -1735,12 +1735,15 @@ input:focus, select:focus, textarea:focus {
     }
     .cal-modal-box {
         border-radius: 16px 16px 0 0 !important;
-        width: 100vw !important;
-        max-width: 100vw !important;
+        width: 100% !important;
+        max-width: 100% !important;
         max-height: 92vh !important;
         overflow-y: auto !important;
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
         box-sizing: border-box !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: none !important;
     }
     .cal-modal-body {
         grid-template-columns: 1fr !important;
@@ -1751,9 +1754,10 @@ input:focus, select:focus, textarea:focus {
     .cal-modal-left {
         border-right: none !important;
         border-bottom: 1px solid var(--glass-border) !important;
-        padding: 14px 8px !important;
+        padding: 12px 4px !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        overflow: hidden !important;
     }
     .cal-modal-right {
         max-height: none !important;
