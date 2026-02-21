@@ -53,7 +53,7 @@ function buildEmailHTML(name, email, password) {
 
 <!-- HEADER -->
 <tr><td style="background:linear-gradient(160deg,#1a1f2e,#0f1420);border-radius:20px 20px 0 0;border:1px solid rgba(212,175,55,0.25);border-bottom:none;padding:48px 40px 36px;text-align:center;">
-  <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8942A);margin:0 auto 24px;line-height:88px;font-size:38px;text-align:center;box-shadow:0 0 50px rgba(212,175,55,0.35);">&#128176;</div>
+  <img src="https://stigasistemas.github.io/stiga-finance/logo-stiga.png" alt="Stiga Finance" width="100" height="100" style="display:block;margin:0 auto 24px;border-radius:50%;filter:drop-shadow(0 0 20px rgba(212,175,55,0.5));">
   <p style="font-size:10px;letter-spacing:4px;color:#D4AF37;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Bem-vindo a</p>
   <h1 style="margin:0;font-size:30px;font-weight:bold;letter-spacing:5px;color:#F4E5C3;font-family:Georgia,serif;">STIGA FINANCE</h1>
   <p style="margin:8px 0 0;font-size:12px;letter-spacing:2px;color:#8A95A3;font-family:Arial,sans-serif;">Gestao Financeira Inteligente</p>
