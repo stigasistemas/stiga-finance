@@ -2116,3 +2116,278 @@ if (!document.getElementById('attachmentModalStyle')) {
 }
 
 console.log('✅ Correção de comprovantes carregada');
+// ================================================================
+// CORREÇÕES: DATA E IMPORTAÇÃO
+// Cole este código no FINAL do script.js (substituindo as funções antigas)
+// ================================================================
+
+// CORREÇÃO 1: EXPORTAR COM DATA NO FORMATO DD/MM/AAAA
+function showExportModal() {
+    // Criar modal personalizado ao invés de prompt
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.8);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: var(--bg-card, #1a1f2e);
+            border: 1px solid var(--glass-border, rgba(212,175,55,0.2));
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+        ">
+            <h2 style="
+                font-family: 'Cinzel', serif;
+                color: var(--gold-primary, #D4AF37);
+                margin: 0 0 24px 0;
+                font-size: 1.3em;
+            ">📊 Exportar Dados</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="
+                    display: block;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.75em;
+                    color: var(--gold-light, #F4E5C3);
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    margin-bottom: 8px;
+                ">Data Inicial (DD/MM/AAAA)</label>
+                <input type="text" id="exportStartDate" placeholder="01/01/2026" maxlength="10" style="
+                    width: 100%;
+                    padding: 12px 14px;
+                    background: rgba(0,0,0,0.35);
+                    border: 1px solid rgba(212,175,55,0.2);
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 1em;
+                ">
+            </div>
+            
+            <div style="margin-bottom: 24px;">
+                <label style="
+                    display: block;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.75em;
+                    color: var(--gold-light, #F4E5C3);
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    margin-bottom: 8px;
+                ">Data Final (DD/MM/AAAA)</label>
+                <input type="text" id="exportEndDate" placeholder="31/12/2026" maxlength="10" style="
+                    width: 100%;
+                    padding: 12px 14px;
+                    background: rgba(0,0,0,0.35);
+                    border: 1px solid rgba(212,175,55,0.2);
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 1em;
+                ">
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button id="exportCancelBtn" style="
+                    flex: 1;
+                    padding: 12px;
+                    background: rgba(255,255,255,0.1);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    color: #fff;
+                    cursor: pointer;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.85em;
+                    letter-spacing: 1px;
+                ">Cancelar</button>
+                <button id="exportConfirmBtn" style="
+                    flex: 1;
+                    padding: 12px;
+                    background: linear-gradient(135deg, var(--gold-primary, #D4AF37), var(--gold-dark, #B8942A));
+                    border: none;
+                    border-radius: 8px;
+                    color: #0A0E17;
+                    cursor: pointer;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.85em;
+                    font-weight: bold;
+                    letter-spacing: 1px;
+                ">Exportar</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Máscara automática de data
+    const startInput = document.getElementById('exportStartDate');
+    const endInput = document.getElementById('exportEndDate');
+    
+    function applyDateMask(input) {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            if (value.length >= 5) {
+                value = value.substring(0, 5) + '/' + value.substring(5, 9);
+            }
+            e.target.value = value;
+        });
+    }
+    
+    applyDateMask(startInput);
+    applyDateMask(endInput);
+    
+    // Botão cancelar
+    document.getElementById('exportCancelBtn').onclick = () => modal.remove();
+    
+    // Botão exportar
+    document.getElementById('exportConfirmBtn').onclick = () => {
+        const start = startInput.value;
+        const end = endInput.value;
+        
+        if (!start || !end) {
+            showToast('❌ Preencha ambas as datas', 'error');
+            return;
+        }
+        
+        // Validar formato DD/MM/AAAA
+        const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        if (!dateRegex.test(start) || !dateRegex.test(end)) {
+            showToast('❌ Use o formato DD/MM/AAAA', 'error');
+            return;
+        }
+        
+        // Converter DD/MM/AAAA para AAAA-MM-DD para filtro
+        const startISO = start.split('/').reverse().join('-');
+        const endISO = end.split('/').reverse().join('-');
+        
+        const fC = credits.filter(c => c.date >= startISO && c.date <= endISO);
+        const fD = debits.filter(d => d.date >= startISO && d.date <= endISO);
+        
+        let csv = "\ufeffTipo;Descricao;Valor;Data;Categoria;Tags\n";
+        
+        // CORREÇÃO: Exportar DÉBITOS também
+        fD.forEach(d => {
+            const dataBR = d.date.split('-').reverse().join('/'); // Converter para DD/MM/AAAA
+            csv += `Debito;${d.description};${d.amount};${dataBR};${d.category};${(d.tags||[]).join(',')}\n`;
+        });
+        
+        fC.forEach(c => {
+            const dataBR = c.date.split('-').reverse().join('/'); // Converter para DD/MM/AAAA
+            csv += `Credito;${c.description};${c.amount};${dataBR};${c.category};${(c.tags||[]).join(',')}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `stiga_${start.replace(/\//g, '-')}_${end.replace(/\//g, '-')}.csv`;
+        link.click();
+        
+        showToast(`📥 ${fC.length + fD.length} transações exportadas!`, 'success');
+        modal.remove();
+    };
+}
+
+// CORREÇÃO 2: IMPORTAR DÉBITOS E CRÉDITOS (com suporte a DD/MM/AAAA)
+function showImportModal() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const lines = ev.target.result.split('\n').filter(l => l.trim()).slice(1);
+            let imported = 0;
+            let duplicados = 0;
+            let erros = 0;
+
+            function chave(t) {
+                return `${t.amount}_${t.date}_${t.description}_${t.category}`;
+            }
+
+            const chavesCreditos = new Set(credits.map(chave));
+            const chavesDebitos = new Set(debits.map(chave));
+
+            lines.forEach((line, index) => {
+                try {
+                    const parts = line.split(';').map(p => p.trim().replace(/"/g, ''));
+                    if (parts.length < 4) return;
+                    
+                    const [tipo, desc, valor, data, cat, tags] = parts;
+                    
+                    // Converter valor
+                    const amount = parseFloat(valor.replace(/[^\d.,-]/g, '').replace(',', '.'));
+                    if (isNaN(amount)) {
+                        erros++;
+                        return;
+                    }
+                    
+                    // Converter data DD/MM/AAAA → AAAA-MM-DD
+                    let dateISO = data;
+                    if (data.includes('/')) {
+                        const [day, month, year] = data.split('/');
+                        dateISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                    }
+
+                    const trans = {
+                        amount,
+                        category: cat || 'Outro',
+                        date: dateISO,
+                        description: desc,
+                        tags: tags ? tags.split(',').filter(Boolean) : []
+                    };
+                    
+                    const k = chave(trans);
+                    const isCredito = tipo.toLowerCase().includes('credit') || tipo.toLowerCase().includes('crédito') || tipo.toLowerCase().includes('credito');
+
+                    if (isCredito) {
+                        if (chavesCreditos.has(k)) {
+                            duplicados++;
+                            return;
+                        }
+                        credits.unshift(trans);
+                        chavesCreditos.add(k);
+                    } else {
+                        if (chavesDebitos.has(k)) {
+                            duplicados++;
+                            return;
+                        }
+                        debits.unshift(trans);
+                        chavesDebitos.add(k);
+                    }
+                    
+                    imported++;
+                } catch (error) {
+                    console.error(`Erro na linha ${index + 2}:`, error);
+                    erros++;
+                }
+            });
+
+            saveAccounts();
+            updateSummary();
+
+            // Mensagem de resultado
+            let msg = `✅ ${imported} transação(ões) importada(s)`;
+            if (duplicados > 0) msg += ` · ${duplicados} duplicata(s) ignorada(s)`;
+            if (erros > 0) msg += ` · ⚠️ ${erros} erro(s)`;
+            
+            showToast(msg, imported > 0 ? 'success' : 'error');
+        };
+        reader.readAsText(file, 'UTF-8');
+    };
+    input.click();
+}
+
+console.log('✅ Correções de data e importação carregadas');
