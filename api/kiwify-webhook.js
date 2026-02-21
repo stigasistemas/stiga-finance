@@ -9,7 +9,7 @@ const nodemailer = require('nodemailer');
 // Lê o firebase-key.json direto do arquivo (mais confiável na Vercel)
 if (!admin.apps.length) {
     try {
-        const serviceAccount = require('../firebase-key.json');
+        const serviceAccount = require('./firebase-key.json');
         admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
         console.log('✅ Firebase Admin inicializado via firebase-key.json');
     } catch (e) {
