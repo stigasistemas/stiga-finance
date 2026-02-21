@@ -1,293 +1,152 @@
-// ============================================================
-// STIGA FINANCE — WEBHOOK KIWIFY
-// Cria usuário no Firebase Auth + envia email profissional
-// ============================================================
+// ================================================================
+// STIGA FINANCE — WEBHOOK KIWIFY (CORRIGIDO)
+// Função serverless que roda na Vercel
+// ================================================================
 
-const admin     = require('firebase-admin');
+const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
 
-// ── Firebase Admin ──────────────────────────────────────────
+// Inicializar Firebase
 if (!admin.apps.length) {
-    const serviceAccount = require('../firebase-key.json');
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+    admin.initializeApp({
+        credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
+    });
 }
 
-// ── Nodemailer (Gmail) ──────────────────────────────────────
-const transporter = nodemailer.createTransport({
+const auth = admin.auth();
+const db = admin.firestore();
+
+// Configurar email
+const transporter = nodemailer.createTransporter({
     service: 'gmail',
     auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS   // App Password do Google
-    }
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
 });
 
-// ── Gera senha aleatória segura ─────────────────────────────
-function generatePassword(length = 10) {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$';
-    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-}
-
-// ── Template de Email ───────────────────────────────────────
-function buildEmailHTML(name, email, password) {
-    const firstName = name.split(' ')[0];
-    const year = new Date().getFullYear();
-    return `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bem-vindo ao Stiga Finance</title>
-</head>
-<body style="margin:0;padding:0;background:#0A0E17;font-family:'Georgia',serif;">
-
-  <!-- WRAPPER -->
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0E17;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-
-        <!-- ── HEADER ── -->
-        <tr>
-          <td style="background:linear-gradient(160deg,#1a1f2e 0%,#0f1420 100%);border-radius:20px 20px 0 0;border:1px solid rgba(212,175,55,0.25);border-bottom:none;padding:48px 40px 36px;text-align:center;">
-            
-            <!-- Logo placeholder circular -->
-            <div style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#B8942A);margin:0 auto 24px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(212,175,55,0.3);">
-              <span style="font-size:38px;line-height:90px;display:block;text-align:center;">💰</span>
-            </div>
-
-            <p style="font-size:11px;letter-spacing:4px;color:#D4AF37;text-transform:uppercase;margin:0 0 8px;font-family:'Georgia',serif;">Bem-vindo a</p>
-            <h1 style="margin:0;font-size:32px;font-weight:bold;letter-spacing:4px;color:#F4E5C3;font-family:'Georgia',serif;">STIGA FINANCE</h1>
-            <p style="margin:8px 0 0;font-size:13px;letter-spacing:2px;color:#8A95A3;font-family:Arial,sans-serif;">Gestão Financeira Inteligente</p>
-
-            <!-- Linha dourada decorativa -->
-            <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,#D4AF37,transparent);margin:28px auto 0;"></div>
-          </td>
-        </tr>
-
-        <!-- ── CORPO PRINCIPAL ── -->
-        <tr>
-          <td style="background:#12172a;border-left:1px solid rgba(212,175,55,0.25);border-right:1px solid rgba(212,175,55,0.25);padding:40px 40px 32px;">
-
-            <!-- Saudação -->
-            <h2 style="margin:0 0 6px;font-size:22px;color:#F4E5C3;font-family:'Georgia',serif;">Olá, ${firstName}! 👋</h2>
-            <p style="margin:0 0 28px;font-size:14px;color:#8A95A3;line-height:1.6;font-family:Arial,sans-serif;">
-              É um prazer ter você conosco. Sua conta no <strong style="color:#D4AF37;">Stiga Finance</strong> está ativa e pronta para uso. A partir de agora, você tem em mãos uma ferramenta completa para organizar, acompanhar e transformar sua vida financeira.
-            </p>
-
-            <!-- Card de credenciais -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(0,0,0,0.4);border:1px solid rgba(212,175,55,0.3);border-radius:14px;margin-bottom:28px;">
-              <tr>
-                <td style="padding:8px 24px 4px;">
-                  <p style="margin:0;font-size:10px;letter-spacing:3px;color:#D4AF37;text-transform:uppercase;font-family:Arial,sans-serif;">🔐 Suas Credenciais de Acesso</p>
-                </td>
-              </tr>
-              <tr><td style="padding:0 24px;"><div style="height:1px;background:rgba(212,175,55,0.15);"></div></td></tr>
-              <tr>
-                <td style="padding:18px 24px 6px;">
-                  <p style="margin:0 0 4px;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:1px;">Email</p>
-                  <p style="margin:0;font-size:15px;color:#F4E5C3;font-family:'Courier New',monospace;">${email}</p>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:14px 24px 20px;">
-                  <p style="margin:0 0 4px;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:1px;">Senha</p>
-                  <p style="margin:0;font-size:18px;color:#D4AF37;font-family:'Courier New',monospace;letter-spacing:2px;font-weight:bold;">${password}</p>
-                </td>
-              </tr>
-            </table>
-
-            <!-- Aviso segurança -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.2);border-left:3px solid #D4AF37;border-radius:8px;margin-bottom:32px;">
-              <tr>
-                <td style="padding:14px 18px;">
-                  <p style="margin:0;font-size:13px;color:#F4E5C3;font-family:Arial,sans-serif;line-height:1.5;">
-                    ⚠️ <strong>Guarde suas credenciais em local seguro.</strong><br>
-                    <span style="color:#8A95A3;font-size:12px;">Recomendamos alterar sua senha após o primeiro acesso.</span>
-                  </p>
-                </td>
-              </tr>
-            </table>
-
-            <!-- Botão CTA -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
-              <tr>
-                <td align="center">
-                  <a href="https://stigasistemas.github.io/stiga-finance/" 
-                     style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#B8942A);color:#0A0E17;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;padding:16px 44px;border-radius:10px;box-shadow:0 6px 24px rgba(212,175,55,0.35);">
-                    ACESSAR O SISTEMA →
-                  </a>
-                </td>
-              </tr>
-            </table>
-
-            <!-- Divisor -->
-            <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.3),transparent);margin-bottom:32px;"></div>
-
-            <!-- O que você pode fazer -->
-            <p style="margin:0 0 16px;font-size:11px;letter-spacing:3px;color:#D4AF37;text-transform:uppercase;font-family:Arial,sans-serif;">✨ O que você pode fazer com o Stiga Finance</p>
-            
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td width="50%" style="padding:0 8px 12px 0;vertical-align:top;">
-                  <table cellpadding="0" cellspacing="0" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;width:100%;">
-                    <tr><td style="padding:14px 16px;">
-                      <p style="margin:0 0 4px;font-size:18px;">💳</p>
-                      <p style="margin:0 0 2px;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;font-weight:bold;">Controle de Gastos</p>
-                      <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;line-height:1.4;">Registre entradas e saídas com categorias</p>
-                    </td></tr>
-                  </table>
-                </td>
-                <td width="50%" style="padding:0 0 12px 8px;vertical-align:top;">
-                  <table cellpadding="0" cellspacing="0" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;width:100%;">
-                    <tr><td style="padding:14px 16px;">
-                      <p style="margin:0 0 4px;font-size:18px;">📊</p>
-                      <p style="margin:0 0 2px;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;font-weight:bold;">Gráficos e Relatórios</p>
-                      <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;line-height:1.4;">Visualize sua saúde financeira</p>
-                    </td></tr>
-                  </table>
-                </td>
-              </tr>
-              <tr>
-                <td width="50%" style="padding:0 8px 0 0;vertical-align:top;">
-                  <table cellpadding="0" cellspacing="0" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;width:100%;">
-                    <tr><td style="padding:14px 16px;">
-                      <p style="margin:0 0 4px;font-size:18px;">🎯</p>
-                      <p style="margin:0 0 2px;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;font-weight:bold;">Metas Financeiras</p>
-                      <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;line-height:1.4;">Defina e acompanhe seus objetivos</p>
-                    </td></tr>
-                  </table>
-                </td>
-                <td width="50%" style="padding:0 0 0 8px;vertical-align:top;">
-                  <table cellpadding="0" cellspacing="0" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;width:100%;">
-                    <tr><td style="padding:14px 16px;">
-                      <p style="margin:0 0 4px;font-size:18px;">🤖</p>
-                      <p style="margin:0 0 2px;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;font-weight:bold;">Assistente IA</p>
-                      <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;line-height:1.4;">Tire dúvidas financeiras na hora</p>
-                    </td></tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-
-          </td>
-        </tr>
-
-        <!-- ── MENSAGEM DE AGRADECIMENTO ── -->
-        <tr>
-          <td style="background:linear-gradient(160deg,#0f1420,#1a1f2e);border:1px solid rgba(212,175,55,0.25);border-top:none;border-bottom:none;padding:32px 40px;">
-            <p style="margin:0 0 12px;font-size:14px;color:#F4E5C3;font-family:'Georgia',serif;font-style:italic;line-height:1.7;">
-              "Muito obrigado por confiar no Stiga Finance para cuidar das suas finanças. Nossa missão é simplificar sua relação com o dinheiro e ajudá-lo a conquistar seus objetivos com clareza e controle."
-            </p>
-            <p style="margin:0;font-size:12px;color:#D4AF37;font-family:Arial,sans-serif;font-weight:bold;">
-              — Equipe Stiga Sistemas
-            </p>
-          </td>
-        </tr>
-
-        <!-- ── SUPORTE ── -->
-        <tr>
-          <td style="background:#0f1420;border:1px solid rgba(212,175,55,0.25);border-top:1px solid rgba(212,175,55,0.1);padding:24px 40px;text-align:center;">
-            <p style="margin:0 0 6px;font-size:12px;color:#8A95A3;font-family:Arial,sans-serif;">
-              Precisa de ajuda? Entre em contato:
-            </p>
-            <a href="mailto:suporte@stigasistemas.com.br" style="color:#D4AF37;text-decoration:none;font-size:13px;font-family:Arial,sans-serif;">suporte@stigasistemas.com.br</a>
-          </td>
-        </tr>
-
-        <!-- ── FOOTER ── -->
-        <tr>
-          <td style="background:#080b12;border-radius:0 0 20px 20px;border:1px solid rgba(212,175,55,0.15);border-top:none;padding:24px 40px;text-align:center;">
-            <p style="margin:0 0 6px;font-size:11px;color:#4a5568;font-family:Arial,sans-serif;">
-              © ${year} Stiga Sistemas. Todos os direitos reservados.
-            </p>
-            <p style="margin:0;font-size:10px;color:#2d3748;font-family:Arial,sans-serif;">
-              Este email foi enviado automaticamente após sua compra. Não responda a este email.
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td></tr>
-  </table>
-
-</body>
-</html>
-    `;
-}
-
-// ── Handler principal ───────────────────────────────────────
+// FUNÇÃO PRINCIPAL
 module.exports = async (req, res) => {
+    console.log('🔔 Webhook recebido:', new Date().toISOString());
+    console.log('Method:', req.method);
+
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Método não permitido' });
+        return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
         const payload = req.body;
+        console.log('📦 Payload:', JSON.stringify(payload, null, 2));
 
-        // Validar evento Kiwify
-        const status = payload?.order_status || payload?.status;
+        if (!payload?.Customer?.email) {
+            return res.status(400).json({ error: 'Email ausente' });
+        }
+
+        const status = payload.order_status || payload.Order?.status;
         if (status !== 'paid' && status !== 'approved') {
-            return res.status(200).json({ message: 'Evento ignorado: pagamento não aprovado' });
+            return res.status(200).json({ message: 'Aguardando pagamento' });
         }
 
-        // Extrair dados do comprador
-        const customer   = payload?.Customer || payload?.customer || {};
-        const email      = customer.email || payload?.customer_email || payload?.email;
-        const name       = customer.name  || payload?.customer_name  || payload?.name || 'Cliente';
+        const email = payload.Customer.email.toLowerCase().trim();
+        const name = payload.Customer.full_name || payload.Customer.first_name || 'Cliente';
+        const orderId = payload.order_id || Date.now();
+        const password = generateStrongPassword();
 
-        if (!email) {
-            return res.status(400).json({ error: 'Email do cliente não encontrado no payload' });
-        }
+        console.log('👤 Cliente:', email, '-', name);
 
-        // Gerar senha segura
-        const password = generatePassword(10);
-
-        // Criar usuário no Firebase Auth
-        let uid;
+        // Criar usuário
+        let user;
         try {
-            const userRecord = await admin.auth().createUser({ email, password, displayName: name });
-            uid = userRecord.uid;
-        } catch (err) {
-            if (err.code === 'auth/email-already-exists') {
-                // Usuário já existe — atualizar senha
-                const existing = await admin.auth().getUserByEmail(email);
-                await admin.auth().updateUser(existing.uid, { password });
-                uid = existing.uid;
+            user = await auth.createUser({
+                email,
+                password,
+                displayName: name,
+            });
+            console.log('✅ Usuário criado:', user.uid);
+        } catch (error) {
+            if (error.code === 'auth/email-already-exists') {
+                user = await auth.getUserByEmail(email);
+                await auth.updateUser(user.uid, { password });
+                console.log('✅ Senha atualizada:', user.uid);
             } else {
-                throw err;
+                throw error;
             }
         }
 
-        // Inicializar documento no Firestore
-        const db = admin.firestore();
-        await db.collection('userData').doc(uid).set({
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            plan: 'basic',
+        // Salvar no Firestore
+        await db.collection('users').doc(user.uid).set({
             email,
             name,
-            accounts: {
-                main: {
-                    name: '💰 Conta Principal',
-                    credits: [],
-                    debits: [],
-                    futurePurchases: []
-                }
-            }
-        }, { merge: true });
-
-        // Enviar email profissional
-        await transporter.sendMail({
-            from: `"Stiga Finance" <${process.env.GMAIL_USER}>`,
-            to: email,
-            subject: '✨ Bem-vindo ao Stiga Finance — Suas Credenciais de Acesso',
-            html: buildEmailHTML(name, email, password)
+            orderId,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            subscriptionStatus: 'active',
+            plan: 'basic',
         });
 
-        console.log(`✅ Usuário criado: ${email} (uid: ${uid})`);
-        return res.status(200).json({ success: true, message: `Usuário ${email} criado com sucesso` });
+        // Enviar email
+        await sendWelcomeEmail(email, name, password);
+        console.log('✅ Concluído!');
+
+        return res.status(200).json({
+            success: true,
+            userId: user.uid,
+        });
 
     } catch (error) {
-        console.error('❌ Erro no webhook:', error);
-        return res.status(500).json({ error: error.message });
+        console.error('❌ Erro:', error.message);
+        return res.status(500).json({
+            error: error.message,
+        });
     }
 };
+
+function generateStrongPassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ' + 'abcdefghijkmnopqrstuvwxyz' + '23456789' + '@#$%&*!';
+    let pwd = '';
+    for (let i = 0; i < 12; i++) {
+        pwd += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return pwd;
+}
+
+async function sendWelcomeEmail(email, name, password) {
+    await transporter.sendMail({
+        from: `"Stiga Finance" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: '🎉 Bem-vindo ao Stiga Finance',
+        html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial; background: #0A0E17; color: #E0E0E0; margin: 0; padding: 40px;">
+    <div style="max-width: 600px; margin: 0 auto; background: #1a1f2e; border-radius: 16px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #D4AF37, #B8942A); padding: 30px; text-align: center;">
+            <h1 style="margin: 0; color: #0A0E17;">STIGA FINANCE</h1>
+        </div>
+        <div style="padding: 40px 30px;">
+            <h2 style="color: #D4AF37;">Olá, ${name}! 👋</h2>
+            <p>Seu pagamento foi confirmado!</p>
+            <div style="background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); border-radius: 12px; padding: 24px; margin: 24px 0;">
+                <p><strong style="color: #F4E5C3;">Email:</strong><br>
+                <code style="background: rgba(0,0,0,0.3); padding: 8px; display: inline-block; margin-top: 6px; color: #D4AF37;">${email}</code></p>
+                <p style="margin-top: 16px;"><strong style="color: #F4E5C3;">Senha:</strong><br>
+                <code style="background: rgba(0,0,0,0.3); padding: 8px; display: inline-block; margin-top: 6px; color: #D4AF37;">${password}</code></p>
+            </div>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="https://stigasistemas.github.io/stiga-finance/" style="background: linear-gradient(135deg, #D4AF37, #B8942A); color: #0A0E17; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">ACESSAR SISTEMA →</a>
+            </div>
+        </div>
+        <div style="background: rgba(0,0,0,0.3); padding: 20px; text-align: center; color: #888; font-size: 13px;">
+            <p>Dúvidas? <a href="mailto:suporte@stigasistemas.com.br" style="color: #D4AF37;">suporte@stigasistemas.com.br</a></p>
+        </div>
+    </div>
+</body>
+</html>
+        `,
+    });
+    console.log('✅ Email enviado para:', email);
+}
