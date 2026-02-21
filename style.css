@@ -616,7 +616,35 @@ h1 {
 }
 .goal-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+}
+.goal-actions input {
+    flex: 1;
+    min-width: 0;
+}
+.goal-actions button {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.goal-header .delete-btn {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    padding: 0 !important;
+    font-size: 1em !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
 }
 /* FILTERS */
 .filter-section {
@@ -1976,79 +2004,4 @@ input:focus, select:focus, textarea:focus {
     object-fit: contain;
     margin: 0 auto;
     border-radius: 8px;
-}
-
-/* ================================================================
-   MOBILE FIX — CATEGORIAS, METAS E ORÇAMENTOS
-   ================================================================ */
-@media (max-width: 768px) {
-
-    /* Itens de categoria — label + botão lado a lado */
-    .transaction-item {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        padding: 12px 14px !important;
-        gap: 10px !important;
-    }
-    .transaction-item span {
-        flex: 1 !important;
-        font-size: 0.95em !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-    }
-
-    /* Botão × — pequeno e arredondado, nunca 100% */
-    .delete-btn-small {
-        width: 32px !important;
-        height: 32px !important;
-        min-width: 32px !important;
-        min-height: 32px !important;
-        max-width: 32px !important;
-        padding: 0 !important;
-        font-size: 1.1em !important;
-        border-radius: 8px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex-shrink: 0 !important;
-        line-height: 1 !important;
-    }
-
-    /* Metas — layout empilhado mas botão continuar pequeno */
-    .goal-item {
-        padding: 14px !important;
-    }
-    .goal-actions {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: 8px !important;
-        margin-top: 10px !important;
-        align-items: center !important;
-    }
-    .goal-actions input {
-        flex: 1 !important;
-        width: auto !important;
-    }
-    .goal-actions button {
-        width: auto !important;
-        min-width: 100px !important;
-        padding: 10px 14px !important;
-    }
-
-    /* Orçamentos — igual */
-    .budget-item {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        gap: 10px !important;
-        flex-wrap: wrap !important;
-    }
-    .budget-item .delete-btn-small {
-        width: 32px !important;
-        height: 32px !important;
-        min-width: 32px !important;
-        padding: 0 !important;
-    }
 }
