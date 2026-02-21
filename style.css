@@ -1728,62 +1728,10 @@ input:focus, select:focus, textarea:focus {
 
 /* Responsivo modal */
 @media (max-width: 768px) {
-    /* Overlay ocupa a tela toda sem cortar */
-    .cal-modal-overlay {
-        padding: 0 !important;
-        align-items: flex-end !important;
-    }
-    /* Box ocupa 100% da largura */
-    .cal-modal-box {
-        border-radius: 16px 16px 0 0 !important;
-        max-width: 100% !important;
-        width: 100% !important;
-        max-height: 92vh !important;
-        overflow-y: auto !important;
-    }
-    /* Empilhar coluna esquerda e direita */
-    .cal-modal-body {
-        grid-template-columns: 1fr !important;
-        min-height: unset !important;
-    }
-    .cal-modal-left {
-        border-right: none !important;
-        border-bottom: 1px solid var(--glass-border) !important;
-        padding: 16px !important;
-    }
-    .cal-modal-right {
-        max-height: none !important;
-        padding: 16px !important;
-    }
-    /* Header do modal */
-    .cal-modal-header {
-        padding: 14px 16px !important;
-    }
-    /* Dias do calendário menores para caber */
-    .cal-day {
-        min-height: 36px !important;
-        font-size: 0.75em !important;
-        border-radius: 6px !important;
-    }
-    .cal-grid {
-        gap: 3px !important;
-    }
-    .cal-grid-header {
-        gap: 3px !important;
-    }
-    .cal-grid-header span {
-        font-size: 0.62em !important;
-        padding: 4px 0 !important;
-    }
-    /* Formulário de lembrete */
-    .cal-form-row {
-        grid-template-columns: 1fr 1fr !important;
-        gap: 8px !important;
-    }
-    /* Mês/ano título */
-    .cal-month-title {
-        font-size: 1em !important;
-    }
+    .cal-modal-body { grid-template-columns: 1fr; }
+    .cal-modal-left { border-right: none; border-bottom: 1px solid var(--glass-border); }
+    .cal-modal-right { max-height: none; }
+    .cal-modal-box { border-radius: 12px; }
 }
 
 /* ========================================
@@ -2028,4 +1976,79 @@ input:focus, select:focus, textarea:focus {
     object-fit: contain;
     margin: 0 auto;
     border-radius: 8px;
+}
+
+/* ================================================================
+   MOBILE FIX — CATEGORIAS, METAS E ORÇAMENTOS
+   ================================================================ */
+@media (max-width: 768px) {
+
+    /* Itens de categoria — label + botão lado a lado */
+    .transaction-item {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 12px 14px !important;
+        gap: 10px !important;
+    }
+    .transaction-item span {
+        flex: 1 !important;
+        font-size: 0.95em !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* Botão × — pequeno e arredondado, nunca 100% */
+    .delete-btn-small {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        max-width: 32px !important;
+        padding: 0 !important;
+        font-size: 1.1em !important;
+        border-radius: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        line-height: 1 !important;
+    }
+
+    /* Metas — layout empilhado mas botão continuar pequeno */
+    .goal-item {
+        padding: 14px !important;
+    }
+    .goal-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        margin-top: 10px !important;
+        align-items: center !important;
+    }
+    .goal-actions input {
+        flex: 1 !important;
+        width: auto !important;
+    }
+    .goal-actions button {
+        width: auto !important;
+        min-width: 100px !important;
+        padding: 10px 14px !important;
+    }
+
+    /* Orçamentos — igual */
+    .budget-item {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        flex-wrap: wrap !important;
+    }
+    .budget-item .delete-btn-small {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        padding: 0 !important;
+    }
 }

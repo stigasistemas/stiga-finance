@@ -150,13 +150,18 @@
         margin-bottom: 12px !important;
     }
     
-    .delete-btn,
-    .delete-btn-small {
+    .delete-btn {
         position: static !important;
         margin-top: 10px !important;
         width: 100% !important;
         padding: 8px !important;
         font-size: 0.85em !important;
+    }
+    /* delete-btn-small (×) nunca ocupa 100% */
+    .delete-btn-small {
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
     }
     
     /* Assistente (chatbot) - posição corrigida */
