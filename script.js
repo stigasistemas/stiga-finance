@@ -585,22 +585,6 @@ function renderMonthComparison() {
 // ========================================
 // EXPORT/IMPORT
 // ========================================
-function showExportModal() {
-    const start = prompt('Data inicial (AAAA-MM-DD):');
-    const end = prompt('Data final (AAAA-MM-DD):');
-    if (!start || !end) return;
-    const fC = credits.filter(c => c.date >= start && c.date <= end);
-    const fD = debits.filter(d => d.date >= start && d.date <= end);
-    let csv = "\ufeffTipo;Descricao;Valor;Data;Categoria;Tags\n";
-    fD.forEach(d => csv += `Debito;${d.description};${d.amount};${d.date};${d.category};${(d.tags||[]).join(',')}\n`);
-    fC.forEach(c => csv += `Credito;${c.description};${c.amount};${c.date};${c.category};${(c.tags||[]).join(',')}\n`);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `stiga_${start}_${end}.csv`;
-    link.click();
-    showToast('📥 Dados exportados!', 'success');
-}
 function exportToCSV() {
     let csv = "\ufeffTipo;Descricao;Valor;Data;Categoria;Tags\n";
     debits.forEach(d => csv += `Debito;${d.description};${d.amount};${d.date};${d.category};${(d.tags||[]).join(',')}\n`);
@@ -1078,69 +1062,6 @@ function showCategoryTotals() {
                     </div>
                 </div>`;
               }).join('');
-    }
-}
-function renderLists() {
-    const privClass = privacyMode ? 'privacy-active' : '';
-    const credList = document.getElementById('creditsList');
-    if (credList) credList.innerHTML = credits.length > 0 ? credits.map((c, i) => `
-        <div class="transaction-item">
-            <div style="flex:1">
-                <b>${formatDate(c.date)}</b><br>
-                ${c.category} - ${c.description}
-                ${c.tags && c.tags.length ? `<br><small class="tags">${c.tags.map(t => `🏷️${t}`).join(' ')}</small>` : ''}
-            </div>
-            <div class="summary-value ${privClass}" style="color:#2ECC71">${formatCurrency(c.amount)}</div>
-            <div class="action-btns">
-                ${c.attachment ? `<button class="edit-btn" title="Ver comprovante" onclick="viewAttachment('credits',${i})">📎</button>` : ''}
-                <button class="edit-btn" onclick="editItem('credits',${i})">✏️</button>
-                <button class="delete-btn" onclick="deleteItem('credits',${i})">×</button>
-            </div>
-        </div>`).join('') : '<p class="no-data">Nenhum crédito registrado</p>';
-
-    const debList = document.getElementById('debitsList');
-    if (debList) debList.innerHTML = debits.length > 0 ? debits.map((d, i) => `
-        <div class="transaction-item">
-            <div style="flex:1">
-                <b>${formatDate(d.date)}</b><br>
-                ${d.category} - ${d.description}
-                ${d.tags && d.tags.length ? `<br><small class="tags">${d.tags.map(t => `🏷️${t}`).join(' ')}</small>` : ''}
-            </div>
-            <div class="summary-value ${privClass}" style="color:#E74C3C">-${formatCurrency(d.amount)}</div>
-            <div class="action-btns">
-                ${d.attachment ? `<button class="edit-btn" title="Ver comprovante" onclick="viewAttachment('debits',${i})">📎</button>` : ''}
-                <button class="edit-btn" onclick="editItem('debits',${i})">✏️</button>
-                <button class="delete-btn" onclick="deleteItem('debits',${i})">×</button>
-            </div>
-        </div>`).join('') : '<p class="no-data">Nenhum débito registrado</p>';
-
-    const futList = document.getElementById('futureList');
-    if (futList) {
-        // Ordenar por vencimento mais próximo, mantendo índice original para deletar/pagar corretamente
-        const futIndexed = futurePurchases.map((f, i) => ({ ...f, _origIdx: i }));
-        futIndexed.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-        const hoje2 = new Date(); hoje2.setHours(0,0,0,0);
-        futList.innerHTML = futIndexed.length > 0 ? futIndexed.map(f => {
-            const venc = new Date(f.dueDate + 'T00:00:00');
-            const diffDias = Math.ceil((venc - hoje2) / 86400000);
-            let urgLabel = '';
-            if (diffDias < 0)       urgLabel = `<span style="color:#E74C3C;font-size:0.75em;font-weight:bold;"> ⚠️ VENCIDA</span>`;
-            else if (diffDias === 0) urgLabel = `<span style="color:#E74C3C;font-size:0.75em;font-weight:bold;"> 🔴 HOJE</span>`;
-            else if (diffDias <= 3)  urgLabel = `<span style="color:#F39C12;font-size:0.75em;font-weight:bold;"> 🟡 ${diffDias}d</span>`;
-            else                     urgLabel = `<span style="color:#8A95A3;font-size:0.75em;"> ${diffDias}d</span>`;
-            return `
-        <div class="transaction-item">
-            <div style="flex:1">
-                <b>Vencimento: ${formatDate(f.dueDate)}</b>${urgLabel}<br>
-                ${f.description}
-            </div>
-            <div class="summary-value ${privClass}" style="color:#F39C12">${formatCurrency(f.amount)}</div>
-            <div class="action-btns">
-                <button class="btn btn-small pay-btn" onclick="payItem(${f._origIdx})">💳 Pagar</button>
-                <button class="delete-btn" onclick="deleteItem('futurePurchases',${f._origIdx})">×</button>
-            </div>
-        </div>`;
-        }).join('') : '<p class="no-data">Nenhuma compra futura</p>';
     }
 }
 function togglePrivacy() {
@@ -2061,180 +1982,6 @@ console.log('✅ Correção de comprovantes carregada');
 // ================================================================
 
 // CORREÇÃO 1: EXPORTAR COM DATA NO FORMATO DD/MM/AAAA
-function showExportModal() {
-    // Criar modal personalizado ao invés de prompt
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.8);
-        z-index: 99999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    `;
-    
-    modal.innerHTML = `
-        <div style="
-            background: var(--bg-card, #1a1f2e);
-            border: 1px solid var(--glass-border, rgba(212,175,55,0.2));
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 400px;
-            width: 100%;
-        ">
-            <h2 style="
-                font-family: 'Cinzel', serif;
-                color: var(--gold-primary, #D4AF37);
-                margin: 0 0 24px 0;
-                font-size: 1.3em;
-            ">📊 Exportar Dados</h2>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="
-                    display: block;
-                    font-family: 'Cinzel', serif;
-                    font-size: 0.75em;
-                    color: var(--gold-light, #F4E5C3);
-                    letter-spacing: 1px;
-                    text-transform: uppercase;
-                    margin-bottom: 8px;
-                ">Data Inicial (DD/MM/AAAA)</label>
-                <input type="text" id="exportStartDate" placeholder="01/01/2026" maxlength="10" style="
-                    width: 100%;
-                    padding: 12px 14px;
-                    background: rgba(0,0,0,0.35);
-                    border: 1px solid rgba(212,175,55,0.2);
-                    border-radius: 8px;
-                    color: #fff;
-                    font-size: 1em;
-                ">
-            </div>
-            
-            <div style="margin-bottom: 24px;">
-                <label style="
-                    display: block;
-                    font-family: 'Cinzel', serif;
-                    font-size: 0.75em;
-                    color: var(--gold-light, #F4E5C3);
-                    letter-spacing: 1px;
-                    text-transform: uppercase;
-                    margin-bottom: 8px;
-                ">Data Final (DD/MM/AAAA)</label>
-                <input type="text" id="exportEndDate" placeholder="31/12/2026" maxlength="10" style="
-                    width: 100%;
-                    padding: 12px 14px;
-                    background: rgba(0,0,0,0.35);
-                    border: 1px solid rgba(212,175,55,0.2);
-                    border-radius: 8px;
-                    color: #fff;
-                    font-size: 1em;
-                ">
-            </div>
-            
-            <div style="display: flex; gap: 12px;">
-                <button id="exportCancelBtn" style="
-                    flex: 1;
-                    padding: 12px;
-                    background: rgba(255,255,255,0.1);
-                    border: 1px solid rgba(255,255,255,0.2);
-                    border-radius: 8px;
-                    color: #fff;
-                    cursor: pointer;
-                    font-family: 'Cinzel', serif;
-                    font-size: 0.85em;
-                    letter-spacing: 1px;
-                ">Cancelar</button>
-                <button id="exportConfirmBtn" style="
-                    flex: 1;
-                    padding: 12px;
-                    background: linear-gradient(135deg, var(--gold-primary, #D4AF37), var(--gold-dark, #B8942A));
-                    border: none;
-                    border-radius: 8px;
-                    color: #0A0E17;
-                    cursor: pointer;
-                    font-family: 'Cinzel', serif;
-                    font-size: 0.85em;
-                    font-weight: bold;
-                    letter-spacing: 1px;
-                ">Exportar</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Máscara automática de data
-    const startInput = document.getElementById('exportStartDate');
-    const endInput = document.getElementById('exportEndDate');
-    
-    function applyDateMask(input) {
-        input.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length >= 2) {
-                value = value.substring(0, 2) + '/' + value.substring(2);
-            }
-            if (value.length >= 5) {
-                value = value.substring(0, 5) + '/' + value.substring(5, 9);
-            }
-            e.target.value = value;
-        });
-    }
-    
-    applyDateMask(startInput);
-    applyDateMask(endInput);
-    
-    // Botão cancelar
-    document.getElementById('exportCancelBtn').onclick = () => modal.remove();
-    
-    // Botão exportar
-    document.getElementById('exportConfirmBtn').onclick = () => {
-        const start = startInput.value;
-        const end = endInput.value;
-        
-        if (!start || !end) {
-            showToast('❌ Preencha ambas as datas', 'error');
-            return;
-        }
-        
-        // Validar formato DD/MM/AAAA
-        const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-        if (!dateRegex.test(start) || !dateRegex.test(end)) {
-            showToast('❌ Use o formato DD/MM/AAAA', 'error');
-            return;
-        }
-        
-        // Converter DD/MM/AAAA para AAAA-MM-DD para filtro
-        const startISO = start.split('/').reverse().join('-');
-        const endISO = end.split('/').reverse().join('-');
-        
-        const fC = credits.filter(c => c.date >= startISO && c.date <= endISO);
-        const fD = debits.filter(d => d.date >= startISO && d.date <= endISO);
-        
-        let csv = "\ufeffTipo;Descricao;Valor;Data;Categoria;Tags\n";
-        
-        // CORREÇÃO: Exportar DÉBITOS também
-        fD.forEach(d => {
-            const dataBR = d.date.split('-').reverse().join('/'); // Converter para DD/MM/AAAA
-            csv += `Debito;${d.description};${d.amount};${dataBR};${d.category};${(d.tags||[]).join(',')}\n`;
-        });
-        
-        fC.forEach(c => {
-            const dataBR = c.date.split('-').reverse().join('/'); // Converter para DD/MM/AAAA
-            csv += `Credito;${c.description};${c.amount};${dataBR};${c.category};${(c.tags||[]).join(',')}\n`;
-        });
-        
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `stiga_${start.replace(/\//g, '-')}_${end.replace(/\//g, '-')}.csv`;
-        link.click();
-        
-        showToast(`📥 ${fC.length + fD.length} transações exportadas!`, 'success');
-        modal.remove();
-    };
-}
 
 // CORREÇÃO 2: IMPORTAR DÉBITOS E CRÉDITOS (com suporte a DD/MM/AAAA)
 // [removida - função duplicada]
@@ -2307,9 +2054,18 @@ function showImportModal() {
                         console.log(`  Valor: "${valor}"`);
                         console.log(`  Data: "${data}"`);
                         
-                        // Converter valor — suporta 782.8, 782,80, 1.000,00
-                        const valorSemMilhar = valor.replace(/\./g, '').replace(',', '.');
-                        const amount = parseFloat(valorSemMilhar) || parseFloat(valor.replace(',', '.'));
+                        // Converter valor — detecta decimal vs milhar
+                        let valorNorm = valor.trim().replace(/\r/g, '');
+                        let amount;
+                        if (/^\d{1,3}(\.\d{3})*(,\d{1,2})?$/.test(valorNorm)) {
+                            amount = parseFloat(valorNorm.replace(/\./g, '').replace(',', '.'));
+                        } else if (/^\d+\.\d{1,2}$/.test(valorNorm)) {
+                            amount = parseFloat(valorNorm);
+                        } else if (/^\d+,\d{1,2}$/.test(valorNorm)) {
+                            amount = parseFloat(valorNorm.replace(',', '.'));
+                        } else {
+                            amount = parseFloat(valorNorm.replace(',', '.'));
+                        }
                         
                         if (isNaN(amount) || amount === 0) {
                             console.error(`❌ Valor inválido: "${valor}" → ${amount}`);
