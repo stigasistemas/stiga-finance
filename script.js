@@ -586,20 +586,76 @@ function renderMonthComparison() {
 // EXPORT/IMPORT
 // ========================================
 function showExportModal() {
-    const start = prompt('Data inicial (AAAA-MM-DD):');
-    const end = prompt('Data final (AAAA-MM-DD):');
-    if (!start || !end) return;
-    const fC = credits.filter(c => c.date >= start && c.date <= end);
-    const fD = debits.filter(d => d.date >= start && d.date <= end);
-    let csv = "\ufeffTipo;Descricao;Valor;Data;Categoria;Tags\n";
-    fD.forEach(d => csv += `Debito;${d.description};${d.amount};${d.date};${d.category};${(d.tags||[]).join(',')}\n`);
-    fC.forEach(c => csv += `Credito;${c.description};${c.amount};${c.date};${c.category};${(c.tags||[]).join(',')}\n`);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `stiga_${start}_${end}.csv`;
-    link.click();
-    showToast('📥 Dados exportados!', 'success');
+    // Converter DD/MM/AAAA para AAAA-MM-DD (para comparação)
+    function parseDateBR(str) {
+        if (!str) return null;
+        const parts = str.split('/');
+        if (parts.length !== 3) return null;
+        const [dd, mm, aaaa] = parts;
+        if (!dd || !mm || !aaaa || aaaa.length !== 4) return null;
+        return `${aaaa}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+    }
+
+    // Modal personalizado no lugar do prompt feio do browser
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+        <div style="background:#12172a;border:1px solid rgba(212,175,55,0.3);border-radius:16px;padding:32px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+            <h3 style="margin:0 0 20px;font-family:'Cinzel',serif;color:#D4AF37;letter-spacing:2px;font-size:14px;text-transform:uppercase;">📥 Exportar por Período</h3>
+            <label style="display:block;font-size:11px;color:#8A95A3;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Data Inicial</label>
+            <input id="expStart" placeholder="DD/MM/AAAA" maxlength="10"
+                style="width:100%;padding:10px 14px;background:rgba(0,0,0,0.4);border:1px solid rgba(212,175,55,0.25);border-radius:8px;color:#fff;font-size:15px;font-family:'Courier New',monospace;box-sizing:border-box;margin-bottom:14px;">
+            <label style="display:block;font-size:11px;color:#8A95A3;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Data Final</label>
+            <input id="expEnd" placeholder="DD/MM/AAAA" maxlength="10"
+                style="width:100%;padding:10px 14px;background:rgba(0,0,0,0.4);border:1px solid rgba(212,175,55,0.25);border-radius:8px;color:#fff;font-size:15px;font-family:'Courier New',monospace;box-sizing:border-box;margin-bottom:20px;">
+            <div style="display:flex;gap:10px;">
+                <button id="expCancel" style="flex:1;padding:10px;background:transparent;border:1px solid rgba(212,175,55,0.2);border-radius:8px;color:#8A95A3;cursor:pointer;font-size:13px;">Cancelar</button>
+                <button id="expOk" style="flex:2;padding:10px;background:linear-gradient(135deg,#D4AF37,#B8942A);border:none;border-radius:8px;color:#0A0E17;font-weight:bold;cursor:pointer;font-size:13px;letter-spacing:1px;">EXPORTAR</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    // Máscara automática DD/MM/AAAA
+    ['expStart','expEnd'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            let v = this.value.replace(/\D/g,'');
+            if (v.length >= 3) v = v.slice(0,2)+'/'+v.slice(2);
+            if (v.length >= 6) v = v.slice(0,5)+'/'+v.slice(5);
+            this.value = v.slice(0,10);
+        });
+    });
+
+    document.getElementById('expCancel').onclick = () => overlay.remove();
+
+    document.getElementById('expOk').onclick = () => {
+        const startRaw = document.getElementById('expStart').value;
+        const endRaw   = document.getElementById('expEnd').value;
+        const start    = parseDateBR(startRaw);
+        const end      = parseDateBR(endRaw);
+
+        if (!start || !end) {
+            showToast('⚠️ Informe as datas no formato DD/MM/AAAA', 'error');
+            return;
+        }
+        if (start > end) {
+            showToast('⚠️ Data inicial maior que a final!', 'error');
+            return;
+        }
+
+        overlay.remove();
+
+        const fC = credits.filter(c => c.date >= start && c.date <= end);
+        const fD = debits.filter(d => d.date >= start && d.date <= end);
+        let csv = "\ufeffTipo;Descricao;Valor;Data;Categoria;Tags\n";
+        fD.forEach(d => csv += `Debito;${d.description};${d.amount};${d.date};${d.category};${(d.tags||[]).join(',')}\n`);
+        fC.forEach(c => csv += `Credito;${c.description};${c.amount};${c.date};${c.category};${(c.tags||[]).join(',')}\n`);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `stiga_${start}_${end}.csv`;
+        link.click();
+        showToast('📥 Dados exportados!', 'success');
+    };
 }
 function exportToCSV() {
     let csv = "\ufeffTipo;Descricao;Valor;Data;Categoria;Tags\n";
