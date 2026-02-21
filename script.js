@@ -2420,3 +2420,553 @@ function showImportModal() {
 }
 
 console.log('✅ Correções de data e importação carregadas');
+// ================================================================
+// CORREÇÃO FINAL: IMPORTAÇÃO + FILTROS
+// Cole este código no FINAL do script.js (SUBSTITUI AS FUNÇÕES ANTIGAS)
+// ================================================================
+
+// CORREÇÃO 1: FUNÇÃO DE IMPORTAÇÃO REESCRITA
+function showImportModal() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const text = ev.target.result;
+                console.log('📄 Arquivo CSV lido:', file.name);
+                console.log('📊 Tamanho:', text.length, 'bytes');
+                
+                // Remover BOM se existir
+                const cleanText = text.replace(/^\ufeff/, '');
+                
+                const lines = cleanText.split('\n').filter(l => l.trim());
+                console.log('📝 Total de linhas:', lines.length);
+                console.log('📋 Cabeçalho:', lines[0]);
+                
+                // Pular cabeçalho
+                const dataLines = lines.slice(1);
+                console.log('📊 Linhas de dados:', dataLines.length);
+                
+                let imported = 0;
+                let duplicados = 0;
+                let erros = 0;
+                let creditosAdd = 0;
+                let debitosAdd = 0;
+
+                function chave(t) {
+                    return `${t.amount}_${t.date}_${t.description}_${t.category}`;
+                }
+
+                const chavesCreditos = new Set(credits.map(chave));
+                const chavesDebitos = new Set(debits.map(chave));
+
+                dataLines.forEach((line, index) => {
+                    try {
+                        if (!line.trim()) return;
+                        
+                        // Separar por ponto e vírgula
+                        const parts = line.split(';').map(p => p.trim().replace(/^"|"$/g, ''));
+                        
+                        if (parts.length < 4) {
+                            console.warn(`⚠️ Linha ${index + 2}: Muito curta - ${parts.length} campos`);
+                            erros++;
+                            return;
+                        }
+                        
+                        const [tipo, desc, valor, data, cat, tags] = parts;
+                        
+                        console.log(`\n📍 Linha ${index + 2}:`);
+                        console.log(`  Tipo: "${tipo}"`);
+                        console.log(`  Descrição: "${desc}"`);
+                        console.log(`  Valor: "${valor}"`);
+                        console.log(`  Data: "${data}"`);
+                        
+                        // Converter valor
+                        const valorLimpo = valor.replace(/[^\d.,-]/g, '').replace(',', '.');
+                        const amount = parseFloat(valorLimpo);
+                        
+                        if (isNaN(amount) || amount === 0) {
+                            console.error(`❌ Valor inválido: "${valor}" → ${amount}`);
+                            erros++;
+                            return;
+                        }
+                        
+                        // Converter data DD/MM/AAAA → AAAA-MM-DD
+                        let dateISO = data;
+                        if (data.includes('/')) {
+                            const [day, month, year] = data.split('/');
+                            dateISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                        }
+
+                        const trans = {
+                            amount,
+                            category: cat || 'Outro',
+                            date: dateISO,
+                            description: desc,
+                            tags: tags ? tags.split(',').filter(Boolean) : [],
+                            account: currentAccount
+                        };
+                        
+                        const k = chave(trans);
+                        
+                        // Detecção de tipo MELHORADA
+                        const tipoLower = tipo.toLowerCase().trim();
+                        
+                        // Verificar se é CRÉDITO
+                        const isCredito = 
+                            tipoLower === 'credito' ||
+                            tipoLower === 'crédito' ||
+                            tipoLower === 'credit' ||
+                            tipoLower === 'c' ||
+                            tipoLower === 'entrada' ||
+                            tipoLower === 'receita';
+                        
+                        // Verificar se é DÉBITO
+                        const isDebito = 
+                            tipoLower === 'debito' ||
+                            tipoLower === 'débito' ||
+                            tipoLower === 'debit' ||
+                            tipoLower === 'd' ||
+                            tipoLower === 'saida' ||
+                            tipoLower === 'saída' ||
+                            tipoLower === 'despesa' ||
+                            tipoLower === 'gasto';
+                        
+                        console.log(`  → Crédito? ${isCredito} | Débito? ${isDebito}`);
+
+                        if (isCredito) {
+                            if (chavesCreditos.has(k)) {
+                                console.log(`  ⚠️ Duplicado (crédito)`);
+                                duplicados++;
+                                return;
+                            }
+                            credits.unshift(trans);
+                            chavesCreditos.add(k);
+                            creditosAdd++;
+                            console.log(`  ✅ CRÉDITO adicionado: ${desc} - R$ ${amount}`);
+                        } else if (isDebito) {
+                            if (chavesDebitos.has(k)) {
+                                console.log(`  ⚠️ Duplicado (débito)`);
+                                duplicados++;
+                                return;
+                            }
+                            debits.unshift(trans);
+                            chavesDebitos.add(k);
+                            debitosAdd++;
+                            console.log(`  ✅ DÉBITO adicionado: ${desc} - R$ ${amount}`);
+                        } else {
+                            console.error(`  ❌ Tipo não reconhecido: "${tipo}"`);
+                            erros++;
+                            return;
+                        }
+                        
+                        imported++;
+                    } catch (error) {
+                        console.error(`❌ Erro na linha ${index + 2}:`, error);
+                        erros++;
+                    }
+                });
+
+                console.log('\n' + '='.repeat(50));
+                console.log('📊 RESULTADO DA IMPORTAÇÃO:');
+                console.log(`✅ Total importado: ${imported}`);
+                console.log(`  💚 Créditos: ${creditosAdd}`);
+                console.log(`  ❤️ Débitos: ${debitosAdd}`);
+                console.log(`  ⚠️ Duplicados: ${duplicados}`);
+                console.log(`  ❌ Erros: ${erros}`);
+                console.log('='.repeat(50));
+
+                if (imported > 0) {
+                    saveAccounts();
+                    updateSummary();
+                    renderLists();
+                }
+
+                // Mensagem de resultado
+                let msg = `✅ ${imported} importada(s)`;
+                if (creditosAdd > 0) msg += ` · 💚 ${creditosAdd} crédito(s)`;
+                if (debitosAdd > 0) msg += ` · ❤️ ${debitosAdd} débito(s)`;
+                if (duplicados > 0) msg += ` · ⚠️ ${duplicados} duplicata(s)`;
+                if (erros > 0) msg += ` · ❌ ${erros} erro(s)`;
+                
+                showToast(msg, imported > 0 ? 'success' : 'error');
+                
+            } catch (error) {
+                console.error('❌ Erro fatal:', error);
+                showToast('❌ Erro ao ler arquivo: ' + error.message, 'error');
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+    };
+    input.click();
+}
+
+// CORREÇÃO 2: ADICIONAR CONTA AO EXPORTAR
+function showExportModal() {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.8);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: var(--bg-card, #1a1f2e);
+            border: 1px solid var(--glass-border, rgba(212,175,55,0.2));
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+        ">
+            <h2 style="
+                font-family: 'Cinzel', serif;
+                color: var(--gold-primary, #D4AF37);
+                margin: 0 0 24px 0;
+                font-size: 1.3em;
+            ">📊 Exportar Dados</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="
+                    display: block;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.75em;
+                    color: var(--gold-light, #F4E5C3);
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    margin-bottom: 8px;
+                ">Data Inicial (DD/MM/AAAA)</label>
+                <input type="text" id="exportStartDate" placeholder="01/01/2026" maxlength="10" style="
+                    width: 100%;
+                    padding: 12px 14px;
+                    background: rgba(0,0,0,0.35);
+                    border: 1px solid rgba(212,175,55,0.2);
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 1em;
+                ">
+            </div>
+            
+            <div style="margin-bottom: 24px;">
+                <label style="
+                    display: block;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.75em;
+                    color: var(--gold-light, #F4E5C3);
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    margin-bottom: 8px;
+                ">Data Final (DD/MM/AAAA)</label>
+                <input type="text" id="exportEndDate" placeholder="31/12/2026" maxlength="10" style="
+                    width: 100%;
+                    padding: 12px 14px;
+                    background: rgba(0,0,0,0.35);
+                    border: 1px solid rgba(212,175,55,0.2);
+                    border-radius: 8px;
+                    color: #fff;
+                    font-size: 1em;
+                ">
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button id="exportCancelBtn" style="
+                    flex: 1;
+                    padding: 12px;
+                    background: rgba(255,255,255,0.1);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    color: #fff;
+                    cursor: pointer;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.85em;
+                    letter-spacing: 1px;
+                ">Cancelar</button>
+                <button id="exportConfirmBtn" style="
+                    flex: 1;
+                    padding: 12px;
+                    background: linear-gradient(135deg, var(--gold-primary, #D4AF37), var(--gold-dark, #B8942A));
+                    border: none;
+                    border-radius: 8px;
+                    color: #0A0E17;
+                    cursor: pointer;
+                    font-family: 'Cinzel', serif;
+                    font-size: 0.85em;
+                    font-weight: bold;
+                    letter-spacing: 1px;
+                ">Exportar</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const startInput = document.getElementById('exportStartDate');
+    const endInput = document.getElementById('exportEndDate');
+    
+    function applyDateMask(input) {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            if (value.length >= 5) {
+                value = value.substring(0, 5) + '/' + value.substring(5, 9);
+            }
+            e.target.value = value;
+        });
+    }
+    
+    applyDateMask(startInput);
+    applyDateMask(endInput);
+    
+    document.getElementById('exportCancelBtn').onclick = () => modal.remove();
+    
+    document.getElementById('exportConfirmBtn').onclick = () => {
+        const start = startInput.value;
+        const end = endInput.value;
+        
+        if (!start || !end) {
+            showToast('❌ Preencha ambas as datas', 'error');
+            return;
+        }
+        
+        const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        if (!dateRegex.test(start) || !dateRegex.test(end)) {
+            showToast('❌ Use o formato DD/MM/AAAA', 'error');
+            return;
+        }
+        
+        const startISO = start.split('/').reverse().join('-');
+        const endISO = end.split('/').reverse().join('-');
+        
+        const fC = credits.filter(c => c.date >= startISO && c.date <= endISO);
+        const fD = debits.filter(d => d.date >= startISO && d.date <= endISO);
+        
+        let csv = "\ufeffTipo;Descricao;Valor;Data;Categoria;Tags\n";
+        
+        fD.forEach(d => {
+            const dataBR = d.date.split('-').reverse().join('/');
+            csv += `Debito;${d.description};${d.amount};${dataBR};${d.category};${(d.tags||[]).join(',')}\n`;
+        });
+        
+        fC.forEach(c => {
+            const dataBR = c.date.split('-').reverse().join('/');
+            csv += `Credito;${c.description};${c.amount};${dataBR};${c.category};${(c.tags||[]).join(',')}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `stiga_${start.replace(/\//g, '-')}_${end.replace(/\//g, '-')}.csv`;
+        link.click();
+        
+        showToast(`📥 ${fC.length + fD.length} transações exportadas!`, 'success');
+        modal.remove();
+    };
+}
+
+console.log('✅ Correção final de importação e exportação carregada');
+console.log('📝 Para testar, abra o Console (F12) e importe um CSV');
+// ================================================================
+// SISTEMA COMPLETO DE FILTROS
+// Cole este código no FINAL do script.js
+// ================================================================
+
+// Variáveis globais de filtro
+let filterCreditCategoryValue = '';
+let filterDebitCategoryValue = '';
+
+// FUNÇÃO: Inicializar filtros
+function initializeFilters() {
+    console.log('🔍 Inicializando sistema de filtros...');
+    
+    // Preencher opções de filtro de créditos
+    const filterCreditSelect = document.getElementById('filterCreditCategory');
+    if (filterCreditSelect) {
+        const creditCategories = getCategories().credit;
+        filterCreditSelect.innerHTML = '<option value="">📁 Todas as categorias</option>';
+        creditCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            filterCreditSelect.appendChild(option);
+        });
+        
+        // Event listener
+        filterCreditSelect.addEventListener('change', function() {
+            filterCreditCategoryValue = this.value;
+            console.log('🔍 Filtro crédito mudou para:', filterCreditCategoryValue || 'TODAS');
+            renderLists();
+        });
+        
+        console.log('✅ Filtro de créditos inicializado');
+    }
+    
+    // Preencher opções de filtro de débitos
+    const filterDebitSelect = document.getElementById('filterDebitCategory');
+    if (filterDebitSelect) {
+        const debitCategories = getCategories().debit;
+        filterDebitSelect.innerHTML = '<option value="">📁 Todas as categorias</option>';
+        debitCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            filterDebitSelect.appendChild(option);
+        });
+        
+        // Event listener
+        filterDebitSelect.addEventListener('change', function() {
+            filterDebitCategoryValue = this.value;
+            console.log('🔍 Filtro débito mudou para:', filterDebitCategoryValue || 'TODAS');
+            renderLists();
+        });
+        
+        console.log('✅ Filtro de débitos inicializado');
+    }
+}
+
+// FUNÇÃO: Renderizar listas COM FILTROS
+function renderLists() {
+    const privClass = privacyMode ? 'privacy-active' : '';
+    
+    // ========================================
+    // CRÉDITOS COM FILTRO
+    // ========================================
+    let creditosParaMostrar = credits;
+    
+    // Aplicar filtro de categoria
+    if (filterCreditCategoryValue) {
+        creditosParaMostrar = credits.filter(c => c.category === filterCreditCategoryValue);
+        console.log(`🔍 Filtro créditos aplicado: "${filterCreditCategoryValue}" → ${creditosParaMostrar.length} resultados`);
+    }
+    
+    const credList = document.getElementById('creditsList');
+    if (credList) {
+        credList.innerHTML = creditosParaMostrar.length > 0 ? creditosParaMostrar.map((c, i) => {
+            // Encontrar índice original para editar/deletar corretamente
+            const originalIndex = credits.indexOf(c);
+            return `
+                <div class="transaction-item">
+                    <div style="flex:1">
+                        <b>${formatDate(c.date)}</b><br>
+                        ${c.category} - ${c.description}
+                        ${c.tags && c.tags.length ? `<br><small class="tags">${c.tags.map(t => `🏷️${t}`).join(' ')}</small>` : ''}
+                    </div>
+                    <div class="summary-value ${privClass}" style="color:#2ECC71">${formatCurrency(c.amount)}</div>
+                    <div class="action-btns">
+                        ${c.attachment ? `<button class="edit-btn" title="Ver comprovante" onclick="viewAttachment('credits',${originalIndex})">📎</button>` : ''}
+                        <button class="edit-btn" onclick="editItem('credits',${originalIndex})">✏️</button>
+                        <button class="delete-btn" onclick="deleteItem('credits',${originalIndex})">×</button>
+                    </div>
+                </div>
+            `;
+        }).join('') : `<p class="no-data">Nenhum crédito ${filterCreditCategoryValue ? 'nesta categoria' : 'registrado'}</p>`;
+    }
+    
+    // ========================================
+    // DÉBITOS COM FILTRO
+    // ========================================
+    let debitosParaMostrar = debits;
+    
+    // Aplicar filtro de categoria
+    if (filterDebitCategoryValue) {
+        debitosParaMostrar = debits.filter(d => d.category === filterDebitCategoryValue);
+        console.log(`🔍 Filtro débitos aplicado: "${filterDebitCategoryValue}" → ${debitosParaMostrar.length} resultados`);
+    }
+    
+    const debList = document.getElementById('debitsList');
+    if (debList) {
+        debList.innerHTML = debitosParaMostrar.length > 0 ? debitosParaMostrar.map((d, i) => {
+            // Encontrar índice original para editar/deletar corretamente
+            const originalIndex = debits.indexOf(d);
+            return `
+                <div class="transaction-item">
+                    <div style="flex:1">
+                        <b>${formatDate(d.date)}</b><br>
+                        ${d.category} - ${d.description}
+                        ${d.tags && d.tags.length ? `<br><small class="tags">${d.tags.map(t => `🏷️${t}`).join(' ')}</small>` : ''}
+                    </div>
+                    <div class="summary-value ${privClass}" style="color:#E74C3C">-${formatCurrency(d.amount)}</div>
+                    <div class="action-btns">
+                        ${d.attachment ? `<button class="edit-btn" title="Ver comprovante" onclick="viewAttachment('debits',${originalIndex})">📎</button>` : ''}
+                        <button class="edit-btn" onclick="editItem('debits',${originalIndex})">✏️</button>
+                        <button class="delete-btn" onclick="deleteItem('debits',${originalIndex})">×</button>
+                    </div>
+                </div>
+            `;
+        }).join('') : `<p class="no-data">Nenhum débito ${filterDebitCategoryValue ? 'nesta categoria' : 'registrado'}</p>`;
+    }
+    
+    // ========================================
+    // COMPRAS FUTURAS (sem filtro)
+    // ========================================
+    const futList = document.getElementById('futureList');
+    if (futList) {
+        const futIndexed = futurePurchases.map((f, i) => ({ ...f, _origIdx: i }));
+        futIndexed.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        const hoje2 = new Date(); 
+        hoje2.setHours(0,0,0,0);
+        
+        futList.innerHTML = futIndexed.length > 0 ? futIndexed.map(f => {
+            const venc = new Date(f.dueDate + 'T00:00:00');
+            const diffDias = Math.ceil((venc - hoje2) / 86400000);
+            let urgLabel = '';
+            if (diffDias < 0) urgLabel = `<span style="color:#E74C3C;font-size:0.75em;font-weight:bold;"> ⚠️ VENCIDA</span>`;
+            else if (diffDias === 0) urgLabel = `<span style="color:#E74C3C;font-size:0.75em;font-weight:bold;"> 🔴 HOJE</span>`;
+            else if (diffDias <= 3) urgLabel = `<span style="color:#F39C12;font-size:0.75em;font-weight:bold;"> 🟡 ${diffDias}d</span>`;
+            else urgLabel = `<span style="color:#8A95A3;font-size:0.75em;"> ${diffDias}d</span>`;
+            
+            return `
+                <div class="transaction-item">
+                    <div style="flex:1">
+                        <b>Vencimento: ${formatDate(f.dueDate)}</b>${urgLabel}<br>
+                        ${f.description}
+                    </div>
+                    <div class="summary-value ${privClass}" style="color:#F39C12">${formatCurrency(f.amount)}</div>
+                    <div class="action-btns">
+                        <button class="btn btn-small pay-btn" onclick="payItem(${f._origIdx})">💳 Pagar</button>
+                        <button class="delete-btn" onclick="deleteItem('futurePurchases',${f._origIdx})">×</button>
+                    </div>
+                </div>
+            `;
+        }).join('') : '<p class="no-data">Nenhuma compra futura</p>';
+    }
+}
+
+// FUNÇÃO: Limpar filtros
+function clearFilters() {
+    filterCreditCategoryValue = '';
+    filterDebitCategoryValue = '';
+    
+    const filterCreditSelect = document.getElementById('filterCreditCategory');
+    if (filterCreditSelect) filterCreditSelect.value = '';
+    
+    const filterDebitSelect = document.getElementById('filterDebitCategory');
+    if (filterDebitSelect) filterDebitSelect.value = '';
+    
+    console.log('🔍 Filtros limpos');
+    renderLists();
+}
+
+// Inicializar filtros quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando sistema...');
+    
+    // Aguardar 500ms para garantir que tudo carregou
+    setTimeout(() => {
+        initializeFilters();
+        renderLists();
+    }, 500);
+});
+
+console.log('✅ Sistema de filtros carregado');
