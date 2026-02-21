@@ -47,12 +47,15 @@ function buildEmailHTML(name, email, password) {
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#0A0E17;font-family:Georgia,serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0E17;padding:40px 20px;">
+<!-- Fundo com detalhes dourados -->
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0E17;background-image:radial-gradient(ellipse at 10% 10%, rgba(212,175,55,0.07) 0%, transparent 50%),radial-gradient(ellipse at 90% 90%, rgba(212,175,55,0.05) 0%, transparent 50%),radial-gradient(ellipse at 90% 10%, rgba(212,175,55,0.04) 0%, transparent 40%),radial-gradient(ellipse at 10% 90%, rgba(212,175,55,0.04) 0%, transparent 40%);padding:40px 20px;">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
 <!-- HEADER -->
-<tr><td style="background:linear-gradient(160deg,#1a1f2e,#0f1420);border-radius:20px 20px 0 0;border:1px solid rgba(212,175,55,0.25);border-bottom:none;padding:48px 40px 36px;text-align:center;">
+<!-- Linha dourada topo -->
+<tr><td style="background:linear-gradient(135deg,#D4AF37,#B8942A);height:3px;border-radius:20px 20px 0 0;"></td></tr>
+<tr><td style="background:linear-gradient(160deg,#1a1f2e,#0f1420);border-radius:0;border:1px solid rgba(212,175,55,0.25);border-top:none;border-bottom:none;padding:48px 40px 36px;text-align:center;">
   <img src="https://stigasistemas.github.io/stiga-finance/logo-stiga.png" alt="Stiga Finance" width="100" height="100" style="display:block;margin:0 auto 24px;border-radius:50%;filter:drop-shadow(0 0 20px rgba(212,175,55,0.5));">
   <p style="font-size:10px;letter-spacing:4px;color:#D4AF37;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Bem-vindo a</p>
   <h1 style="margin:0;font-size:30px;font-weight:bold;letter-spacing:5px;color:#F4E5C3;font-family:Georgia,serif;">STIGA FINANCE</h1>
@@ -180,6 +183,8 @@ function buildEmailHTML(name, email, password) {
 </td></tr>
 
 <!-- FOOTER -->
+<!-- Linha dourada rodape -->
+<tr><td style="background:linear-gradient(135deg,#B8942A,#D4AF37);height:2px;"></td></tr>
 <tr><td style="background:#080b12;border-radius:0 0 20px 20px;border:1px solid rgba(212,175,55,0.15);border-top:none;padding:20px 40px;text-align:center;">
   <p style="margin:0 0 4px;font-size:11px;color:#4a5568;font-family:Arial,sans-serif;">© ${year} Stiga Sistemas. Todos os direitos reservados.</p>
   <p style="margin:0;font-size:10px;color:#2d3748;font-family:Arial,sans-serif;">Este email foi enviado automaticamente apos sua compra.</p>
