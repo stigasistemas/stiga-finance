@@ -48,7 +48,7 @@ function buildEmailHTML(name, email, password) {
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#0A0E17;font-family:Georgia,serif;">
 <!-- Fundo com detalhes dourados -->
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0E17;background-image:radial-gradient(ellipse at 10% 10%, rgba(212,175,55,0.07) 0%, transparent 50%),radial-gradient(ellipse at 90% 90%, rgba(212,175,55,0.05) 0%, transparent 50%),radial-gradient(ellipse at 90% 10%, rgba(212,175,55,0.04) 0%, transparent 40%),radial-gradient(ellipse at 10% 90%, rgba(212,175,55,0.04) 0%, transparent 40%);padding:40px 20px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F5;padding:40px 20px;">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
