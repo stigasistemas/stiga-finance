@@ -64,7 +64,7 @@ function buildEmailHTML(name, email, password) {
 </td></tr>
 
 <!-- AGRADECIMENTO PELA COMPRA -->
-<tr><td style="background:linear-gradient(135deg,rgba(212,175,55,0.08),rgba(212,175,55,0.03));border-left:1px solid rgba(212,175,55,0.25);border-right:1px solid rgba(212,175,55,0.25);padding:32px 40px;">
+<tr><td style="background:#12172a;border-left:1px solid rgba(212,175,55,0.25);border-right:1px solid rgba(212,175,55,0.25);padding:32px 40px;">
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td style="text-align:center;">
