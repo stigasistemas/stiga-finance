@@ -2350,7 +2350,27 @@ function showImportModal() {
                     };
                     
                     const k = chave(trans);
-                    const isCredito = tipo.toLowerCase().includes('credit') || tipo.toLowerCase().includes('crédito') || tipo.toLowerCase().includes('credito');
+                    
+                    // Detecção melhorada de tipo
+                    const tipoLower = tipo.toLowerCase().trim();
+                    const isCredito = tipoLower.includes('credit') || 
+                                     tipoLower.includes('crédito') || 
+                                     tipoLower.includes('credito') ||
+                                     tipoLower === 'c' ||
+                                     tipoLower === 'entrada' ||
+                                     tipoLower === 'receita';
+                    
+                    const isDebito = tipoLower.includes('debit') || 
+                                    tipoLower.includes('débito') || 
+                                    tipoLower.includes('debito') ||
+                                    tipoLower === 'd' ||
+                                    tipoLower === 'saida' ||
+                                    tipoLower === 'saída' ||
+                                    tipoLower === 'despesa' ||
+                                    tipoLower === 'gasto';
+                    
+                    // Log de debug
+                    console.log(`Linha ${index + 2}: Tipo="${tipo}" → isCredito=${isCredito}, isDebito=${isDebito}`);
 
                     if (isCredito) {
                         if (chavesCreditos.has(k)) {
@@ -2359,13 +2379,22 @@ function showImportModal() {
                         }
                         credits.unshift(trans);
                         chavesCreditos.add(k);
-                    } else {
+                        console.log(`✅ Crédito adicionado: ${desc} - R$ ${amount}`);
+                    } else if (isDebito) {
                         if (chavesDebitos.has(k)) {
                             duplicados++;
                             return;
                         }
                         debits.unshift(trans);
                         chavesDebitos.add(k);
+                        console.log(`✅ Débito adicionado: ${desc} - R$ ${amount}`);
+                    } else {
+                        console.warn(`⚠️ Tipo não reconhecido: "${tipo}" - Tratando como débito`);
+                        // Se não reconhecer, trata como débito por padrão
+                        if (!chavesDebitos.has(k)) {
+                            debits.unshift(trans);
+                            chavesDebitos.add(k);
+                        }
                     }
                     
                     imported++;
