@@ -2789,49 +2789,67 @@ let filterDebitCategoryValue = '';
 // FUNÇÃO: Inicializar filtros
 function initializeFilters() {
     console.log('🔍 Inicializando sistema de filtros...');
-    
-    // Preencher opções de filtro de créditos
+    populateFilterOptions();
+}
+
+// Separado para poder chamar sempre que dados mudarem
+function populateFilterOptions() {
     const filterCreditSelect = document.getElementById('filterCreditCategory');
     if (filterCreditSelect) {
-        const creditCategories = getCategories().credit;
+        const saved = filterCreditSelect.value; // Preservar seleção atual
+        
+        // Pegar categorias únicas dos créditos existentes
+        const cats = [...new Set(credits.map(c => c.category).filter(Boolean))].sort();
+        
         filterCreditSelect.innerHTML = '<option value="">📁 Todas as categorias</option>';
-        creditCategories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat;
-            option.textContent = cat;
-            filterCreditSelect.appendChild(option);
+        cats.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            filterCreditSelect.appendChild(opt);
         });
         
-        // Event listener
-        filterCreditSelect.addEventListener('change', function() {
+        // Restaurar seleção
+        if (saved) filterCreditSelect.value = saved;
+
+        // Remover listener antigo e adicionar novo
+        const newSelect = filterCreditSelect.cloneNode(true);
+        filterCreditSelect.parentNode.replaceChild(newSelect, filterCreditSelect);
+        newSelect.value = saved || '';
+        newSelect.addEventListener('change', function() {
             filterCreditCategoryValue = this.value;
-            console.log('🔍 Filtro crédito mudou para:', filterCreditCategoryValue || 'TODAS');
             renderLists();
         });
         
-        console.log('✅ Filtro de créditos inicializado');
+        console.log('✅ Filtro créditos:', cats.length, 'categorias');
     }
     
-    // Preencher opções de filtro de débitos
     const filterDebitSelect = document.getElementById('filterDebitCategory');
     if (filterDebitSelect) {
-        const debitCategories = getCategories().debit;
-        filterDebitSelect.innerHTML = '<option value="">📁 Todas as categorias</option>';
-        debitCategories.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat;
-            option.textContent = cat;
-            filterDebitSelect.appendChild(option);
-        });
+        const saved = filterDebitSelect.value;
         
-        // Event listener
-        filterDebitSelect.addEventListener('change', function() {
+        // Pegar categorias únicas dos débitos existentes
+        const cats = [...new Set(debits.map(d => d.category).filter(Boolean))].sort();
+        
+        filterDebitSelect.innerHTML = '<option value="">📁 Todas as categorias</option>';
+        cats.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            filterDebitSelect.appendChild(opt);
+        });
+
+        if (saved) filterDebitSelect.value = saved;
+
+        const newSelect = filterDebitSelect.cloneNode(true);
+        filterDebitSelect.parentNode.replaceChild(newSelect, filterDebitSelect);
+        newSelect.value = saved || '';
+        newSelect.addEventListener('change', function() {
             filterDebitCategoryValue = this.value;
-            console.log('🔍 Filtro débito mudou para:', filterDebitCategoryValue || 'TODAS');
             renderLists();
         });
         
-        console.log('✅ Filtro de débitos inicializado');
+        console.log('✅ Filtro débitos:', cats.length, 'categorias');
     }
 }
 
@@ -2960,13 +2978,18 @@ function clearFilters() {
 
 // Inicializar filtros quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Inicializando sistema...');
-    
-    // Aguardar 500ms para garantir que tudo carregou
-    setTimeout(() => {
-        initializeFilters();
-        renderLists();
-    }, 500);
+    console.log('🚀 Inicializando sistema de filtros...');
+    // Listener nos selects para garantir que funciona
+    document.addEventListener('change', function(e) {
+        if (e.target.id === 'filterCreditCategory') {
+            filterCreditCategoryValue = e.target.value;
+            renderLists();
+        }
+        if (e.target.id === 'filterDebitCategory') {
+            filterDebitCategoryValue = e.target.value;
+            renderLists();
+        }
+    });
 });
 
 console.log('✅ Sistema de filtros carregado');
