@@ -248,13 +248,13 @@ module.exports = async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: 'matheusempresarial0001@gmail.com',
+                user: 'stigasistemas@gmail.com',
                 pass: process.env.GMAIL_PASS
             }
         });
 
         await transporter.sendMail({
-            from: '"Stiga Finance" <matheusempresarial0001@gmail.com>',
+            from: '"Stiga Finance" <stigasistemas@gmail.com>',
             to: email,
             subject: '✨ Bem-vindo ao Stiga Finance — Suas Credenciais de Acesso',
             html: buildEmailHTML(name, email, password)
