@@ -2128,9 +2128,7 @@ function showImportModal() {
                             console.log(`  ✅ CRÉDITO adicionado: ${desc} - R$ ${amount}`);
                         } else if (isDebito) {
                             if (chavesDebitos.has(k)) {
-                                console.log(`  ⚠️ Duplicado (débito)`);
-                                duplicados++;
-                                return;
+                                console.log(`  ⚠️ Duplicado (débito) - importando mesmo assim`);
                             }
                             debits.unshift(trans);
                             chavesDebitos.add(k);
