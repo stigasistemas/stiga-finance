@@ -302,27 +302,10 @@
     .btn,
     .action-btn,
     .edit-btn,
-    button:not(.close):not(.toggle-password):not(.cal-day):not(.cal-nav-btn):not(.cal-modal-close):not(.delete-btn-small):not(.goal-header .delete-btn) {
+    button:not(.close):not(.toggle-password):not(.cal-day):not(.cal-nav-btn):not(.cal-modal-close):not(.delete-btn-small) {
         min-height: 44px !important;
         padding: 12px 16px !important;
         font-size: 0.9em !important;
-    }
-    /* Botão × das metas — sempre pequeno */
-    .goal-header .delete-btn,
-    .goal-header .delete-btn-small {
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        max-width: 30px !important;
-        min-height: 30px !important;
-        padding: 0 !important;
-        margin-top: 0 !important;
-        font-size: 1em !important;
-        border-radius: 8px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex-shrink: 0 !important;
     }
 }
 
@@ -375,3 +358,33 @@
 /* ================================================================
    FIM DAS CORREÇÕES
    ================================================================ */
+
+/* ================================================================
+   FIX ANDROID — BOTÃO × DAS METAS
+   ================================================================ */
+@media (max-width: 768px) {
+    .goal-header .delete-btn,
+    .goal-header .delete-btn-small {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        max-width: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 18px !important;
+        line-height: 30px !important;
+        text-align: center !important;
+        border-radius: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+    }
+}
