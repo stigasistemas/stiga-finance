@@ -593,7 +593,33 @@ h1 {
 .goal-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 10px;
+    gap: 8px;
+}
+.goal-header strong {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.goal-header .delete-btn,
+.goal-header .delete-btn-small {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+    font-size: 1em !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    margin-top: 0 !important;
+    line-height: 1 !important;
 }
 .goal-progress-bar {
     height: 8px;
@@ -616,7 +642,17 @@ h1 {
 }
 .goal-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+}
+.goal-actions input {
+    flex: 1;
+    min-width: 0;
+}
+.goal-actions button {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 /* FILTERS */
 .filter-section {
