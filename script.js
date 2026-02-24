@@ -1369,7 +1369,10 @@ function initCalendar() {
     const ri = document.getElementById('reminderDate');
     if (ri && !ri.value) ri.value = today;
     const rf = document.getElementById('reminderForm');
-    if (rf) rf.addEventListener('submit', addReminder);
+    if (rf) {
+    rf.removeEventListener('submit', addReminder);
+    rf.addEventListener('submit', addReminder);
+}
     renderCalendar();
     renderRemindersList();
 }
