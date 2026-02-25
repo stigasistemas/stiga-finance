@@ -1113,6 +1113,47 @@ function payItem(i) {
     addNotification('✅ Pagamento', `${item.description} foi pago`, 'success');
 }
 
+// FUNÇÃO: ESTORNAR PAGAMENTO
+function undoPayment(index) {
+    const debit = debits[index];
+    
+    // Verificar se é um débito de pagamento
+    if (!debit.description || !debit.description.startsWith('PAGO:')) {
+        showToast('⚠️ Este débito não pode ser estornado', 'error');
+        return;
+    }
+    
+    // Confirmar com usuário
+    if (!confirm(`Estornar pagamento de "${debit.description.replace('PAGO: ', '')}"?\n\nIsso vai:\n• Remover o débito\n• Devolver para Compras Futuras`)) {
+        return;
+    }
+    
+    // Extrair descrição original (sem o "PAGO:")
+    const originalDescription = debit.description.replace('PAGO: ', '');
+    
+    // Criar item em compras futuras
+    const futureItem = {
+        amount: debit.amount,
+        dueDate: debit.date,
+        description: originalDescription,
+        account: debit.account || currentAccount
+    };
+    
+    // Adicionar em compras futuras
+    futurePurchases.push(futureItem);
+    
+    // Remover débito
+    debits.splice(index, 1);
+    
+    // Salvar e atualizar
+    saveAccounts();
+    updateSummary();
+    renderLists();
+    
+    showToast('🔄 Pagamento estornado!', 'success');
+    addNotification('🔄 Estorno', `${originalDescription} voltou para Compras Futuras`, 'info');
+}
+
 // ========================================
 // SETUP FORMS
 // ========================================
@@ -2477,6 +2518,10 @@ function renderLists() {
         debList.innerHTML = debitosParaMostrar.length > 0 ? debitosParaMostrar.map((d, i) => {
             // Encontrar índice original para editar/deletar corretamente
             const originalIndex = debits.indexOf(d);
+            // Verificar se é um débito que pode ser estornado
+            const isPaidItem = d.description && d.description.startsWith('PAGO:');
+            const undoButton = isPaidItem ? `<button class="btn-undo" onclick="undoPayment(${originalIndex})" title="Estornar pagamento">🔄 Estornar</button>` : '';
+            
             return `
                 <div class="transaction-item">
                     <div style="flex:1">
@@ -2487,6 +2532,7 @@ function renderLists() {
                     <div class="summary-value ${privClass}" style="color:#E74C3C">-${formatCurrency(d.amount)}</div>
                     <div class="action-btns">
                         ${d.attachment ? `<button class="edit-btn" title="Ver comprovante" onclick="viewAttachment('debits',${originalIndex})">📎</button>` : ''}
+                        ${undoButton}
                         <button class="edit-btn" onclick="editItem('debits',${originalIndex})">✏️</button>
                         <button class="delete-btn" onclick="deleteItem('debits',${originalIndex})">×</button>
                     </div>
