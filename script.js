@@ -1283,16 +1283,26 @@ function setupTabs() {
             if (!tab) return;
             if (layoutMode === 'full') {
                 const target = document.getElementById(tab);
-                if (target) target.scrollIntoView({ behavior: 'smooth' });
+                if (target) {
+                    // Scroll sem pular o topo da página
+                    const offset = target.getBoundingClientRect().top + window.scrollY - 80;
+                    window.scrollTo({ top: offset, behavior: 'smooth' });
+                }
                 return;
             }
+            // Salvar posição do scroll para não pular para o topo
+            const scrollY = window.scrollY;
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
             this.classList.add('active');
             const target = document.getElementById(tab);
-            if (target) { target.style.display = 'block'; setTimeout(() => target.classList.add('active'), 10); }
+            if (target) {
+                target.style.display = 'block';
+                target.classList.add('active'); // sem setTimeout — evita flash
+            }
+            // Restaurar posição do scroll imediatamente
+            window.scrollTo({ top: scrollY, behavior: 'instant' });
             if (tab === 'calendar') setTimeout(() => { initCalendar(); initScrollAnimations(); }, 50);
-            else setTimeout(initScrollAnimations, 50);
             if (tab === 'overview') updateOverviewTab();
         });
     });
