@@ -2603,4 +2603,157 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
 });
 
-console.log('✅ Sistema de filtros carregado');
+console.log('✅ Sistema de filtros carregado');// ================================================================
+// SIDEBAR LATERAL PROFISSIONAL - JAVASCRIPT
+// Cole este código no FINAL do script.js
+// ================================================================
+
+// TOGGLE SIDEBAR (MOBILE)
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar-pro');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const toggle = document.querySelector('.sidebar-toggle-btn');
+    
+    sidebar?.classList.toggle('active');
+    overlay?.classList.toggle('active');
+    toggle?.classList.toggle('active');
+}
+
+// NAVEGAÇÃO ENTRE TABS
+function setupSidebarNavigation() {
+    const sidebarItems = document.querySelectorAll('.sidebar-item');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    sidebarItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const tabName = item.dataset.tab;
+            
+            // Remove active de todos
+            sidebarItems.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Adiciona active no clicado
+            item.classList.add('active');
+            
+            // Mostra o conteúdo correto
+            const targetTab = document.getElementById(tabName);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // Fecha sidebar em mobile
+            if (window.innerWidth <= 768) {
+                toggleSidebar();
+            }
+            
+            // Scroll para o topo
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Atualiza URL
+            history.pushState(null, null, `#${tabName}`);
+            
+            // Log para debug
+            console.log(`Navegou para: ${tabName}`);
+        });
+    });
+}
+
+// ATUALIZAR INFO DO USUÁRIO NA SIDEBAR
+function updateSidebarUser() {
+    const userNameEl = document.getElementById('sidebarUserName');
+    const userBalanceEl = document.getElementById('sidebarUserBalance');
+    
+    if (userNameEl && currentUser) {
+        // Pega primeiro nome do email
+        const firstName = currentUser.split('@')[0];
+        const capitalizedName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+        userNameEl.textContent = capitalizedName;
+    }
+    
+    if (userBalanceEl) {
+        const totalCredits = credits.reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
+        const totalDebits = debits.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+        const balance = totalCredits - totalDebits;
+        
+        userBalanceEl.textContent = formatCurrency(balance);
+        userBalanceEl.style.color = balance >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+}
+
+// ATUALIZAR BADGE DO CALENDÁRIO
+function updateSidebarCalendarBadge() {
+    const badgeEl = document.getElementById('calendarBadge');
+    if (badgeEl) {
+        const reminderCount = reminders.length;
+        badgeEl.textContent = reminderCount;
+        badgeEl.style.display = reminderCount > 0 ? 'block' : 'none';
+    }
+}
+
+// INICIALIZAR SIDEBAR
+function initSidebar() {
+    setupSidebarNavigation();
+    updateSidebarUser();
+    updateSidebarCalendarBadge();
+    
+    // Navegar para tab inicial ou hash da URL
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+        const targetButton = document.querySelector(`[data-tab="${hash}"]`);
+        if (targetButton) {
+            targetButton.click();
+        }
+    } else {
+        // Ativa Dashboard por padrão
+        const dashboardBtn = document.querySelector('[data-tab="dashboard"]');
+        if (dashboardBtn) {
+            dashboardBtn.click();
+        }
+    }
+}
+
+// ATUALIZAR SIDEBAR QUANDO DADOS MUDAREM
+function onDataUpdate() {
+    updateSidebarUser();
+    updateSidebarCalendarBadge();
+}
+
+// Chamar onDataUpdate sempre que dados mudarem
+const originalSaveAccounts = saveAccounts;
+saveAccounts = function() {
+    originalSaveAccounts.apply(this, arguments);
+    onDataUpdate();
+};
+
+// FECHAR SIDEBAR AO CLICAR FORA (MOBILE)
+document.addEventListener('click', (e) => {
+    const sidebar = document.querySelector('.sidebar-pro');
+    const toggle = document.querySelector('.sidebar-toggle-btn');
+    
+    if (window.innerWidth <= 768 && 
+        sidebar?.classList.contains('active') &&
+        !sidebar.contains(e.target) && 
+        !toggle.contains(e.target)) {
+        toggleSidebar();
+    }
+});
+
+// ATALHO DE TECLADO (Ctrl + B = Toggle Sidebar)
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'b') {
+        e.preventDefault();
+        toggleSidebar();
+    }
+});
+
+// INICIALIZAR QUANDO DOM CARREGAR
+document.addEventListener('DOMContentLoaded', () => {
+    // Pequeno delay para garantir que tudo carregou
+    setTimeout(initSidebar, 500);
+});
+
+// ================================================================
+// FIM DO JAVASCRIPT DA SIDEBAR
+// ================================================================
+
+console.log('✅ Sidebar profissional carregada!');
