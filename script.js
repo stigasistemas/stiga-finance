@@ -2757,3 +2757,44 @@ document.addEventListener('DOMContentLoaded', () => {
 // ================================================================
 
 console.log('✅ Sidebar profissional carregada!');
+
+// ================================================================
+// FIX: FORÇAR NAVEGAÇÃO CORRETA
+// ================================================================
+
+// Garantir que setupSidebarNavigation seja chamado
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Iniciando correção de navegação...');
+    
+    // Pequeno delay para garantir que DOM carregou
+    setTimeout(() => {
+        // Forçar setup da navegação
+        if (typeof setupSidebarNavigation === 'function') {
+            setupSidebarNavigation();
+            console.log('✅ Navegação configurada!');
+        }
+        
+        // Forçar dashboard ativo
+        const dashboard = document.getElementById('dashboard');
+        if (dashboard) {
+            dashboard.classList.add('active');
+            console.log('✅ Dashboard ativado!');
+        }
+        
+        // Verificar botões da sidebar
+        const sidebarButtons = document.querySelectorAll('.sidebar-item');
+        console.log(`📍 ${sidebarButtons.length} botões encontrados`);
+        
+        sidebarButtons.forEach((btn, index) => {
+            const tab = btn.dataset.tab;
+            console.log(`  ${index + 1}. ${tab}`);
+        });
+        
+    }, 1000);
+});
+
+console.log('✅ Script de correção carregado!');
+
+// ================================================================
+// FIM DO FIX
+// ================================================================

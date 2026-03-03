@@ -2511,3 +2511,37 @@ html {
 /* ================================================================
    FIM DA SIDEBAR
    ================================================================ */
+
+/* ================================================================
+   FIX: TABS E NAVEGAÇÃO
+   ================================================================ */
+
+/* Esconder todas as tabs por padrão */
+.tab-content {
+    display: none !important;
+}
+
+/* Mostrar apenas a tab ativa */
+.tab-content.active {
+    display: block !important;
+}
+
+/* Main content no topo */
+.main-content-wrapper {
+    padding-top: 20px !important;
+}
+
+/* Container sem margin top */
+.container {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Esconder header original (muito grande) */
+header {
+    display: none !important;
+}
+
+/* ================================================================
+   FIM DO FIX
+   ================================================================ */
