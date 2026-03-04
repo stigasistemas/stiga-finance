@@ -2798,13 +2798,13 @@ console.log('✅ Script de correção carregado!');
 // ================================================================
 // FIM DO FIX
 // ================================================================
+
 // ================================================================
-// JAVASCRIPT PARA METAS, ORÇAMENTOS E OUTRAS FUNCIONALIDADES
-// Cole este código no FINAL do script.js
+// METAS E ORÇAMENTOS - VERSÃO LIMPA SEM DUPLICATAS
 // ================================================================
 
-// ===== METAS FINANCEIRAS =====
-let goals = JSON.parse(localStorage.getItem('goals') || '[]');
+goals = JSON.parse(localStorage.getItem('goals') || '[]');
+budgets = JSON.parse(localStorage.getItem('budgets') || '[]');
 
 function addGoal(e) {
     e.preventDefault();
@@ -2822,11 +2822,11 @@ function addGoal(e) {
     localStorage.setItem('goals', JSON.stringify(goals));
     
     document.getElementById('goalForm').reset();
-    renderGoals();
+    renderGoalsFinal();
     showToast('Meta criada com sucesso!', 'success');
 }
 
-function renderGoals() {
+function renderGoalsFinal() {
     const container = document.getElementById('goalsList');
     if (!container) return;
     
@@ -2851,7 +2851,7 @@ function renderGoals() {
                             ${daysLeft > 0 ? `Faltam ${daysLeft} dias` : 'Prazo vencido'}
                         </p>` : ''}
                     </div>
-                    <button onclick="deleteGoal(${goal.id})" class="delete-btn-small" title="Excluir meta">×</button>
+                    <button onclick="deleteGoalFinal(${goal.id})" class="delete-btn-small" title="Excluir meta">×</button>
                 </div>
                 
                 <div style="margin-bottom: 15px;">
@@ -2873,7 +2873,7 @@ function renderGoals() {
                     <input type="number" id="goalAdd${goal.id}" placeholder="Valor" step="0.01" 
                            style="flex: 1; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(212,175,55,0.3); 
                                   border-radius: 6px; color: white;">
-                    <button onclick="addToGoal(${goal.id})" class="btn-secondary" style="padding: 8px 16px;">
+                    <button onclick="addToGoalFinal(${goal.id})" class="btn-secondary" style="padding: 8px 16px;">
                         ➕ Adicionar
                     </button>
                 </div>
@@ -2888,7 +2888,7 @@ function renderGoals() {
     }).join('');
 }
 
-function addToGoal(goalId) {
+function addToGoalFinal(goalId) {
     const input = document.getElementById(`goalAdd${goalId}`);
     const amount = parseFloat(input.value);
     
@@ -2901,29 +2901,25 @@ function addToGoal(goalId) {
     if (goal) {
         goal.current += amount;
         localStorage.setItem('goals', JSON.stringify(goals));
-        renderGoals();
+        renderGoalsFinal();
         showToast(`${formatCurrency(amount)} adicionado à meta!`, 'success');
     }
 }
 
-function deleteGoal(goalId) {
+function deleteGoalFinal(goalId) {
     if (!confirm('Deseja realmente excluir esta meta?')) return;
     
     goals = goals.filter(g => g.id !== goalId);
     localStorage.setItem('goals', JSON.stringify(goals));
-    renderGoals();
+    renderGoalsFinal();
     showToast('Meta excluída', 'info');
 }
-
-// ===== ORÇAMENTOS =====
-let budgets = JSON.parse(localStorage.getItem('budgets') || '[]');
 
 function addBudget(e) {
     e.preventDefault();
     
     const category = document.getElementById('budgetCategory').value;
     
-    // Verificar se já existe orçamento para essa categoria
     const exists = budgets.find(b => b.category === category);
     if (exists) {
         showToast('Já existe um orçamento para esta categoria', 'error');
@@ -2941,11 +2937,11 @@ function addBudget(e) {
     localStorage.setItem('budgets', JSON.stringify(budgets));
     
     document.getElementById('budgetForm').reset();
-    renderBudgets();
+    renderBudgetsFinal();
     showToast('Orçamento definido com sucesso!', 'success');
 }
 
-function renderBudgets() {
+function renderBudgetsFinal() {
     const container = document.getElementById('budgetsList');
     if (!container) return;
     
@@ -2955,7 +2951,6 @@ function renderBudgets() {
     }
     
     container.innerHTML = budgets.map(budget => {
-        // Calcular gastos do mês atual nessa categoria
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
@@ -2994,7 +2989,7 @@ function renderBudgets() {
                             ${statusText}
                         </p>
                     </div>
-                    <button onclick="deleteBudget(${budget.id})" class="delete-btn-small" title="Excluir orçamento">×</button>
+                    <button onclick="deleteBudgetFinal(${budget.id})" class="delete-btn-small" title="Excluir orçamento">×</button>
                 </div>
                 
                 <div style="margin-bottom: 15px;">
@@ -3023,23 +3018,21 @@ function renderBudgets() {
     }).join('');
 }
 
-function deleteBudget(budgetId) {
+function deleteBudgetFinal(budgetId) {
     if (!confirm('Deseja realmente excluir este orçamento?')) return;
     
     budgets = budgets.filter(b => b.id !== budgetId);
     localStorage.setItem('budgets', JSON.stringify(budgets));
-    renderBudgets();
+    renderBudgetsFinal();
     showToast('Orçamento excluído', 'info');
 }
 
-// ===== INICIALIZAÇÃO =====
+// INICIALIZAÇÃO
 document.addEventListener('DOMContentLoaded', function() {
-    // Aguardar um pouco para garantir que DOM carregou
     setTimeout(() => {
-        renderGoals();
-        renderBudgets();
+        renderGoalsFinal();
+        renderBudgetsFinal();
         
-        // Atualizar email nas configurações
         const configEmail = document.getElementById('configEmail');
         if (configEmail && currentUser) {
             configEmail.textContent = currentUser;
@@ -3047,11 +3040,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 500);
 });
 
-// Atualizar orçamentos quando débitos mudarem
-const originalSaveAccounts2 = saveAccounts;
-saveAccounts = function() {
-    originalSaveAccounts2.apply(this, arguments);
-    renderBudgets();
-};
-
-console.log('✅ Metas e Orçamentos carregados!');
+console.log('✅ Metas e Orçamentos carregados (versão limpa)!');

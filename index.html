@@ -875,39 +875,291 @@
 
         <!-- CALENDAR TAB -->
         <div id="calendar" class="tab-content">
-            <h2>📅 Calendário</h2>
-            <p>Clique no botão "Calendário" no header para ver seus lembretes.</p>
-        </div>
+    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
+        📅 Calendário e Lembretes
+    </h2>
+    <p style="color: var(--text-secondary); margin-bottom: 30px;">
+        Visualize e gerencie seus compromissos financeiros.
+    </p>
+
+    <button onclick="openCalendarModal()" class="btn-primary" style="margin-bottom: 20px;">
+        📅 Abrir Calendário Completo
+    </button>
+
+    <div class="card" style="padding: 20px;">
+        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 15px;">
+            Próximos Compromissos
+        </h3>
+        <div id="upcomingReminders"></div>
+    </div>
+</div>
 
         <!-- QUICK ACTIONS TAB -->
         <div id="quick-actions" class="tab-content">
-            <h2>⚡ Ações Rápidas</h2>
-            <p>Funcionalidade em desenvolvimento.</p>
+    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
+        ⚡ Ações Rápidas
+    </h2>
+    <p style="color: var(--text-secondary); margin-bottom: 30px;">
+        Acesso rápido às funções mais usadas.
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        
+        <!-- ADICIONAR CRÉDITO -->
+        <div class="card action-card" onclick="document.querySelector('[data-tab=credits]').click()" 
+             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+            <div style="font-size: 3em; margin-bottom: 15px;">💰</div>
+            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
+                Adicionar Crédito
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9em;">
+                Registrar entrada de dinheiro
+            </p>
         </div>
+
+        <!-- ADICIONAR DÉBITO -->
+        <div class="card action-card" onclick="document.querySelector('[data-tab=debits]').click()" 
+             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+            <div style="font-size: 3em; margin-bottom: 15px;">💳</div>
+            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
+                Adicionar Débito
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9em;">
+                Registrar saída de dinheiro
+            </p>
+        </div>
+
+        <!-- COMPRA FUTURA -->
+        <div class="card action-card" onclick="document.querySelector('[data-tab=future]').click()" 
+             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+            <div style="font-size: 3em; margin-bottom: 15px;">🛒</div>
+            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
+                Compra Futura
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9em;">
+                Planejar compras futuras
+            </p>
+        </div>
+
+        <!-- VER CALENDÁRIO -->
+        <div class="card action-card" onclick="openCalendarModal()" 
+             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+            <div style="font-size: 3em; margin-bottom: 15px;">📅</div>
+            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
+                Calendário
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9em;">
+                Ver lembretes e datas
+            </p>
+        </div>
+
+        <!-- CRIAR META -->
+        <div class="card action-card" onclick="document.querySelector('[data-tab=goals]').click()" 
+             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+            <div style="font-size: 3em; margin-bottom: 15px;">🎯</div>
+            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
+                Nova Meta
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9em;">
+                Definir objetivo financeiro
+            </p>
+        </div>
+
+        <!-- DEFINIR ORÇAMENTO -->
+        <div class="card action-card" onclick="document.querySelector('[data-tab=budgets]').click()" 
+             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+            <div style="font-size: 3em; margin-bottom: 15px;">💼</div>
+            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
+                Definir Orçamento
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9em;">
+                Controlar gastos mensais
+            </p>
+        </div>
+
+        <!-- RECORRENTE -->
+        <div class="card action-card" onclick="openRecurringModal()" 
+             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+            <div style="font-size: 3em; margin-bottom: 15px;">🔄</div>
+            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
+                Recorrente
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9em;">
+                Pagamento automático
+            </p>
+        </div>
+
+        <!-- EXPORTAR DADOS -->
+        <div class="card action-card" onclick="exportToExcel()" 
+             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+            <div style="font-size: 3em; margin-bottom: 15px;">📊</div>
+            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
+                Exportar Excel
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9em;">
+                Baixar planilha completa
+            </p>
+        </div>
+
+    </div>
+</div>
 
         <!-- RECURRING TAB -->
         <div id="recurring" class="tab-content">
-            <h2>🔄 Transações Recorrentes</h2>
-            <p>Gerencie suas transações automáticas aqui.</p>
-        </div>
+    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
+        🔄 Transações Recorrentes
+    </h2>
+    <p style="color: var(--text-secondary); margin-bottom: 30px;">
+        Gerencie pagamentos e recebimentos automáticos.
+    </p>
+
+    <!-- BOTÃO NOVA RECORRENTE -->
+    <button onclick="openRecurringModal()" class="btn-primary" style="margin-bottom: 30px;">
+        ➕ Nova Recorrente
+    </button>
+
+    <!-- LISTA DE RECORRENTES -->
+    <div id="recurringList"></div>
+</div>
 
         <!-- GOALS TAB -->
         <div id="goals" class="tab-content">
-            <h2>🎯 Metas Financeiras</h2>
-            <p>Defina e acompanhe suas metas.</p>
-        </div>
+    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
+        🎯 Metas Financeiras
+    </h2>
+    <p style="color: var(--text-secondary); margin-bottom: 30px;">
+        Defina e acompanhe suas metas financeiras.
+    </p>
+
+    <!-- FORMULÁRIO NOVA META -->
+    <div class="card" style="margin-bottom: 30px; padding: 20px;">
+        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
+            ➕ Nova Meta
+        </h3>
+        <form id="goalForm" onsubmit="addGoal(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>Nome da Meta</label>
+                    <input type="text" id="goalName" placeholder="Ex: Férias" required>
+                </div>
+                <div class="form-group">
+                    <label>Valor Total</label>
+                    <input type="number" id="goalTarget" step="0.01" placeholder="R$ 0,00" required>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>Valor Atual</label>
+                    <input type="number" id="goalCurrent" step="0.01" value="0" placeholder="R$ 0,00">
+                </div>
+                <div class="form-group">
+                    <label>Data Limite</label>
+                    <input type="date" id="goalDeadline">
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Criar Meta</button>
+        </form>
+    </div>
+
+    <!-- LISTA DE METAS -->
+    <div id="goalsList"></div>
+</div>
 
         <!-- BUDGETS TAB -->
         <div id="budgets" class="tab-content">
-            <h2>💼 Orçamentos</h2>
-            <p>Controle seus limites de gastos.</p>
-        </div>
+    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
+        💼 Orçamentos por Categoria
+    </h2>
+    <p style="color: var(--text-secondary); margin-bottom: 30px;">
+        Defina limites de gastos para cada categoria.
+    </p>
+
+    <!-- FORMULÁRIO NOVO ORÇAMENTO -->
+    <div class="card" style="margin-bottom: 30px; padding: 20px;">
+        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
+            ➕ Novo Orçamento
+        </h3>
+        <form id="budgetForm" onsubmit="addBudget(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="budgetCategory" required>
+                        <option value="">Selecione...</option>
+                        <option value="Alimentação">🍔 Alimentação</option>
+                        <option value="Transporte">🚗 Transporte</option>
+                        <option value="Moradia">🏠 Moradia</option>
+                        <option value="Lazer">🎮 Lazer</option>
+                        <option value="Saúde">💊 Saúde</option>
+                        <option value="Educação">📚 Educação</option>
+                        <option value="Compras">🛒 Compras</option>
+                        <option value="Outros">📌 Outros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Limite Mensal</label>
+                    <input type="number" id="budgetLimit" step="0.01" placeholder="R$ 0,00" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">Definir Orçamento</button>
+        </form>
+    </div>
+
+    <!-- LISTA DE ORÇAMENTOS -->
+    <div id="budgetsList"></div>
+</div>
 
         <!-- CONFIG TAB -->
         <div id="config" class="tab-content">
-            <h2>⚙️ Configurações</h2>
-            <p>Configure suas preferências aqui.</p>
+    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
+        ⚙️ Configurações
+    </h2>
+    <p style="color: var(--text-secondary); margin-bottom: 30px;">
+        Personalize sua experiência no Stiga Finance.
+    </p>
+
+    <div class="card" style="padding: 20px; margin-bottom: 20px;">
+        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 15px;">
+            🎨 Aparência
+        </h3>
+        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+            <button onclick="toggleTheme()" class="btn-secondary">
+                🌙 Alternar Tema
+            </button>
+            <button onclick="togglePrivacy()" class="btn-secondary">
+                👁️ Modo Privacidade
+            </button>
         </div>
+    </div>
+
+    <div class="card" style="padding: 20px; margin-bottom: 20px;">
+        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 15px;">
+            👤 Conta
+        </h3>
+        <p style="color: var(--text-secondary); margin-bottom: 10px;">
+            <strong>Email:</strong> <span id="configEmail">carregando...</span>
+        </p>
+        <p style="color: var(--text-secondary); margin-bottom: 15px;">
+            <strong>Conta Principal:</strong> <span id="configAccount">Conta Principal</span>
+        </p>
+        <button onclick="logout()" class="btn-danger">
+            🚪 Sair da Conta
+        </button>
+    </div>
+
+    <div class="card" style="padding: 20px;">
+        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 15px;">
+            💾 Dados
+        </h3>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <button onclick="exportToExcel()" class="btn-secondary">
+                📊 Exportar Excel
+            </button>
+            <button onclick="if(confirm('Limpar TODOS os dados? Esta ação não pode ser desfeita!')) { localStorage.clear(); location.reload(); }" class="btn-danger">
+                🗑️ Limpar Todos os Dados
+            </button>
+        </div>
+    </div>
+</div>
 
     </div>
 <!-- FIM MAIN WRAPPER -->
