@@ -2798,3 +2798,260 @@ console.log('✅ Script de correção carregado!');
 // ================================================================
 // FIM DO FIX
 // ================================================================
+// ================================================================
+// JAVASCRIPT PARA METAS, ORÇAMENTOS E OUTRAS FUNCIONALIDADES
+// Cole este código no FINAL do script.js
+// ================================================================
+
+// ===== METAS FINANCEIRAS =====
+let goals = JSON.parse(localStorage.getItem('goals') || '[]');
+
+function addGoal(e) {
+    e.preventDefault();
+    
+    const goal = {
+        id: Date.now(),
+        name: document.getElementById('goalName').value,
+        target: parseFloat(document.getElementById('goalTarget').value),
+        current: parseFloat(document.getElementById('goalCurrent').value || 0),
+        deadline: document.getElementById('goalDeadline').value,
+        createdAt: new Date().toISOString()
+    };
+    
+    goals.push(goal);
+    localStorage.setItem('goals', JSON.stringify(goals));
+    
+    document.getElementById('goalForm').reset();
+    renderGoals();
+    showToast('Meta criada com sucesso!', 'success');
+}
+
+function renderGoals() {
+    const container = document.getElementById('goalsList');
+    if (!container) return;
+    
+    if (goals.length === 0) {
+        container.innerHTML = '<p class="no-data">Nenhuma meta cadastrada ainda.</p>';
+        return;
+    }
+    
+    container.innerHTML = goals.map(goal => {
+        const progress = (goal.current / goal.target) * 100;
+        const remaining = goal.target - goal.current;
+        const daysLeft = goal.deadline ? Math.ceil((new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+        
+        return `
+            <div class="card" style="margin-bottom: 20px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                    <div>
+                        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 5px;">
+                            ${goal.name}
+                        </h3>
+                        ${daysLeft !== null ? `<p style="color: var(--text-secondary); font-size: 0.85em;">
+                            ${daysLeft > 0 ? `Faltam ${daysLeft} dias` : 'Prazo vencido'}
+                        </p>` : ''}
+                    </div>
+                    <button onclick="deleteGoal(${goal.id})" class="delete-btn-small" title="Excluir meta">×</button>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 0.9em;">
+                            ${formatCurrency(goal.current)} de ${formatCurrency(goal.target)}
+                        </span>
+                        <span style="color: var(--gold-primary); font-weight: bold; font-size: 0.9em;">
+                            ${progress.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); height: 12px; border-radius: 6px; overflow: hidden;">
+                        <div style="background: linear-gradient(90deg, var(--gold-dark), var(--gold-primary)); 
+                                    height: 100%; width: ${Math.min(progress, 100)}%; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="number" id="goalAdd${goal.id}" placeholder="Valor" step="0.01" 
+                           style="flex: 1; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(212,175,55,0.3); 
+                                  border-radius: 6px; color: white;">
+                    <button onclick="addToGoal(${goal.id})" class="btn-secondary" style="padding: 8px 16px;">
+                        ➕ Adicionar
+                    </button>
+                </div>
+                
+                ${remaining > 0 ? `<p style="color: var(--text-secondary); font-size: 0.85em; margin-top: 10px;">
+                    Faltam ${formatCurrency(remaining)} para atingir a meta
+                </p>` : `<p style="color: var(--success); font-weight: bold; margin-top: 10px;">
+                    🎉 Meta atingida!
+                </p>`}
+            </div>
+        `;
+    }).join('');
+}
+
+function addToGoal(goalId) {
+    const input = document.getElementById(`goalAdd${goalId}`);
+    const amount = parseFloat(input.value);
+    
+    if (!amount || amount <= 0) {
+        showToast('Digite um valor válido', 'error');
+        return;
+    }
+    
+    const goal = goals.find(g => g.id === goalId);
+    if (goal) {
+        goal.current += amount;
+        localStorage.setItem('goals', JSON.stringify(goals));
+        renderGoals();
+        showToast(`${formatCurrency(amount)} adicionado à meta!`, 'success');
+    }
+}
+
+function deleteGoal(goalId) {
+    if (!confirm('Deseja realmente excluir esta meta?')) return;
+    
+    goals = goals.filter(g => g.id !== goalId);
+    localStorage.setItem('goals', JSON.stringify(goals));
+    renderGoals();
+    showToast('Meta excluída', 'info');
+}
+
+// ===== ORÇAMENTOS =====
+let budgets = JSON.parse(localStorage.getItem('budgets') || '[]');
+
+function addBudget(e) {
+    e.preventDefault();
+    
+    const category = document.getElementById('budgetCategory').value;
+    
+    // Verificar se já existe orçamento para essa categoria
+    const exists = budgets.find(b => b.category === category);
+    if (exists) {
+        showToast('Já existe um orçamento para esta categoria', 'error');
+        return;
+    }
+    
+    const budget = {
+        id: Date.now(),
+        category: category,
+        limit: parseFloat(document.getElementById('budgetLimit').value),
+        createdAt: new Date().toISOString()
+    };
+    
+    budgets.push(budget);
+    localStorage.setItem('budgets', JSON.stringify(budgets));
+    
+    document.getElementById('budgetForm').reset();
+    renderBudgets();
+    showToast('Orçamento definido com sucesso!', 'success');
+}
+
+function renderBudgets() {
+    const container = document.getElementById('budgetsList');
+    if (!container) return;
+    
+    if (budgets.length === 0) {
+        container.innerHTML = '<p class="no-data">Nenhum orçamento definido ainda.</p>';
+        return;
+    }
+    
+    container.innerHTML = budgets.map(budget => {
+        // Calcular gastos do mês atual nessa categoria
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        const spent = debits
+            .filter(d => {
+                const debitDate = new Date(d.date);
+                return debitDate.getMonth() === currentMonth && 
+                       debitDate.getFullYear() === currentYear && 
+                       d.category === budget.category;
+            })
+            .reduce((sum, d) => sum + parseFloat(d.amount), 0);
+        
+        const percentage = (spent / budget.limit) * 100;
+        const remaining = budget.limit - spent;
+        
+        let statusColor = 'var(--success)';
+        let statusText = 'Dentro do limite';
+        
+        if (percentage >= 100) {
+            statusColor = 'var(--danger)';
+            statusText = 'Orçamento estourado!';
+        } else if (percentage >= 80) {
+            statusColor = '#FFA500';
+            statusText = 'Atenção: próximo do limite';
+        }
+        
+        return `
+            <div class="card" style="margin-bottom: 20px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                    <div>
+                        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 5px;">
+                            ${budget.category}
+                        </h3>
+                        <p style="color: ${statusColor}; font-size: 0.85em; font-weight: bold;">
+                            ${statusText}
+                        </p>
+                    </div>
+                    <button onclick="deleteBudget(${budget.id})" class="delete-btn-small" title="Excluir orçamento">×</button>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 0.9em;">
+                            Gasto: ${formatCurrency(spent)} de ${formatCurrency(budget.limit)}
+                        </span>
+                        <span style="color: ${statusColor}; font-weight: bold; font-size: 0.9em;">
+                            ${percentage.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); height: 12px; border-radius: 6px; overflow: hidden;">
+                        <div style="background: ${statusColor}; height: 100%; width: ${Math.min(percentage, 100)}%; 
+                                    transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                
+                <p style="color: var(--text-secondary); font-size: 0.9em;">
+                    ${remaining >= 0 
+                        ? `Disponível: ${formatCurrency(remaining)}` 
+                        : `Excedido em: ${formatCurrency(Math.abs(remaining))}`
+                    }
+                </p>
+            </div>
+        `;
+    }).join('');
+}
+
+function deleteBudget(budgetId) {
+    if (!confirm('Deseja realmente excluir este orçamento?')) return;
+    
+    budgets = budgets.filter(b => b.id !== budgetId);
+    localStorage.setItem('budgets', JSON.stringify(budgets));
+    renderBudgets();
+    showToast('Orçamento excluído', 'info');
+}
+
+// ===== INICIALIZAÇÃO =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Aguardar um pouco para garantir que DOM carregou
+    setTimeout(() => {
+        renderGoals();
+        renderBudgets();
+        
+        // Atualizar email nas configurações
+        const configEmail = document.getElementById('configEmail');
+        if (configEmail && currentUser) {
+            configEmail.textContent = currentUser;
+        }
+    }, 500);
+});
+
+// Atualizar orçamentos quando débitos mudarem
+const originalSaveAccounts2 = saveAccounts;
+saveAccounts = function() {
+    originalSaveAccounts2.apply(this, arguments);
+    renderBudgets();
+};
+
+console.log('✅ Metas e Orçamentos carregados!');
