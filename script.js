@@ -138,6 +138,21 @@ async function saveToFirestore() {
 }
 
 // saveAccounts agora chama Firestore
+function updateFileLabel(input, labelId) {
+    const label = document.getElementById(labelId);
+    if (!label) return;
+    if (input.files && input.files.length > 0) {
+        const name = input.files[0].name;
+        label.textContent = name.length > 35 ? name.slice(0, 32) + '...' : name;
+        label.style.color = '#F4E5C3';
+        label.style.fontStyle = 'normal';
+    } else {
+        label.textContent = 'Nenhum arquivo selecionado';
+        label.style.color = '#999';
+        label.style.fontStyle = 'italic';
+    }
+}
+
 function saveAccounts() {
     accounts[currentAccount] = {
         name: accounts[currentAccount].name,
@@ -174,6 +189,7 @@ function initApp() {
         renderBudgets();
         loadBudgetCategories();
         renderRecurringList();
+        renderRecurring();
         renderGoalsList();
         updateSummary();
         setTimeout(processRecurringTransactions, 500);
@@ -509,42 +525,63 @@ function addBudget() {
         const input = document.getElementById('budgetAmount');
         if (input) input.value = '';
         showToast(`Orçamento de ${cat} definido: ${formatCurrency(amt)}`, 'success');
+        setTimeout(syncBudgetsMain, 200);
     } catch (e) { showToast('Erro ao adicionar orçamento', 'error'); }
 }
 function renderBudgets() {
-    const cont = document.getElementById('budgetList');
-    const prog = document.getElementById('budgetProgress');
     try {
-        const entries = Object.entries(budgets);
-        if (entries.length === 0) {
-            if (cont) cont.innerHTML = '<p class="no-data">Nenhum orçamento definido</p>';
-            if (prog) prog.innerHTML = '<p class="no-data">Defina orçamentos nas configurações</p>';
-            return;
-        }
-        const budgetHTML = ([cat, lim]) => {
-            const spent = debits.filter(d => d.category === cat && new Date(d.date).getMonth() === new Date().getMonth())
+        const entries = Object.entries(budgets || {});
+        const thisMonth = new Date().getMonth();
+
+        const buildBudgetHTML = (cat, lim, showDelete = true) => {
+            const spent = (debits || [])
+                .filter(d => d.category === cat && new Date(d.date).getMonth() === thisMonth)
                 .reduce((s, d) => s + parseFloat(d.amount || 0), 0);
-            const pct = (spent / lim * 100).toFixed(1);
-            const rem = lim - spent;
+            const pct = lim > 0 ? Math.min(spent / lim * 100, 100).toFixed(0) : 0;
+            const color = pct >= 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning)' : 'var(--success)';
+            const delBtn = showDelete ? `<button onclick="deleteBudget('${cat}')" style="padding:3px 8px;font-size:0.8em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;">&times;</button>` : '';
             return `
-                <div class="transaction-item">
-                    <div style="flex:1;">
-                        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-                            <strong>${cat}</strong>
-                            <button onclick="deleteBudget('${cat}')" class="delete-btn-small">×</button>
-                        </div>
-                        <div class="budget-bar">
-                            <div class="budget-fill ${pct >= 100 ? 'over-budget' : pct >= 80 ? 'warning-budget' : ''}" style="width:${Math.min(pct,100)}%"></div>
-                        </div>
-                        <div class="budget-details">
-                            <span>${formatCurrency(spent)} / ${formatCurrency(lim)}</span>
-                            <span class="${rem < 0 ? 'over-budget-text' : ''}">${rem >= 0 ? 'Restam' : 'Excedeu'}: ${formatCurrency(Math.abs(rem))}</span>
-                        </div>
+            <div style="margin-bottom:14px;padding:14px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span style="color:var(--text-primary);font-weight:600;font-size:1.2em;">${cat}</span>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.5em;color:${color};font-weight:700;">${pct}% — ${formatCurrency(spent)} / ${formatCurrency(lim)}</span>
+                        ${delBtn}
                     </div>
-                </div>`;
+                </div>
+                <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;transition:width 0.6s ease;"></div>
+                </div>
+            </div>`;
         };
-        if (cont) cont.innerHTML = entries.map(budgetHTML).join('');
-        if (prog) prog.innerHTML = entries.slice(0, 5).map(budgetHTML).join('');
+
+        const emptyHTML = `
+            <div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+                <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;margin-bottom:18px;display:block;margin-left:auto;margin-right:auto;">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                    <line x1="2" y1="20" x2="22" y2="20"/>
+                </svg>
+                <h3 style="font-family:'Cinzel',serif;color:var(--gold-primary);margin-bottom:8px;font-size:1.05em;letter-spacing:1px;">Nenhum orçamento definido</h3>
+                <p style="font-size:0.88em;max-width:360px;margin:0 auto;line-height:1.6;">Defina limites de gastos por categoria para manter suas finanças sob controle.</p>
+            </div>`;
+        const fullHTML = entries.length === 0 ? emptyHTML : entries.map(([cat, lim]) => buildBudgetHTML(cat, lim)).join('');
+
+        // Escrever em TODOS os containers possíveis
+        ['budgetList', 'budgetListMain', 'budgetProgress'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = fullHTML;
+        });
+
+        // Painel de controle (dashBudgets)
+        const dashEl = document.getElementById('dashBudgets');
+        if (dashEl) {
+            dashEl.innerHTML = entries.length === 0
+                ? '<p style="color:var(--text-secondary);font-style:italic;font-size:0.85em;">Configure orçamentos em Configurações</p>'
+                : entries.slice(0, 3).map(([cat, lim]) => buildBudgetHTML(cat, lim, false)).join('');
+        }
+
         loadBudgetCategories();
     } catch (e) { console.error('Erro ao renderizar orçamentos:', e); }
 }
@@ -575,9 +612,9 @@ function renderMonthComparison() {
         const bDiff = (lastC - lastD) !== 0 ? (((thisC - thisD) - (lastC - lastD)) / Math.abs(lastC - lastD) * 100) : 0;
         cont.innerHTML = `
             <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
-                <div class="transaction-item"><span>Créditos:</span><span class="${cDiff > 0 ? 'positive' : 'negative'}">${cDiff > 0 ? '+' : ''}${cDiff.toFixed(1)}% ${cDiff > 0 ? '⬆️' : '⬇️'}</span></div>
-                <div class="transaction-item"><span>Débitos:</span><span class="${dDiff < 0 ? 'positive' : 'negative'}">${dDiff > 0 ? '+' : ''}${dDiff.toFixed(1)}% ${dDiff > 0 ? '⬆️' : '⬇️'}</span></div>
-                <div class="transaction-item"><span>Saldo:</span><span class="${bDiff > 0 ? 'positive' : 'negative'}">${bDiff > 0 ? '+' : ''}${bDiff.toFixed(1)}% ${bDiff > 0 ? '🎉' : '⚠️'}</span></div>
+                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Créditos:</span><span class="${cDiff > 0 ? 'positive' : 'negative'}">${cDiff > 0 ? '+' : ''}${cDiff.toFixed(1)}% ${cDiff > 0 ? '⬆️' : '⬇️'}</span></div>
+                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Débitos:</span><span class="${dDiff < 0 ? 'positive' : 'negative'}">${dDiff > 0 ? '+' : ''}${dDiff.toFixed(1)}% ${dDiff > 0 ? '⬆️' : '⬇️'}</span></div>
+                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Saldo:</span><span class="${bDiff > 0 ? 'positive' : 'negative'}">${bDiff > 0 ? '+' : ''}${bDiff.toFixed(1)}% ${bDiff > 0 ? '🎉' : '⚠️'}</span></div>
             </div>`;
     } catch (e) { cont.innerHTML = '<p class="no-data">Erro ao carregar comparação mensal</p>'; }
 }
@@ -998,8 +1035,8 @@ function checkVencimentos() {
     em.setDate(hoje.getDate() + parseInt(settings.notificationDays));
     const prox = futurePurchases.filter(p => new Date(p.dueDate + 'T00:00:00') <= em);
     div.innerHTML = prox.length > 0
-        ? `<p style="color:#E74C3C;font-weight:bold">⚠️ ${prox.length} conta(s) vencendo em breve!</p>`
-        : `<p style="color:#2ECC71">✅ Todos os compromissos estão em dia</p>`;
+        ? `<p style="color:#E74C3C;font-weight:bold;font-size:0.95em;">⚠️ ${prox.length} conta(s) vencendo em breve!</p>`
+        : `<p style="color:#2ECC71;font-size:0.95em;">✅ Todos os compromissos estão em dia</p>`;
 }
 function showCategoryTotals() {
     const div = document.getElementById('categoryTotals');
@@ -1010,12 +1047,12 @@ function showCategoryTotals() {
     const maxVal = sorted.length > 0 ? sorted[0][1] : 1;
     div.innerHTML = sorted.length === 0
         ? '<p class="no-data" style="color:var(--text-secondary);font-style:italic;padding:10px 0">Nenhum gasto registrado</p>'
-        : `<h4 style="color:var(--gold-primary);font-family:'Cinzel',serif;font-size:0.8em;letter-spacing:1px;text-transform:uppercase;margin:12px 0 10px">Gastos por Categoria</h4>` +
+        : `<h4 style="color:var(--gold-primary);font-family:'Cinzel',serif;font-size:0.85em;letter-spacing:1px;text-transform:uppercase;margin:10px 0 8px">Gastos por Categoria</h4>` +
           sorted.map(([cat, val]) => `
             <div style="margin-bottom:10px">
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-                    <span style="font-size:0.88em;color:var(--text-primary)">${cat}</span>
-                    <strong style="color:var(--gold-light);font-size:0.88em">${formatCurrency(val)}</strong>
+                    <span style="font-size:0.95em;color:var(--text-primary);font-weight:600;">${cat}</span>
+                    <strong style="color:var(--gold-light);font-size:0.95em;font-weight:700;">${formatCurrency(val)}</strong>
                 </div>
                 <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
                     <div style="height:100%;width:${(val/maxVal*100).toFixed(0)}%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-primary));border-radius:2px;transition:width 0.5s"></div>
@@ -1028,18 +1065,16 @@ function showCategoryTotals() {
         const thisMonth = new Date().getMonth();
         budgetDiv.innerHTML = entries.length === 0
             ? '<p class="no-data" style="color:var(--text-secondary);font-style:italic;font-size:0.85em">Configure orçamentos em Configurações</p>'
-            : `<h4 style="color:var(--gold-primary);font-family:'Cinzel',serif;font-size:0.8em;letter-spacing:1px;text-transform:uppercase;margin:12px 0 10px">Orçamentos do Mês</h4>` +
+            : `<h4 style="color:var(--gold-primary);font-family:'Cinzel',serif;font-size:0.85em;letter-spacing:1px;text-transform:uppercase;margin:10px 0 8px">Orçamentos do Mês</h4>` +
               entries.map(([cat, lim]) => {
                 const spent = debits.filter(d => d.category === cat && new Date(d.date).getMonth() === thisMonth).reduce((s, d) => s + parseFloat(d.amount || 0), 0);
                 const pct = Math.min(spent/lim*100, 100).toFixed(0);
                 const color = pct >= 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning)' : 'var(--success)';
-                return `<div style="margin-bottom:10px">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-                        <span style="font-size:0.85em;color:var(--text-primary)">${cat}</span>
-                        <span style="font-size:0.82em;color:${color}">${pct}% — ${formatCurrency(spent)} / ${formatCurrency(lim)}</span>
-                    </div>
-                    <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
-                        <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;transition:width 0.5s"></div>
+                return `<div style="margin-bottom:16px;padding:14px;background:rgba(0,0,0,0.2);border-radius:10px;border-left:4px solid ${color};">
+                    <div style="font-size:1em !important;color:var(--text-primary) !important;font-weight:700 !important;margin-bottom:4px !important;line-height:1.2;">${cat}</div>
+                    <div style="font-size:1.8em !important;color:${color} !important;font-weight:800 !important;margin-bottom:10px !important;line-height:1.3;">${pct}% &nbsp;|&nbsp; ${formatCurrency(spent)} / ${formatCurrency(lim)}</div>
+                    <div style="height:14px;background:rgba(255,255,255,0.07);border-radius:7px;overflow:hidden;">
+                        <div style="height:100%;width:${pct}%;background:${color};border-radius:7px;transition:width 0.5s"></div>
                     </div>
                 </div>`;
               }).join('');
@@ -1049,16 +1084,14 @@ function showCategoryTotals() {
     if (goalsDiv) {
         goalsDiv.innerHTML = !goals || goals.length === 0
             ? '<p class="no-data" style="color:var(--text-secondary);font-style:italic;font-size:0.85em">Crie metas em Configurações</p>'
-            : `<h4 style="color:var(--gold-primary);font-family:'Cinzel',serif;font-size:0.8em;letter-spacing:1px;text-transform:uppercase;margin:12px 0 10px">Metas Financeiras</h4>` +
+            : `<h4 style="color:var(--gold-primary);font-family:'Cinzel',serif;font-size:0.85em;letter-spacing:1px;text-transform:uppercase;margin:10px 0 8px">Metas Financeiras</h4>` +
               goals.slice(0, 3).map(g => {
                 const pct = Math.min((g.current || 0)/g.target*100, 100).toFixed(0);
-                return `<div style="margin-bottom:10px">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-                        <span style="font-size:0.85em;color:var(--text-primary)">${g.name}</span>
-                        <span style="font-size:0.82em;color:var(--gold-primary)">${pct}% — ${formatCurrency(g.current || 0)} / ${formatCurrency(g.target)}</span>
-                    </div>
-                    <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
-                        <div style="height:100%;width:${pct}%;background:var(--gold-primary);border-radius:2px;transition:width 0.5s"></div>
+                return `<div style="margin-bottom:16px;padding:14px;background:rgba(0,0,0,0.2);border-radius:10px;border-left:4px solid var(--gold-primary);">
+                    <div style="font-size:1em !important;color:var(--text-primary) !important;font-weight:700 !important;margin-bottom:4px !important;line-height:1.2;">${g.name}</div>
+                    <div style="font-size:1.1em !important;color:var(--gold-primary) !important;font-weight:700 !important;margin-bottom:8px !important;line-height:1.3;">${pct}% — ${formatCurrency(g.current || 0)} / ${formatCurrency(g.target)}</div>
+                    <div style="height:14px;background:rgba(255,255,255,0.07);border-radius:7px;overflow:hidden;">
+                        <div style="height:100%;width:${pct}%;background:var(--gold-primary);border-radius:7px;transition:width 0.5s"></div>
                     </div>
                 </div>`;
               }).join('');
@@ -1287,6 +1320,7 @@ function setupForms() {
             if (!amount || !cat || !desc || !freq || !day) { showToast('Preencha todos os campos', 'error'); return; }
             recurringTransactions.push({ type, amount, category: cat, description: desc, frequency: freq, day });
             saveToFirestore();
+            renderRecurring();
             renderRecurringList();
             closeRecurringModal();
             e.target.reset();
@@ -1320,66 +1354,17 @@ function setupForms() {
 function setupTabs() {
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.addEventListener('click', function () {
-            const tab = this.getAttribute('data-tab');
-            if (!tab) return;
-            if (layoutMode === 'full') {
-                const target = document.getElementById(tab);
-                if (target) {
-                    // Scroll sem pular o topo da página
-                    const offset = target.getBoundingClientRect().top + window.scrollY - 80;
-                    window.scrollTo({ top: offset, behavior: 'smooth' });
-                }
-                return;
-            }
-            // Salvar posição do scroll para não pular para o topo
-            const scrollY = window.scrollY;
+            const tabId = this.getAttribute('data-tab');
+            if (!tabId || tabId === 'calendar' || tabId === 'settings') return;
+
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
             this.classList.add('active');
-            const target = document.getElementById(tab);
-            if (target) {
-                target.style.display = 'block';
-                target.classList.add('active'); // sem setTimeout — evita flash
-            }
-            // Restaurar posição do scroll imediatamente
-            window.scrollTo({ top: scrollY, behavior: 'instant' });
-            if (tab === 'calendar') setTimeout(() => { initCalendar(); initScrollAnimations(); }, 50);
-            if (tab === 'overview') updateOverviewTab();
+            const target = document.getElementById(tabId);
+            if (target) target.classList.add('active');
         });
     });
-
-    document.querySelectorAll('.settings-tab').forEach(button => {
-        button.addEventListener('click', () => {
-            document.querySelectorAll('.settings-tab').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
-            button.classList.add('active');
-            const tabId = button.dataset.tab;
-            const tab = document.getElementById(tabId);
-            if (tab) tab.classList.add('active');
-            if (tabId === 'budget-settings') loadBudgetCategories();
-            if (tabId === 'recurring-settings') renderRecurringList();
-            if (tabId === 'goals-settings') renderGoalsList();
-        });
-    });
-
-    document.querySelectorAll('.cat-tab').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentCategoryType = btn.dataset.type;
-            renderCustomCategories();
-        });
-    });
-
-    // Ativa primeira aba
-    const firstBtn = document.querySelector('.tab-button[data-tab="credits"]');
-    const firstContent = document.getElementById('credits');
-    if (firstBtn && firstContent) {
-        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => { c.classList.remove('active'); });
-        firstBtn.classList.add('active');
-        firstContent.classList.add('active');
-    }
 }
 
 // ========================================
@@ -1397,7 +1382,9 @@ function saveSettings() {
         notificationDays: parseInt(document.getElementById('notificationDays')?.value) || 3
     };
     saveToFirestore();
-    showToast('⚙️ Configurações salvas!', 'success');
+    // Mostrar toast SEM som (não é uma notificação financeira)
+    const toast = document.getElementById('toast');
+    if (toast) { toast.textContent = '⚙️ Configurações salvas!'; toast.className = 'toast show success'; setTimeout(() => toast.classList.remove('show'), 3000); }
 }
 function loadSettings() {
     const set = (id, val) => { const e = document.getElementById(id); if (e) e.checked = val; };
@@ -1678,13 +1665,7 @@ function processRecurringTransactions() {
         localStorage.setItem(lastRunKey, todayStr);
     }
 }
-function deleteRecurring(i) {
-    if (!confirm('Remover esta transação recorrente?')) return;
-    recurringTransactions.splice(i, 1);
-    saveToFirestore();
-    renderRecurringList();
-    showToast('Recorrente removida', 'info');
-}
+// deleteRecurring definida abaixo
 
 // ========================================
 // METAS
@@ -1698,27 +1679,53 @@ function closeGoalModal() {
     if (modal) modal.style.display = 'none';
 }
 function renderGoalsList() {
-    const list = document.getElementById('goalsList');
-    if (!list) return;
-    if (!goals || goals.length === 0) { list.innerHTML = '<p class="no-data" style="color:var(--text-secondary);padding:20px 0;text-align:center;">Nenhuma meta definida</p>'; return; }
-    list.innerHTML = goals.map((g, i) => {
-        const pct = Math.min((g.current / g.target) * 100, 100).toFixed(1);
-        const remaining = g.target - g.current;
+    const emptyHTML = `
+        <div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+            <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;margin-bottom:18px;display:block;margin-left:auto;margin-right:auto;">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="6"/>
+                <circle cx="12" cy="12" r="2"/>
+                <line x1="12" y1="2" x2="12" y2="4"/>
+                <line x1="12" y1="20" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="4" y2="12"/>
+                <line x1="20" y1="12" x2="22" y2="12"/>
+            </svg>
+            <h3 style="font-family:'Cinzel',serif;color:var(--gold-primary);margin-bottom:8px;font-size:1.05em;letter-spacing:1px;">Nenhuma meta definida</h3>
+            <p style="font-size:0.88em;max-width:360px;margin:0 auto;line-height:1.6;">Defina objetivos como viagem, reserva de emergencia ou uma compra especial.</p>
+        </div>`;
+
+    const html = (!goals || goals.length === 0) ? emptyHTML : goals.map((g, i) => {
+        const cur = parseFloat(g.current || 0);
+        const tgt = parseFloat(g.target || 1);
+        const pct = Math.min(cur / tgt * 100, 100).toFixed(1);
+        const remaining = tgt - cur;
+        const color = remaining <= 0 ? 'var(--success)' : 'var(--gold-primary)';
         return `
-        <div class="goal-item">
-            <div class="goal-header"><strong style="color:var(--gold-light)">${g.name}</strong><button onclick="deleteGoal(${i})" class="delete-btn" style="padding:4px 10px;font-size:0.8em">×</button></div>
-            <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${pct}%"></div></div>
-            <div class="goal-details">
-                <span>${formatCurrency(g.current)} de ${formatCurrency(g.target)}</span>
-                <span style="color:${remaining <= 0 ? 'var(--success)':'var(--gold-primary)'}">${remaining <= 0 ? 'Meta atingida!' : 'Faltam ' + formatCurrency(remaining)}</span>
+        <div style="margin-bottom:14px;padding:14px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong style="color:var(--gold-light);font-size:1.35em;letter-spacing:0.3px;">${g.name}</strong>
+                <button onclick="deleteGoal(${i})" style="padding:3px 9px;font-size:0.85em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;">&times;</button>
             </div>
-            <div class="goal-actions">
-                <input type="number" id="goalAdd_${i}" placeholder="Valor a adicionar" step="0.01" style="flex:1;padding:6px 10px;background:rgba(0,0,0,0.3);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-size:0.9em;">
-                <button onclick="addToGoal(${i})" class="edit-btn" style="padding:6px 14px">Adicionar</button>
+            <div style="height:10px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;margin-bottom:10px;">
+                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-primary));border-radius:3px;transition:width 0.5s;"></div>
             </div>
-            ${g.deadline ? `<small style="color:var(--text-secondary);margin-top:5px;display:block">Prazo: ${formatDate(g.deadline)}</small>` : ''}
+            <div style="display:flex;justify-content:space-between;font-size:1.25em;margin-bottom:12px;">
+                <span style="color:var(--text-secondary)">${formatCurrency(cur)} de ${formatCurrency(tgt)} (${pct}%)</span>
+                <span style="color:${color}">${remaining <= 0 ? '&#10003; Meta atingida!' : 'Faltam ' + formatCurrency(remaining)}</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <input type="number" id="goalAdd_${i}" placeholder="Valor a adicionar" step="0.01" min="0"
+                    style="flex:1;padding:10px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--glass-border);border-radius:7px;color:var(--text-primary);font-size:1em;">
+                <button onclick="addToGoalDirect(${i})" style="padding:10px 18px;border-radius:7px;background:linear-gradient(135deg,var(--gold-dark),var(--gold-primary));border:none;color:#0A0E17;font-weight:700;cursor:pointer;font-size:1em;">+ Adicionar</button>
+            </div>
+            ${g.deadline ? '<small style="color:var(--text-secondary);margin-top:8px;display:block;font-size:1.1em;">Prazo: ' + formatDate(g.deadline) + '</small>' : ''}
         </div>`;
     }).join('');
+
+    ['goalsList', 'goalsListMain'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+    });
 }
 function addToGoal(i) {
     const inp = document.getElementById('goalAdd_' + i);
@@ -2646,8 +2653,7 @@ function setupSidebarNavigation() {
                 toggleSidebar();
             }
             
-            // Scroll para o topo
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // scroll pelo sistema unificado
             
             // Atualiza URL
             history.pushState(null, null, `#${tabName}`);
@@ -2808,22 +2814,24 @@ budgets = JSON.parse(localStorage.getItem('budgets') || '[]');
 
 function addGoal(e) {
     e.preventDefault();
-    
     const goal = {
         id: Date.now(),
-        name: document.getElementById('goalName').value,
-        target: parseFloat(document.getElementById('goalTarget').value),
-        current: parseFloat(document.getElementById('goalCurrent').value || 0),
-        deadline: document.getElementById('goalDeadline').value,
+        name: document.getElementById('goalName')?.value?.trim(),
+        target: parseFloat(document.getElementById('goalTarget')?.value || 0),
+        current: parseFloat(document.getElementById('goalCurrent')?.value || 0),
+        deadline: document.getElementById('goalDeadline')?.value || '',
         createdAt: new Date().toISOString()
     };
-    
+    if (!goal.name || !goal.target) { showToast('Preencha nome e valor da meta', 'error'); return; }
     goals.push(goal);
-    localStorage.setItem('goals', JSON.stringify(goals));
-    
-    document.getElementById('goalForm').reset();
-    renderGoalsFinal();
-    showToast('Meta criada com sucesso!', 'success');
+    saveToFirestore();
+    document.getElementById('goalForm')?.reset();
+    const modal = document.getElementById('goalModal');
+    if (modal) modal.style.display = 'none';
+    renderGoalsList();
+    syncGoalsMain();
+    updateSummary();
+    showToast('🎯 Meta criada com sucesso!', 'success');
 }
 
 function renderGoalsFinal() {
@@ -3041,3 +3049,1134 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('✅ Metas e Orçamentos carregados (versão limpa)!');
+
+
+
+function scrollToTop() { /* desativado */ }
+function navigateToTab(tabName) {
+    // Atualizar botões da sidebar
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.querySelector(`.tab-button[data-tab="${tabName}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // Esconder todos os conteúdos
+    document.querySelectorAll('.tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
+
+    // Mostrar conteúdo alvo
+    const tabContent = document.getElementById(tabName);
+    if (tabContent) { tabContent.classList.add('active'); tabContent.style.display = 'block'; }
+
+    // Renderizar dados na tab aberta
+    if (tabName === 'recurring') { syncRecurringMain(); renderRecurring(); }
+    if (tabName === 'budgets') { syncBudgetsMain(); }
+    if (tabName === 'goals') { syncGoalsMain(); renderGoalsList(); }
+
+    // Em mobile: fechar sidebar após clicar
+    if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+    
+
+    
+    // Atualizar histórico do navegador (opcional)
+    if (history.pushState) {
+        history.pushState(null, null, `#${tabName}`);
+    }
+    
+    // Renderizar conteúdo se necessário
+    if (tabName === 'dashboard') {
+        updateDashboard();
+    } else if (tabName === 'credits' || tabName === 'debits' || tabName === 'future') {
+        renderLists();
+    } else if (tabName === 'calendar') {
+        openCalendarModal();
+    } else if (tabName === 'goals') {
+        renderGoals();
+    } else if (tabName === 'budgets') {
+        renderBudgets();
+    } else if (tabName === 'recurring') {
+        renderRecurring();
+    }
+}
+
+// ================================================================
+// SYNC: TABS SIDEBAR (Recorrentes / Orçamentos / Metas)
+// ================================================================
+
+// Função principal que renderiza na aba Recorrentes (recurringListMain)
+function renderRecurring() {
+    const container = document.getElementById('recurringListMain');
+    if (!container) { renderRecurringList(); return; }
+
+    const freqLabel = { daily:'Diária', weekly:'Semanal', monthly:'Mensal', yearly:'Anual' };
+
+    // SVG icons
+    const svgCategory = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+    const svgRepeat  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
+    const svgCalendar= `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+    const svgArrowUp = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`;
+    const svgArrowDn = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`;
+
+    if (!recurringTransactions || recurringTransactions.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;margin-bottom:18px;display:block;margin-left:auto;margin-right:auto;">
+                    <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                    <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+                <h3 style="font-family:'Cinzel',serif;color:var(--gold-primary);margin-bottom:8px;font-size:1.05em;">Nenhuma transação recorrente</h3>
+                <p style="font-size:0.88em;max-width:360px;margin:0 auto;line-height:1.6;">Configure lançamentos fixos como salário, aluguel ou assinaturas.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = recurringTransactions.map((r, i) => {
+        const isCredit = r.type === 'credit';
+        const color    = isCredit ? 'var(--success)' : 'var(--danger)';
+        const colorHex = isCredit ? '#2ECC71' : '#E74C3C';
+        const bgColor  = isCredit ? 'rgba(46,204,113,0.07)' : 'rgba(231,76,60,0.07)';
+        const freq     = freqLabel[r.frequency] || r.frequency;
+        const arrow    = isCredit ? svgArrowUp : svgArrowDn;
+
+        return `
+        <div style="
+            display:flex;
+            align-items:center;
+            gap:14px;
+            padding:14px 18px;
+            margin-bottom:10px;
+            background:rgba(255,255,255,0.03);
+            border:1px solid rgba(212,175,55,0.12);
+            border-left:3px solid ${colorHex};
+            border-radius:10px;
+            transition:background 0.2s, transform 0.2s;
+            cursor:default;
+        "
+        onmouseover="this.style.background='rgba(212,175,55,0.05)';this.style.transform='translateX(3px)';"
+        onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.transform='translateX(0)';">
+
+            <!-- Ícone tipo -->
+            <div style="
+                width:38px;height:38px;border-radius:10px;
+                background:${bgColor};
+                border:1px solid ${colorHex}33;
+                display:flex;align-items:center;justify-content:center;
+                flex-shrink:0;
+                color:${colorHex};
+            ">${arrow}</div>
+
+            <!-- Info -->
+            <div style="flex:1;min-width:0;">
+                <div style="
+                    font-family:'Cinzel',serif;
+                    font-size:1.1em;
+                    color:var(--gold-light);
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+                    margin-bottom:6px;
+                ">${r.description}</div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.92em;color:var(--text-secondary);">
+                        <span style="color:var(--gold-primary);opacity:0.7;">${svgCategory}</span>${r.category}
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.92em;color:var(--text-secondary);">
+                        <span style="color:var(--gold-primary);opacity:0.7;">${svgRepeat}</span>${freq}
+                    </span>
+                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.92em;color:var(--text-secondary);">
+                        <span style="color:var(--gold-primary);opacity:0.7;">${svgCalendar}</span>Dia ${r.day}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Valor -->
+            <div style="
+                font-family:'Cinzel',serif;
+                font-size:1.2em;
+                font-weight:700;
+                color:${color};
+                white-space:nowrap;
+                flex-shrink:0;
+                margin-right:4px;
+            ">${isCredit ? '+' : '-'}${formatCurrency(r.amount)}</div>
+
+            <!-- Botão excluir -->
+            <button onclick="deleteRecurring(${i})" title="Remover recorrente" style="
+                width:34px;height:34px;
+                border-radius:8px;
+                background:rgba(231,76,60,0.08);
+                border:1px solid rgba(231,76,60,0.25);
+                color:#E74C3C;
+                cursor:pointer;
+                display:flex;align-items:center;justify-content:center;
+                flex-shrink:0;
+                font-size:20px;
+                line-height:1;
+                transition:all 0.2s;
+            "
+            onmouseover="this.style.background='rgba(231,76,60,0.22)';this.style.borderColor='rgba(231,76,60,0.7)';this.style.transform='scale(1.1)';"
+            onmouseout="this.style.background='rgba(231,76,60,0.08)';this.style.borderColor='rgba(231,76,60,0.25)';this.style.transform='scale(1)';"
+            >&#x00D7;</button>
+        </div>`;
+    }).join('');
+}
+
+function syncRecurringMain() {
+    renderRecurring();
+    renderRecurringList();
+}
+
+function syncBudgetsMain() {
+    const catDst = document.getElementById('budgetCategoryMain');
+    if (catDst) catDst.innerHTML = customCategories.debit.map(c => `<option value="${c}">${c}</option>`).join('');
+    renderBudgets();
+}
+
+function addBudgetFromMain() {
+    const catEl = document.getElementById('budgetCategoryMain');
+    const amtEl = document.getElementById('budgetAmountMain');
+    if (!catEl || !amtEl) return;
+    const cat = catEl.value?.trim();
+    const amt = parseFloat(amtEl.value);
+    if (!cat || isNaN(amt) || amt <= 0) { showToast('Preencha categoria e valor válido', 'error'); return; }
+    budgets[cat] = amt;
+    saveToFirestore();
+    amtEl.value = '';
+    renderBudgets();
+    showToast(`Orçamento de ${cat}: ${formatCurrency(amt)}`, 'success');
+}
+
+function syncGoalsMain() {
+    renderGoalsList();
+}
+
+function addToGoalDirect(i) {
+    // Pega do input ativo (pode estar em goalsListMain ou goalsList)
+    const input = document.getElementById(`goalAdd_${i}`);
+    if (!input || !input.value) { showToast('Digite um valor para adicionar', 'error'); return; }
+    const amount = parseFloat(input.value);
+    if (isNaN(amount) || amount <= 0) { showToast('Valor inválido', 'error'); return; }
+    if (!goals[i]) return;
+    goals[i].current = (parseFloat(goals[i].current) || 0) + amount;
+    saveToFirestore();
+    renderGoalsList();
+    updateSummary();
+    showToast(`✅ +${formatCurrency(amount)} adicionado à meta "${goals[i].name}"!`, 'success');
+}
+
+
+
+// === CORREÇÕES MOBILE ===
+// FIX 1: FILTRO DE CONTAS - Garantir que funciona
+document.addEventListener('DOMContentLoaded', function() {
+    // Créditos
+    const creditAccountFilter = document.getElementById('creditAccountFilter');
+    if (creditAccountFilter) {
+        creditAccountFilter.addEventListener('change', function() {
+            console.log('Filtro crédito mudou para:', this.value);
+            renderLists(); // Força atualização
+        });
+    }
+    
+    // Débitos
+    const debitAccountFilter = document.getElementById('debitAccountFilter');
+    if (debitAccountFilter) {
+        debitAccountFilter.addEventListener('change', function() {
+            console.log('Filtro débito mudou para:', this.value);
+            renderLists(); // Força atualização
+        });
+    }
+    
+    // Futuras
+    const futureAccountFilter = document.getElementById('futureAccountFilter');
+    if (futureAccountFilter) {
+        futureAccountFilter.addEventListener('change', function() {
+            console.log('Filtro futuras mudou para:', this.value);
+            renderLists(); // Força atualização
+        });
+    }
+});
+
+// FIX 2: VIEW ATTACHMENT - Corrigir visualização
+function viewAttachment(type, index) {
+    const item = type === 'credits' ? credits[index] : debits[index];
+    if (!item || !item.attachment) {
+        showToast('Nenhum comprovante anexado', 'info');
+        return;
+    }
+    
+    // Remover modal anterior se existir
+    const existing = document.getElementById('attachmentModal');
+    if (existing) existing.remove();
+    
+    const isImage = item.attachment.type && item.attachment.type.startsWith('image/');
+    
+    const modal = document.createElement('div');
+    modal.id = 'attachmentModal';
+    modal.style.cssText = `
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(8px);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow: auto;
+            position: relative;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+        ">
+            <div style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 20px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid var(--glass-border);
+            ">
+                <h2 style="
+                    font-family: 'Cinzel', serif;
+                    color: var(--gold-primary);
+                    font-size: 1.1em;
+                    letter-spacing: 1px;
+                    margin: 0;
+                ">📎 Comprovante</h2>
+                <button onclick="document.getElementById('attachmentModal').remove()" style="
+                    background: transparent;
+                    border: 1px solid var(--glass-border);
+                    color: var(--text-secondary);
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 1.2em;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                ">×</button>
+            </div>
+            ${isImage
+                ? `<img src="${item.attachment.data}" style="
+                    width: 100%;
+                    max-height: 65vh;
+                    object-fit: contain;
+                    border-radius: 8px;
+                    display: block;
+                " alt="Comprovante">`
+                : `<div style="text-align: center; padding: 40px 20px;">
+                    <p style="color: var(--text-primary); margin-bottom: 20px; font-size: 1.1em;">
+                        📄 ${item.attachment.name || 'Arquivo anexado'}
+                    </p>
+                    <a href="${item.attachment.data}" download="${item.attachment.name}" style="
+                        background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+                        color: #0A0E17;
+                        padding: 12px 28px;
+                        border-radius: 8px;
+                        text-decoration: none;
+                        font-family: 'Cinzel', serif;
+                        font-size: 0.85em;
+                        letter-spacing: 1px;
+                        font-weight: bold;
+                        display: inline-block;
+                    ">⬇️ Download</a>
+                </div>`
+            }
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Fechar ao clicar fora
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+    
+    console.log('✅ Comprovante exibido:', item.attachment.name || 'Imagem');
+}
+
+// FIX 3: RENDERIZAR LISTAS - Aplicar filtro corretamente
+// Esta função substitui a original se houver problemas
+function applyAccountFilter(list, filterValue) {
+    if (!filterValue || filterValue === 'all') {
+        return list;
+    }
+    return list.filter(item => item.account === filterValue);
+}
+
+// FIX 4: GARANTIR QUE FILTROS APARECEM
+function ensureFiltersVisible() {
+    const filters = document.querySelectorAll('.filter-section, .filter-row, .filter-select');
+    filters.forEach(filter => {
+        if (filter) {
+            filter.style.display = 'block';
+            filter.style.visibility = 'visible';
+            filter.style.opacity = '1';
+        }
+    });
+}
+
+// Executar ao carregar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureFiltersVisible);
+} else {
+    ensureFiltersVisible();
+}
+
+// FIX 5: BOTÃO EXCLUIR - Confirmar antes de excluir (mobile-friendly)
+function confirmDelete(message) {
+    if (window.innerWidth <= 768) {
+        // Em mobile, usar confirm nativo que é mais touch-friendly
+        return confirm(message || 'Deseja realmente excluir este item?');
+    }
+    return confirm(message || 'Deseja realmente excluir este item?');
+}
+
+// FIX 6: SCROLL SUAVE ao abrir modais em mobile
+function openModalMobile(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal && window.innerWidth <= 768) {
+        modal.style.display = 'block';
+        // Scroll to top
+        setTimeout(() => {
+            if (modal.querySelector('.modal-content')) {
+                modal.querySelector('.modal-content').scrollTop = 0;
+            }
+        }, 100);
+    }
+}
+
+// FIX 7: FORMATAÇÃO DE VALORES - Garantir que R$ apareça
+function ensureCurrencyVisible() {
+    const values = document.querySelectorAll('.summary-value, .transaction-item strong, .value');
+    values.forEach(el => {
+        if (el.textContent && el.textContent.includes('R$')) {
+            el.style.whiteSpace = 'nowrap';
+            el.style.overflow = 'visible';
+        }
+    });
+}
+
+// Executar periodicamente
+setInterval(ensureCurrencyVisible, 2000);
+
+console.log('✅ Correções mobile carregadas');
+// ================================================================
+// CORREÇÃO DEFINITIVA: TABS DE CONFIGURAÇÕES + RECORRENTES
+// Cole este código no FINAL do script.js (SUBSTITUINDO o anterior)
+// ================================================================
+
+// ===== FIX 1: TABS DE CONFIGURAÇÕES (CORRIGIDO) =====
+document.addEventListener('DOMContentLoaded', function() {
+    
+    console.log('🔧 Inicializando tabs de configurações...');
+    
+    // Configurar tabs de configurações
+    const settingsTabs = document.querySelectorAll('.settings-tab');
+    
+    if (settingsTabs.length === 0) {
+        console.log('⚠️ Nenhuma tab de configurações encontrada');
+        return;
+    }
+    
+    console.log(`📋 ${settingsTabs.length} tabs encontradas`);
+    
+    settingsTabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            console.log('🖱️ Tab clicada:', this.getAttribute('data-tab'));
+            
+            // Remover active de todas as tabs
+            settingsTabs.forEach(t => t.classList.remove('active'));
+            
+            // Adicionar active na clicada
+            this.classList.add('active');
+            
+            // Pegar ID da tab
+            const tabId = this.getAttribute('data-tab');
+            
+            // Esconder todos os painéis (CLASSE CORRETA: settings-tab-content)
+            const allPanels = document.querySelectorAll('.settings-tab-content');
+            console.log(`📄 ${allPanels.length} painéis encontrados`);
+            
+            allPanels.forEach(content => {
+                content.classList.remove('active');
+                content.style.display = 'none';
+            });
+            
+            // Mostrar painel correto
+            const targetPanel = document.getElementById(tabId);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+                targetPanel.style.display = 'block';
+                console.log('✅ Painel ativado:', tabId);
+            } else {
+                console.error('❌ Painel não encontrado:', tabId);
+            }
+        });
+    });
+    
+    // Garantir que primeira tab esteja ativa
+    setTimeout(() => {
+        const firstTab = document.querySelector('.settings-tab');
+        const firstPanel = document.getElementById('notifications-settings');
+        
+        if (firstTab && firstPanel) {
+            firstTab.classList.add('active');
+            firstPanel.classList.add('active');
+            firstPanel.style.display = 'block';
+            console.log('✅ Primeira tab ativada');
+        }
+    }, 100);
+});
+
+// ===== FIX 2: BOTÃO TESTAR ALERTA =====
+function testAlert() {
+    console.log('🔔 Testando alerta...');
+    
+    // Verificar permissão de notificações
+    if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+            // Criar notificação
+            new Notification('🎯 Teste de Alerta - Stiga Finance', {
+                body: 'Esta é uma notificação de teste. Sistema funcionando corretamente!',
+                icon: 'logo-stiga.png',
+                badge: 'logo-stiga.png'
+            });
+            showToast('🔔 Notificação enviada!', 'success');
+        } else if (Notification.permission !== 'denied') {
+            // Pedir permissão
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    new Notification('🎯 Teste de Alerta - Stiga Finance', {
+                        body: 'Permissão concedida! Agora você receberá alertas de vencimento.',
+                        icon: 'logo-stiga.png'
+                    });
+                    showToast('✅ Permissão concedida!', 'success');
+                } else {
+                    showToast('❌ Permissão negada pelo navegador', 'error');
+                }
+            });
+        } else {
+            showToast('❌ Notificações bloqueadas. Ative nas configurações do navegador.', 'error');
+        }
+    } else {
+        // Navegador não suporta
+        showToast('⚠️ Seu navegador não suporta notificações', 'info');
+    }
+}
+
+// ===== FIX 3: RENDERIZAR RECORRENTES (MELHORADO) =====
+function renderRecurringTransactions() {
+    console.log('📋 Renderizando recorrentes...');
+    
+    const container = document.getElementById('recurringList');
+    if (!container) {
+        console.error('❌ Container recurringList não encontrado');
+        return;
+    }
+    
+    // Pegar recorrentes da variável global (Firestore)
+    let recurring = [];
+    try {
+        recurring = Array.isArray(recurringTransactions) ? recurringTransactions : [];
+    } catch (e) {
+        console.error('❌ Erro ao ler recorrentes:', e);
+        recurring = [];
+    }
+    
+    console.log(`📊 Recorrentes encontradas: ${recurring.length}`);
+    
+    if (recurring.length === 0) {
+        container.innerHTML = `
+            <div style="
+                text-align: center;
+                padding: 60px 20px;
+                color: var(--text-secondary);
+            ">
+                <div style="font-size: 4em; margin-bottom: 20px; opacity: 0.3;">🔄</div>
+                <h3 style="
+                    font-family: 'Cinzel', serif;
+                    color: var(--gold-primary);
+                    margin-bottom: 10px;
+                    font-size: 1.2em;
+                ">Nenhuma transação recorrente</h3>
+                <p style="
+                    color: var(--text-secondary);
+                    margin-bottom: 25px;
+                    font-size: 0.95em;
+                    max-width: 400px;
+                    margin-left: auto;
+                    margin-right: auto;
+                    line-height: 1.5;
+                ">
+                    Configure transações que se repetem automaticamente, 
+                    como salário, aluguel, ou assinaturas mensais.
+                </p>
+                <button onclick="openRecurringModal()" class="btn-primary" style="
+                    padding: 12px 30px;
+                    font-size: 0.9em;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                ">
+                    ➕ Adicionar Primeira Recorrente
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Renderizar cada recorrente
+    container.innerHTML = recurring.map((item, index) => {
+        const isCredit = item.type === 'credit';
+        const icon = isCredit ? '💰' : '💳';
+        const color = isCredit ? 'var(--success)' : 'var(--danger)';
+        
+        // Traduzir frequência
+        const frequencyMap = {
+            'daily': 'Diária',
+            'weekly': 'Semanal',
+            'monthly': 'Mensal',
+            'yearly': 'Anual'
+        };
+        const frequency = frequencyMap[item.frequency] || item.frequency;
+        
+        return `
+            <div class="card" style="
+                margin-bottom: 16px;
+                padding: 18px;
+                border-left: 3px solid ${color};
+                transition: all 0.3s;
+            " onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 4px 15px rgba(212,175,55,0.2)';" 
+               onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='';">
+                
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px;">
+                    
+                    <!-- LADO ESQUERDO -->
+                    <div style="flex: 1; min-width: 0;">
+                        
+                        <!-- TÍTULO -->
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="font-size: 1.3em;">${icon}</span>
+                            <h4 style="
+                                font-family: 'Cinzel', serif;
+                                color: var(--gold-primary);
+                                margin: 0;
+                                font-size: 1.05em;
+                                letter-spacing: 0.5px;
+                            ">${item.description}</h4>
+                        </div>
+                        
+                        <!-- INFO -->
+                        <div style="
+                            display: flex;
+                            gap: 15px;
+                            flex-wrap: wrap;
+                            color: var(--text-secondary);
+                            font-size: 0.85em;
+                            margin-bottom: 10px;
+                        ">
+                            <span title="Categoria">📁 ${item.category}</span>
+                            <span title="Frequência">🔄 ${frequency}</span>
+                            <span title="Dia do mês">📅 Dia ${item.day}</span>
+                        </div>
+                        
+                        <!-- PRÓXIMA OCORRÊNCIA -->
+                        <div style="
+                            font-size: 0.8em;
+                            color: var(--text-secondary);
+                            padding-top: 8px;
+                            border-top: 1px solid rgba(212, 175, 55, 0.15);
+                        ">
+                            ⏰ Próxima: ${getNextOccurrence(item.frequency, item.day)}
+                        </div>
+                    </div>
+                    
+                    <!-- LADO DIREITO -->
+                    <div style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                        gap: 12px;
+                    ">
+                        <!-- VALOR -->
+                        <span style="
+                            font-family: 'Cinzel', serif;
+                            font-size: 1.15em;
+                            font-weight: bold;
+                            color: ${color};
+                            white-space: nowrap;
+                        ">
+                            ${isCredit ? '+' : '-'} ${formatCurrency(item.amount)}
+                        </span>
+                        
+                        <!-- BOTÃO EXCLUIR -->
+                        <button onclick="deleteRecurring(${index})" 
+                                title="Excluir recorrente"
+                                style="
+                                    width: 32px;
+                                    height: 32px;
+                                    border-radius: 6px;
+                                    background: rgba(231, 76, 60, 0.1);
+                                    border: 1px solid rgba(231, 76, 60, 0.3);
+                                    color: var(--danger);
+                                    cursor: pointer;
+                                    font-size: 18px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    transition: all 0.3s;
+                                "
+                                onmouseover="this.style.background='rgba(231,76,60,0.2)'; this.style.transform='scale(1.1)';"
+                                onmouseout="this.style.background='rgba(231,76,60,0.1)'; this.style.transform='scale(1)';">×</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    console.log('✅ Recorrentes renderizadas com sucesso!');
+}
+
+// Função para calcular próxima ocorrência
+function getNextOccurrence(frequency, day) {
+    const now = new Date();
+    const currentDay = now.getDate();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    if (frequency === 'monthly') {
+        let targetDate;
+        
+        if (day > currentDay) {
+            // Este mês
+            targetDate = new Date(currentYear, currentMonth, day);
+        } else {
+            // Próximo mês
+            targetDate = new Date(currentYear, currentMonth + 1, day);
+        }
+        
+        const dayStr = String(targetDate.getDate()).padStart(2, '0');
+        const monthStr = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const yearStr = targetDate.getFullYear();
+        
+        return `${dayStr}/${monthStr}/${yearStr}`;
+    }
+    
+    if (frequency === 'weekly') {
+        return 'Próxima semana';
+    }
+    
+    if (frequency === 'daily') {
+        return 'Amanhã';
+    }
+    
+    if (frequency === 'yearly') {
+        return 'Próximo ano';
+    }
+    
+    return 'Em breve';
+}
+
+// Função para excluir recorrente
+function deleteRecurring(index) {
+    if (!confirm('Remover esta transação recorrente?')) return;
+    recurringTransactions.splice(index, 1);
+    saveToFirestore();
+    renderRecurring();
+    renderRecurringList();
+    showToast('Recorrente removida', 'info');
+}
+
+// ===== FIX 4: CHAMAR RENDERIZAÇÃO QUANDO NECESSÁRIO =====
+
+// Sobrescrever showTab para detectar quando abrir recorrentes
+const originalShowTab = window.showTab;
+if (typeof originalShowTab === 'function') {
+    window.showTab = function(tabName) {
+        originalShowTab(tabName);
+        
+        if (tabName === 'recurring') {
+            setTimeout(() => {
+                renderRecurringTransactions();
+            }, 100);
+        }
+    };
+}
+
+// Renderizar se já estiver na tab ao carregar
+setTimeout(() => {
+    const recurringTab = document.getElementById('recurring');
+    if (recurringTab && recurringTab.classList.contains('active')) {
+        renderRecurringTransactions();
+    }
+}, 800);
+
+console.log('✅ Sistema de tabs e recorrentes carregado!');
+// ================================================================
+// MEGA CORREÇÃO - TODOS OS PROBLEMAS RESOLVIDOS
+// Cole este código no FINAL do script.js
+// ================================================================
+
+// ===== FIX 1: TAB DÉBITOS NAS CATEGORIAS =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Usar as classes corretas do HTML: .category-type-tabs .cat-tab com data-type
+    function setupCategoryTabs() {
+        const categoryTabs = document.querySelectorAll('.category-type-tabs .cat-tab');
+        if (!categoryTabs.length) return;
+
+        categoryTabs.forEach(tab => {
+            // Remover listener antigo clonando
+            const clone = tab.cloneNode(true);
+            tab.parentNode.replaceChild(clone, tab);
+        });
+
+        document.querySelectorAll('.category-type-tabs .cat-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Atualizar active visual
+                document.querySelectorAll('.category-type-tabs .cat-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Atualizar tipo global e re-renderizar
+                const type = this.dataset.type || (this.textContent.toLowerCase().includes('crédit') ? 'credit' : 'debit');
+                currentCategoryType = type;
+                renderCustomCategories();
+            });
+        });
+    }
+
+    setupCategoryTabs();
+
+    // Re-setup quando modal de settings abrir (pode ser criado depois)
+    document.addEventListener('click', function(e) {
+        if (e.target && (e.target.id === 'settingsBtn' || e.target.closest('.settings-btn'))) {
+            setTimeout(setupCategoryTabs, 100);
+        }
+    });
+});
+
+// ===== FIX 2: RECORRENTES - FORÇAR RENDERIZAÇÃO =====
+
+// ===== FIX 3: AUMENTAR CARDS E INPUTS =====
+
+// Aplicar estilos maiores para cards e inputs
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        // Cards de orçamento
+        const budgetCards = document.querySelectorAll('#budgetsList .card, [id*="budget"] .card');
+        budgetCards.forEach(card => {
+            card.style.padding = '24px';
+            card.style.minHeight = '140px';
+        });
+        
+        // Inputs de adicionar valor nas metas
+        const goalInputs = document.querySelectorAll('[id^="goalAdd"]');
+        goalInputs.forEach(input => {
+            input.style.padding = '12px 16px';
+            input.style.fontSize = '1em';
+            input.style.minHeight = '48px';
+        });
+        
+        console.log('✅ Cards e inputs aumentados!');
+    }, 1000);
+});
+
+// ===== FIX 4: SIDEBAR - SUBIR SEÇÕES =====
+
+// Aplicar CSS para subir as seções
+const sidebarStyle = document.createElement('style');
+sidebarStyle.innerHTML = `
+    /* Sidebar logo - tamanho legível */
+    .logo-container {
+        margin-bottom: 12px !important;
+        padding: 16px 12px 12px !important;
+        text-align: center !important;
+    }
+    
+    .logo-img {
+        width: 64px !important;
+        height: 64px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .logo-title {
+        font-size: 1.1em !important;
+        margin-bottom: 4px !important;
+        letter-spacing: 2px !important;
+    }
+    
+    .logo-subtitle {
+        font-size: 0.72em !important;
+        margin: 0 !important;
+        letter-spacing: 1px !important;
+    }
+    
+    /* Sidebar brand (nova sidebar) */
+    .sidebar-logo {
+        width: 64px !important;
+        height: 64px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .sidebar-brand {
+        font-size: 1.15em !important;
+        letter-spacing: 2px !important;
+    }
+    
+    .sidebar-subtitle {
+        font-size: 0.72em !important;
+        letter-spacing: 1px !important;
+    }
+    
+    /* Seções coladas no topo */
+    .sidebar-section-label {
+        margin-top: 2px !important;
+        margin-bottom: 2px !important;
+        padding-top: 0px !important;
+        font-size: 0.7em !important;
+    }
+    
+    .sidebar-divider {
+        margin: 4px 0 !important;
+    }
+    
+    /* Botões compactos */
+    .tab-button {
+        padding: 8px 16px !important;
+        margin-bottom: 1px !important;
+        font-size: 0.9em !important;
+    }
+    
+    /* Menu colado ao topo */
+    .sidebar-menu {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Cards maiores */
+    #budgetsList .card {
+        padding: 24px !important;
+        min-height: 150px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    #budgetsList h3 {
+        font-size: 1.15em !important;
+        margin-bottom: 10px !important;
+    }
+    
+    #budgetsList p {
+        font-size: 0.95em !important;
+        line-height: 1.6 !important;
+    }
+    
+    /* Inputs de metas maiores */
+    [id^="goalAdd"] {
+        padding: 12px 16px !important;
+        font-size: 1em !important;
+        min-height: 48px !important;
+        border: 2px solid rgba(212, 175, 55, 0.3) !important;
+    }
+    
+    [id^="goalAdd"]:focus {
+        border-color: var(--gold-primary) !important;
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1) !important;
+    }
+    
+    /* Botão adicionar nas metas maior */
+    #goalsList .btn-secondary {
+        padding: 12px 20px !important;
+        font-size: 0.95em !important;
+        min-height: 48px !important;
+    }
+    
+    /* Cards de metas maiores */
+    #goalsList .card {
+        padding: 22px !important;
+        min-height: 160px !important;
+    }
+    
+    #goalsList h3 {
+        font-size: 1.2em !important;
+        margin-bottom: 10px !important;
+    }
+    
+    /* Seção de metas - campo adicionar */
+    #goalsList input[type="number"] {
+        min-width: 150px !important;
+        flex: 1 !important;
+    }
+    
+    /* Desktop: garantir que sidebar comece do topo */
+    @media (min-width: 769px) {
+        .sidebar {
+            padding-top: 2px !important;
+        }
+        
+        .sidebar-menu {
+            margin-top: 0 !important;
+        }
+    }
+    
+    /* Mobile */
+    @media (max-width: 768px) {
+        .logo-img {
+            width: 30px !important;
+            height: 30px !important;
+        }
+        
+        .tab-button {
+            padding: 12px 14px !important;
+        }
+        
+        #budgetsList .card,
+        #goalsList .card {
+            padding: 18px !important;
+        }
+    }
+`;
+document.head.appendChild(sidebarStyle);
+
+// ===== FIX 5: DEBUG LOGS =====
+
+// Log quando criar recorrente
+const originalCreateRecurring = window.createRecurring;
+if (typeof originalCreateRecurring === 'function') {
+    window.createRecurring = function(...args) {
+        console.log('➕ Criando recorrente...');
+        const result = originalCreateRecurring.apply(this, args);
+        
+        // Forçar renderização após criar
+        setTimeout(() => {
+            console.log('🔄 Renderizando após criar...');
+            renderRecurringTransactions();
+        }, 300);
+        
+        return result;
+    };
+}
+
+// ===== FIX 6: GARANTIR QUE TUDO RENDERIZE AO ABRIR TAB =====
+
+// Observer para detectar quando tab fica visível
+const tabObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const target = mutation.target;
+            
+            // Se tab recurring ficou ativa
+            if (target.id === 'recurring' && target.classList.contains('active')) {
+                console.log('👁️ Tab recurring ficou visível!');
+                setTimeout(() => {
+                    renderRecurringTransactions();
+                }, 100);
+            }
+            
+            // Se tab budgets ficou ativa
+            if (target.id === 'budgets' && target.classList.contains('active')) {
+                console.log('👁️ Tab budgets ficou visível!');
+                setTimeout(() => {
+                    if (typeof renderBudgetsFinal === 'function') {
+                        renderBudgetsFinal();
+                    }
+                }, 100);
+            }
+            
+            // Se tab goals ficou ativa
+            if (target.id === 'goals' && target.classList.contains('active')) {
+                console.log('👁️ Tab goals ficou visível!');
+                setTimeout(() => {
+                    if (typeof renderGoalsFinal === 'function') {
+                        renderGoalsFinal();
+                    }
+                }, 100);
+            }
+        }
+    });
+});
+
+// Observar todas as tabs
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const tabs = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tabObserver.observe(tab, { attributes: true });
+        });
+        console.log('👁️ Observer ativado para', tabs.length, 'tabs');
+    }, 500);
+});
+
+console.log('✅ MEGA CORREÇÃO APLICADA!');
+console.log('✅ Fix 1: Débitos nas categorias');
+console.log('✅ Fix 2: Recorrentes renderizam');
+console.log('✅ Fix 3: Cards maiores');
+console.log('✅ Fix 4: Sidebar mais alta');
+console.log('✅ Fix 5: Debug logs');
+console.log('✅ Fix 6: Observer de tabs');
+
+// ================================================================
+
+
+// ================================================================
+// SCROLL AUTOMÁTICO - SISTEMA ÚNICO
+// ================================================================
+(function() {
+    function irParaConteudo() {
+        const mainWrapper = document.querySelector('.main-wrapper');
+        if (!mainWrapper) return;
+        const cw = document.getElementById('contentWrapper') || document.querySelector('.content-wrapper');
+        if (cw) mainWrapper.scrollTo({ top: cw.offsetTop, behavior: 'smooth' });
+    }
+
+    function ativarAba(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
+        const tabEl = document.getElementById(tabId);
+        if (tabEl) { tabEl.classList.add('active'); tabEl.style.display = 'block'; }
+        document.querySelectorAll('.tab-button, .sidebar-item').forEach(b => {
+            b.classList.toggle('active', (b.getAttribute('data-tab') || b.dataset.tab) === tabId);
+        });
+        if (tabId === 'recurring') { if(typeof syncRecurringMain==='function') syncRecurringMain(); if(typeof renderRecurring==='function') renderRecurring(); if(typeof renderRecurringList==='function') renderRecurringList(); }
+        if (tabId === 'budgets')   { if(typeof syncBudgetsMain==='function') syncBudgetsMain(); if(typeof renderBudgets==='function') renderBudgets(); }
+        if (tabId === 'goals')     { if(typeof syncGoalsMain==='function') syncGoalsMain(); if(typeof renderGoalsList==='function') renderGoalsList(); }
+        if (window.innerWidth <= 768) {
+            const sb = document.getElementById('sidebar'); const ov = document.getElementById('sidebarOverlay');
+            if (sb) sb.classList.remove('active'); if (ov) ov.classList.remove('active');
+        }
+        if (history.pushState) history.pushState(null, null, '#' + tabId);
+        setTimeout(irParaConteudo, 150);
+    }
+
+    function attachListeners() {
+        document.querySelectorAll('.tab-button, .sidebar-item').forEach(btn => {
+            const clone = btn.cloneNode(true);
+            btn.parentNode.replaceChild(clone, btn);
+            clone.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const tabId = this.getAttribute('data-tab') || this.dataset.tab;
+                if (!tabId || tabId === 'calendar' || tabId === 'settings') return;
+                ativarAba(tabId);
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(attachListeners, 800));
+    } else {
+        setTimeout(attachListeners, 800);
+    }
+})();

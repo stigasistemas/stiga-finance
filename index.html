@@ -17,164 +17,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-
-<!-- ========================================
-     SIDEBAR LATERAL PROFISSIONAL - STIGA FINANCE
-     Cole este código LOGO APÓS <body> no index.html
-     ======================================== -->
-
-<aside class="sidebar-pro">
-    <!-- HEADER DA SIDEBAR -->
-    <div class="sidebar-header">
-        <img src="logo-stiga.png" alt="Stiga Finance" class="sidebar-logo">
-        <h2 class="sidebar-brand">STIGA</h2>
-        <p class="sidebar-subtitle">Finance</p>
-    </div>
-
-    <!-- NAVEGAÇÃO PRINCIPAL -->
-    <nav class="sidebar-nav">
-        <div class="sidebar-section">
-            <h3 class="sidebar-section-title">PRINCIPAL</h3>
-            
-            <button class="sidebar-item active" data-tab="dashboard">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7"/>
-                    <rect x="14" y="3" width="7" height="7"/>
-                    <rect x="14" y="14" width="7" height="7"/>
-                    <rect x="3" y="14" width="7" height="7"/>
-                </svg>
-                <span>Dashboard</span>
-            </button>
-
-            <button class="sidebar-item" data-tab="credits">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="1" x2="12" y2="23"/>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-                <span>Créditos</span>
-            </button>
-
-            <button class="sidebar-item" data-tab="debits">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                    <line x1="1" y1="10" x2="23" y2="10"/>
-                </svg>
-                <span>Débitos</span>
-            </button>
-
-            <button class="sidebar-item" data-tab="calendar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                <span>Calendário</span>
-                <span class="sidebar-badge" id="calendarBadge">0</span>
-            </button>
-
-            <button class="sidebar-item" data-tab="future">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                </svg>
-                <span>Compras Futuras</span>
-            </button>
-        </div>
-
-        <!-- GESTÃO -->
-        <div class="sidebar-section">
-            <h3 class="sidebar-section-title">GESTÃO</h3>
-            
-            <button class="sidebar-item" data-tab="quick-actions">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                </svg>
-                <span>Ações Rápidas</span>
-            </button>
-
-            <button class="sidebar-item" data-tab="recurring">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="23 4 23 10 17 10"/>
-                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-                </svg>
-                <span>Recorrentes</span>
-            </button>
-
-            <button class="sidebar-item" data-tab="goals">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <circle cx="12" cy="12" r="6"/>
-                    <circle cx="12" cy="12" r="2"/>
-                </svg>
-                <span>Metas</span>
-            </button>
-
-            <button class="sidebar-item" data-tab="budgets">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="20" x2="12" y2="10"/>
-                    <line x1="18" y1="20" x2="18" y2="4"/>
-                    <line x1="6" y1="20" x2="6" y2="16"/>
-                </svg>
-                <span>Orçamentos</span>
-            </button>
-        </div>
-
-        <!-- SISTEMA -->
-        <div class="sidebar-section">
-            <h3 class="sidebar-section-title">SISTEMA</h3>
-            
-            <button class="sidebar-item" data-tab="config">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M12 1v6m0 6v6m8.66-15l-3 5.2M8.34 13.8l-3 5.2m12.66 0l-3-5.2M5.34 7.2l-3-5.2"/>
-                </svg>
-                <span>Configurações</span>
-            </button>
-        </div>
-    </nav>
-
-    <!-- FOOTER DA SIDEBAR -->
-    <div class="sidebar-footer">
-        <div class="sidebar-user">
-            <div class="sidebar-user-avatar">👤</div>
-            <div class="sidebar-user-info">
-                <p class="sidebar-user-name" id="sidebarUserName">Usuário</p>
-                <p class="sidebar-user-balance" id="sidebarUserBalance">R$ 0,00</p>
-            </div>
-        </div>
-        <button class="sidebar-logout" onclick="logout()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-        </button>
-    </div>
-</aside>
-
-<!-- OVERLAY PARA MOBILE -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-<!-- BOTÃO HAMBURGUER MOBILE -->
-<button class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">
-    <span></span>
-    <span></span>
-    <span></span>
-</button>
-
-<!-- WRAPPER PARA O CONTEÚDO -->
-<!-- Cole o conteúdo existente dentro de: -->
-<div class="main-content-wrapper" style="padding-top: 20px;">
-    <!-- TODO O CONTEÚDO ATUAL VAI AQUI -->
-</div>
-
-
-
     <!-- LOADING OVERLAY -->
-    <div class="main-content-wrapper" style="padding-top: 20px;">
-
-<div id="loadingOverlay" class="loading-overlay">
+    <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner">
             <div class="diamond-spinner"></div>
             <p>Carregando...</p>
@@ -193,66 +37,90 @@
             <p class="no-notifications">Nenhuma notificação</p>
         </div>
     </div>
-    <div class="container">
-        <header style="display:none;">
-            <!-- Div só para a imagem, alinhada à esquerda -->
-            <div class="logo-imagem">
-                <!-- Imagem da logo SVG -->
-                <img src="logo-stiga.png" alt="Stiga Finance" style="width: 250px; height: 250px; object-fit: contain;">
+    <div class="app-layout">
+        <!-- ===== SIDEBAR LATERAL ===== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo-container" style="text-align:center;margin-bottom:2px;padding-bottom:2px;border-bottom:1px solid rgba(212,175,55,0.15);">
+                <img src="logo-stiga.png" alt="Stiga Finance" class="logo-img" style="width:36px;height:36px;object-fit:contain;margin-bottom:2px;display:block;margin-left:auto;margin-right:auto;">
+                <h1 class="logo-title" style="font-size:0.82em;margin-bottom:0px;">STIGA FINANCE</h1>
+                <p class="logo-subtitle">Gestão Inteligente</p>
             </div>
-            
-            <!-- Div só para o texto, centralizada -->
-            <div class="logo-texto">
-                <h1>STIGA FINANCE</h1>
-                <p class="subtitle">Gestão Financeira Inteligente</p>
-            </div>
-            
-            <div class="header-controls">
-                <span id="welcomeUser" class="welcome-text"></span>
-                
-                <!-- SELETOR DE VISUALIZAÇÃO (NOVO) -->
-                
-                
-                
-                <!-- BOTÃO CALENDÁRIO no header -->
-                <button onclick="openCalendarModal()" class="header-svg-btn cal-header-btn" title="Calendário e Lembretes">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Calendário
-                    <span id="reminderCount" class="reminder-header-badge" style="display:none">0</span>
+            <nav class="tabs sidebar-menu" style="margin-top:2px;">
+                <!-- TRANSAÇÕES -->
+                <div class="sidebar-section-label">Transações</div>
+                <button class="tab-button active" data-tab="credits">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    Créditos
+                </button>
+                <button class="tab-button" data-tab="debits">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    Débitos
+                </button>
+                <button class="tab-button" data-tab="future">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Compras Futuras
                 </button>
 
-                <!-- SELETOR DE CONTA -->
-                <select id="accountSelector" class="account-selector" onchange="switchAccount()">
-                    <option value="main">Conta Principal</option>
-                </select>
-                
-                <button onclick="toggleNotificationCenter()" class="notification-btn header-svg-btn" title="Notificações" style="position:relative">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    Alertas
-                    <span id="notificationBadge" class="notification-badge" style="display:none">0</span>
+                <div class="sidebar-divider"></div>
+
+                <!-- GESTÃO -->
+                <div class="sidebar-section-label">Gestão</div>
+                <button class="tab-button" data-tab="recurring" onclick="navigateToTab('recurring')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                    Recorrentes
                 </button>
-                
-                <button onclick="toggleSettings()" class="settings-btn header-svg-btn" title="Configurações">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    Config
+                <button class="tab-button" data-tab="budgets" onclick="navigateToTab('budgets')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+                    Orçamentos
                 </button>
-                
-                <!-- TOGGLE TEMA -->
-                <button onclick="toggleTheme()" id="themeBtn" class="theme-btn header-svg-btn" title="Alternar tema">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                    Tema
+                <button class="tab-button" data-tab="goals" onclick="navigateToTab('goals')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                    Metas
                 </button>
-                
-                <button onclick="togglePrivacy()" id="privacyBtn" class="privacy-btn header-svg-btn" title="Modo privacidade">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    Privado
+
+                <div class="sidebar-divider"></div>
+            </nav>
+        </aside>
+
+        <!-- ===== MAIN WRAPPER ===== -->
+        <div class="main-wrapper">
+            <header>
+                <button id="sidebarToggle" class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Menu" aria-label="Menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
                 </button>
-                <button onclick="logout()" class="logout-btn header-svg-btn" style="border-color:var(--danger);color:var(--danger)">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    Sair
-                </button>
-            </div>
-        </header>
+                <div class="welcome-area">
+                    <span id="welcomeUser" class="welcome-text"></span>
+                </div>
+                <div class="header-controls">
+                    <select id="accountSelector" class="account-selector" onchange="switchAccount()">
+                        <option value="main">💰 Conta Principal</option>
+                    </select>
+                    <button onclick="openCalendarModal()" class="header-svg-btn cal-header-btn" title="Calendário e Lembretes">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span id="reminderCount" class="reminder-header-badge" style="display:none">0</span>
+                    </button>
+                    <button onclick="toggleNotificationCenter()" class="notification-btn header-svg-btn" title="Notificações" style="position:relative">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span id="notificationBadge" class="notification-badge" style="display:none">0</span>
+                    </button>
+                    <button onclick="toggleSettings()" class="settings-btn header-svg-btn" title="Configurações">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </button>
+                    <button onclick="toggleTheme()" id="themeBtn" class="theme-btn header-svg-btn" title="Alternar tema">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+                    <button onclick="togglePrivacy()" id="privacyBtn" class="privacy-btn header-svg-btn" title="Modo privacidade">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <button onclick="logout()" class="logout-btn header-svg-btn" style="border-color:var(--danger);color:var(--danger)" title="Sair">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </button>
+                </div>
+            </header>
         <!-- PAINEL DE CONFIGURAÇÕES -->
         <div id="settingsPanel" class="settings-panel">
             <div class="settings-content">
@@ -263,9 +131,7 @@
                     <button class="settings-tab active" data-tab="notifications-settings">Notificações</button>
                     <button class="settings-tab" data-tab="accounts-settings">Contas</button>
                     <button class="settings-tab" data-tab="categories-settings">Categorias</button>
-                    <button class="settings-tab" data-tab="recurring-settings">Recorrentes</button>
-                    <button class="settings-tab" data-tab="budget-settings">Orçamentos</button>
-                    <button class="settings-tab" data-tab="goals-settings">Metas</button>
+    
                 </div>
                 <!-- ABA NOTIFICAÇÕES -->
                 <div id="notifications-settings" class="settings-tab-content active">
@@ -363,9 +229,6 @@
                 </div>
             </div>
         </div>
-        <!-- DASHBOARD TAB -->
-        <div id="dashboard" class="tab-content active">
-
         <!-- CARDS DE RESUMO -->
         <div class="summary-cards">
             <div class="summary-card credit">
@@ -549,8 +412,15 @@
                             <textarea id="creditDescription" placeholder="Detalhes sobre esta entrada..."></textarea>
                         </div>
                         <div class="form-group" style="margin-top: 15px;">
-                            <label>📎 Anexar Comprovante (opcional)</label>
-                            <input type="file" id="creditAttachment" accept="image/*,.pdf">
+<label>📎 Anexar Comprovante (opcional)</label>
+                            <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+                                <input type="file" id="creditAttachment" accept="image/*,.pdf" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;" onchange="updateFileLabel(this,'creditFileLabel')">
+                                <button type="button" onclick="document.getElementById('creditAttachment').click()" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:transparent;border:1px solid #D4AF37;color:#D4AF37;border-radius:8px;cursor:pointer;font-family:Cinzel,serif;font-size:0.82em;font-weight:600;letter-spacing:0.5px;" onmouseover="this.style.background='rgba(212,175,55,0.12)';this.style.color='#F4E5C3';this.style.borderColor='#F4E5C3';" onmouseout="this.style.background='transparent';this.style.color='#D4AF37';this.style.borderColor='#D4AF37';">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    Escolher arquivo
+                                </button>
+                                <span id="creditFileLabel" style="font-size:0.88em;color:#999;font-style:italic;">Nenhum arquivo selecionado</span>
+                            </div>
                         </div>
                         <button type="submit" class="btn-primary" style="margin-top: 15px;">Adicionar Crédito</button>
                     </form>
@@ -569,9 +439,6 @@
             </div>
             
             <!-- ABA DÉBITOS -->
-        </div>
-        <!-- FIM DASHBOARD TAB -->
-
             <div id="debits" class="tab-content">
                 <div class="form-section">
                     <h2>Adicionar Débito</h2>
@@ -599,8 +466,15 @@
                             <textarea id="debitDescription" placeholder="Detalhes sobre este débito..." required></textarea>
                         </div>
                         <div class="form-group" style="margin-top: 15px;">
-                            <label>📎 Anexar Comprovante (opcional)</label>
-                            <input type="file" id="debitAttachment" accept="image/*,.pdf">
+<label>📎 Anexar Comprovante (opcional)</label>
+                            <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+                                <input type="file" id="debitAttachment" accept="image/*,.pdf" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;" onchange="updateFileLabel(this,'debitFileLabel')">
+                                <button type="button" onclick="document.getElementById('debitAttachment').click()" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:transparent;border:1px solid #D4AF37;color:#D4AF37;border-radius:8px;cursor:pointer;font-family:Cinzel,serif;font-size:0.82em;font-weight:600;letter-spacing:0.5px;" onmouseover="this.style.background='rgba(212,175,55,0.12)';this.style.color='#F4E5C3';this.style.borderColor='#F4E5C3';" onmouseout="this.style.background='transparent';this.style.color='#D4AF37';this.style.borderColor='#D4AF37';">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    Escolher arquivo
+                                </button>
+                                <span id="debitFileLabel" style="font-size:0.88em;color:#999;font-style:italic;">Nenhum arquivo selecionado</span>
+                            </div>
                         </div>
                         <button type="submit" class="btn-primary" style="margin-top: 15px;">Adicionar Débito</button>
                     </form>
@@ -651,6 +525,49 @@
             </div>
 
             
+
+            <!-- ABA RECORRENTES -->
+            <div id="recurring" class="tab-content" style="display:none;">
+                <div class="form-section">
+                    <h2>Transações Recorrentes</h2>
+                    <p class="hint-text">Configure transações que se repetem automaticamente</p>
+                    <div id="recurringListMain" style="margin:20px 0;"></div>
+                    <button onclick="showAddRecurring()" class="btn-primary">+ Nova Recorrente</button>
+                </div>
+            </div>
+
+            <!-- ABA ORÇAMENTOS -->
+            <div id="budgets" class="tab-content" style="display:none;">
+                <div class="form-section">
+                    <h2>Orçamentos Mensais</h2>
+                    <p class="hint-text">Defina limites de gastos por categoria</p>
+                    <div class="form-grid" style="margin:20px 0;">
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <select id="budgetCategoryMain"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Limite Mensal (R$)</label>
+                            <input type="number" id="budgetAmountMain" step="0.01" placeholder="0,00">
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;">
+                            <button onclick="addBudgetFromMain()" class="btn-primary" style="width:100%;">Definir Orçamento</button>
+                        </div>
+                    </div>
+                    <div id="budgetListMain" style="margin-top:20px;"></div>
+                </div>
+            </div>
+
+            <!-- ABA METAS -->
+            <div id="goals" class="tab-content" style="display:none;">
+                <div class="form-section">
+                    <h2>Metas Financeiras</h2>
+                    <p class="hint-text">Crie metas e acompanhe seu progresso</p>
+                    <div id="goalsListMain" style="margin:20px 0;"></div>
+                    <button onclick="showAddGoal()" class="btn-primary">+ Nova Meta</button>
+                </div>
+            </div>
+
         </div><!-- /content-wrapper -->
     </div><!-- /container -->
     <!-- MODAL DE EDIÇÃO -->
@@ -871,298 +788,7 @@
     <script src="mobile-fixes.js"></script>
 
 
-
-
-        <!-- CALENDAR TAB -->
-        <div id="calendar" class="tab-content">
-    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
-        📅 Calendário e Lembretes
-    </h2>
-    <p style="color: var(--text-secondary); margin-bottom: 30px;">
-        Visualize e gerencie seus compromissos financeiros.
-    </p>
-
-    <button onclick="openCalendarModal()" class="btn-primary" style="margin-bottom: 20px;">
-        📅 Abrir Calendário Completo
-    </button>
-
-    <div class="card" style="padding: 20px;">
-        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 15px;">
-            Próximos Compromissos
-        </h3>
-        <div id="upcomingReminders"></div>
     </div>
-</div>
-
-        <!-- QUICK ACTIONS TAB -->
-        <div id="quick-actions" class="tab-content">
-    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
-        ⚡ Ações Rápidas
-    </h2>
-    <p style="color: var(--text-secondary); margin-bottom: 30px;">
-        Acesso rápido às funções mais usadas.
-    </p>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-        
-        <!-- ADICIONAR CRÉDITO -->
-        <div class="card action-card" onclick="document.querySelector('[data-tab=credits]').click()" 
-             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
-            <div style="font-size: 3em; margin-bottom: 15px;">💰</div>
-            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
-                Adicionar Crédito
-            </h3>
-            <p style="color: var(--text-secondary); font-size: 0.9em;">
-                Registrar entrada de dinheiro
-            </p>
-        </div>
-
-        <!-- ADICIONAR DÉBITO -->
-        <div class="card action-card" onclick="document.querySelector('[data-tab=debits]').click()" 
-             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
-            <div style="font-size: 3em; margin-bottom: 15px;">💳</div>
-            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
-                Adicionar Débito
-            </h3>
-            <p style="color: var(--text-secondary); font-size: 0.9em;">
-                Registrar saída de dinheiro
-            </p>
-        </div>
-
-        <!-- COMPRA FUTURA -->
-        <div class="card action-card" onclick="document.querySelector('[data-tab=future]').click()" 
-             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
-            <div style="font-size: 3em; margin-bottom: 15px;">🛒</div>
-            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
-                Compra Futura
-            </h3>
-            <p style="color: var(--text-secondary); font-size: 0.9em;">
-                Planejar compras futuras
-            </p>
-        </div>
-
-        <!-- VER CALENDÁRIO -->
-        <div class="card action-card" onclick="openCalendarModal()" 
-             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
-            <div style="font-size: 3em; margin-bottom: 15px;">📅</div>
-            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
-                Calendário
-            </h3>
-            <p style="color: var(--text-secondary); font-size: 0.9em;">
-                Ver lembretes e datas
-            </p>
-        </div>
-
-        <!-- CRIAR META -->
-        <div class="card action-card" onclick="document.querySelector('[data-tab=goals]').click()" 
-             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
-            <div style="font-size: 3em; margin-bottom: 15px;">🎯</div>
-            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
-                Nova Meta
-            </h3>
-            <p style="color: var(--text-secondary); font-size: 0.9em;">
-                Definir objetivo financeiro
-            </p>
-        </div>
-
-        <!-- DEFINIR ORÇAMENTO -->
-        <div class="card action-card" onclick="document.querySelector('[data-tab=budgets]').click()" 
-             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
-            <div style="font-size: 3em; margin-bottom: 15px;">💼</div>
-            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
-                Definir Orçamento
-            </h3>
-            <p style="color: var(--text-secondary); font-size: 0.9em;">
-                Controlar gastos mensais
-            </p>
-        </div>
-
-        <!-- RECORRENTE -->
-        <div class="card action-card" onclick="openRecurringModal()" 
-             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
-            <div style="font-size: 3em; margin-bottom: 15px;">🔄</div>
-            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
-                Recorrente
-            </h3>
-            <p style="color: var(--text-secondary); font-size: 0.9em;">
-                Pagamento automático
-            </p>
-        </div>
-
-        <!-- EXPORTAR DADOS -->
-        <div class="card action-card" onclick="exportToExcel()" 
-             style="padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
-            <div style="font-size: 3em; margin-bottom: 15px;">📊</div>
-            <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 10px;">
-                Exportar Excel
-            </h3>
-            <p style="color: var(--text-secondary); font-size: 0.9em;">
-                Baixar planilha completa
-            </p>
-        </div>
-
-    </div>
-</div>
-
-        <!-- RECURRING TAB -->
-        <div id="recurring" class="tab-content">
-    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
-        🔄 Transações Recorrentes
-    </h2>
-    <p style="color: var(--text-secondary); margin-bottom: 30px;">
-        Gerencie pagamentos e recebimentos automáticos.
-    </p>
-
-    <!-- BOTÃO NOVA RECORRENTE -->
-    <button onclick="openRecurringModal()" class="btn-primary" style="margin-bottom: 30px;">
-        ➕ Nova Recorrente
-    </button>
-
-    <!-- LISTA DE RECORRENTES -->
-    <div id="recurringList"></div>
-</div>
-
-        <!-- GOALS TAB -->
-        <div id="goals" class="tab-content">
-    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
-        🎯 Metas Financeiras
-    </h2>
-    <p style="color: var(--text-secondary); margin-bottom: 30px;">
-        Defina e acompanhe suas metas financeiras.
-    </p>
-
-    <!-- FORMULÁRIO NOVA META -->
-    <div class="card" style="margin-bottom: 30px; padding: 20px;">
-        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
-            ➕ Nova Meta
-        </h3>
-        <form id="goalForm" onsubmit="addGoal(event)">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div class="form-group">
-                    <label>Nome da Meta</label>
-                    <input type="text" id="goalName" placeholder="Ex: Férias" required>
-                </div>
-                <div class="form-group">
-                    <label>Valor Total</label>
-                    <input type="number" id="goalTarget" step="0.01" placeholder="R$ 0,00" required>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div class="form-group">
-                    <label>Valor Atual</label>
-                    <input type="number" id="goalCurrent" step="0.01" value="0" placeholder="R$ 0,00">
-                </div>
-                <div class="form-group">
-                    <label>Data Limite</label>
-                    <input type="date" id="goalDeadline">
-                </div>
-            </div>
-            <button type="submit" class="btn-primary">Criar Meta</button>
-        </form>
-    </div>
-
-    <!-- LISTA DE METAS -->
-    <div id="goalsList"></div>
-</div>
-
-        <!-- BUDGETS TAB -->
-        <div id="budgets" class="tab-content">
-    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
-        💼 Orçamentos por Categoria
-    </h2>
-    <p style="color: var(--text-secondary); margin-bottom: 30px;">
-        Defina limites de gastos para cada categoria.
-    </p>
-
-    <!-- FORMULÁRIO NOVO ORÇAMENTO -->
-    <div class="card" style="margin-bottom: 30px; padding: 20px;">
-        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
-            ➕ Novo Orçamento
-        </h3>
-        <form id="budgetForm" onsubmit="addBudget(event)">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                <div class="form-group">
-                    <label>Categoria</label>
-                    <select id="budgetCategory" required>
-                        <option value="">Selecione...</option>
-                        <option value="Alimentação">🍔 Alimentação</option>
-                        <option value="Transporte">🚗 Transporte</option>
-                        <option value="Moradia">🏠 Moradia</option>
-                        <option value="Lazer">🎮 Lazer</option>
-                        <option value="Saúde">💊 Saúde</option>
-                        <option value="Educação">📚 Educação</option>
-                        <option value="Compras">🛒 Compras</option>
-                        <option value="Outros">📌 Outros</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Limite Mensal</label>
-                    <input type="number" id="budgetLimit" step="0.01" placeholder="R$ 0,00" required>
-                </div>
-            </div>
-            <button type="submit" class="btn-primary">Definir Orçamento</button>
-        </form>
-    </div>
-
-    <!-- LISTA DE ORÇAMENTOS -->
-    <div id="budgetsList"></div>
-</div>
-
-        <!-- CONFIG TAB -->
-        <div id="config" class="tab-content">
-    <h2 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 20px;">
-        ⚙️ Configurações
-    </h2>
-    <p style="color: var(--text-secondary); margin-bottom: 30px;">
-        Personalize sua experiência no Stiga Finance.
-    </p>
-
-    <div class="card" style="padding: 20px; margin-bottom: 20px;">
-        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 15px;">
-            🎨 Aparência
-        </h3>
-        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
-            <button onclick="toggleTheme()" class="btn-secondary">
-                🌙 Alternar Tema
-            </button>
-            <button onclick="togglePrivacy()" class="btn-secondary">
-                👁️ Modo Privacidade
-            </button>
-        </div>
-    </div>
-
-    <div class="card" style="padding: 20px; margin-bottom: 20px;">
-        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 15px;">
-            👤 Conta
-        </h3>
-        <p style="color: var(--text-secondary); margin-bottom: 10px;">
-            <strong>Email:</strong> <span id="configEmail">carregando...</span>
-        </p>
-        <p style="color: var(--text-secondary); margin-bottom: 15px;">
-            <strong>Conta Principal:</strong> <span id="configAccount">Conta Principal</span>
-        </p>
-        <button onclick="logout()" class="btn-danger">
-            🚪 Sair da Conta
-        </button>
-    </div>
-
-    <div class="card" style="padding: 20px;">
-        <h3 style="font-family: 'Cinzel', serif; color: var(--gold-primary); margin-bottom: 15px;">
-            💾 Dados
-        </h3>
-        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-            <button onclick="exportToExcel()" class="btn-secondary">
-                📊 Exportar Excel
-            </button>
-            <button onclick="if(confirm('Limpar TODOS os dados? Esta ação não pode ser desfeita!')) { localStorage.clear(); location.reload(); }" class="btn-danger">
-                🗑️ Limpar Todos os Dados
-            </button>
-        </div>
-    </div>
-</div>
-
-    </div>
-<!-- FIM MAIN WRAPPER -->
-
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 </body>
 </html>

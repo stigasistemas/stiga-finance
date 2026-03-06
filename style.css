@@ -1,3 +1,5 @@
+*, *::before, *::after { box-sizing: border-box !important; }
+
  /* DIAMOND FINANCE - VERSÃO CORRIGIDA */
 * { 
     margin: 0; 
@@ -17,6 +19,10 @@
     --warning: #F39C12;
     --info: #3498DB;
     --glass-border: rgba(212, 175, 55, 0.2);
+}
+html {
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 body {
     font-family: 'Cormorant Garamond', serif;
@@ -44,18 +50,23 @@ body.light-theme::before {
     background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
 }
 body.light-theme {
-    --bg-dark: #f5f7fa;
-    --bg-card: rgba(255, 255, 255, 0.95);
-    --text-primary: #2c3e50;
-    --text-secondary: #7f8c8d;
-    --glass-border: rgba(52, 73, 94, 0.2);
+    --bg-dark: #f0f2f5;
+    --bg-card: rgba(255, 255, 255, 0.97);
+    --text-primary: #1a202c;
+    --text-secondary: #4a5568;
+    --glass-border: rgba(52, 73, 94, 0.15);
+    --gold-primary: #8B6914;
+    --gold-light: #705210;
+    --gold-dark: #7A5C12;
 }
 .container { 
-    max-width: 1300px; 
+    max-width: 100%; 
+    width: 100%;
     margin: 0 auto; 
     padding: 20px;
     position: relative;
     z-index: 1;
+    box-sizing: border-box;
 }
 /* LOADING */
 .loading-overlay {
@@ -516,9 +527,10 @@ h1 {
 .chart-container h3,
 .control-panel h3 {
     font-family: 'Cinzel', serif;
-    font-size: 1em;
+    font-size: 1.5em;
     color: var(--gold-primary);
-    margin-bottom: 15px;
+    margin-bottom: 18px;
+    letter-spacing: 1.5px;
 }
 .chart-container canvas {
     flex: 1;
@@ -527,9 +539,10 @@ h1 {
 #vencimentoAlert,
 #categoryTotals {
     margin-bottom: 15px;
-    padding: 10px;
+    padding: 12px;
     background: rgba(255,255,255,0.03);
     border-radius: 8px;
+    font-size: 1.15em;
 }
 /* Comparação mensal */
 .comparison-item {
@@ -2020,7 +2033,7 @@ input:focus, select:focus, textarea:focus {
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
     box-shadow: none !important;
-    min-height: 90px;
+    min-height: 125px;
     position: relative;
     overflow: hidden;
     font-family: inherit !important;
@@ -2048,8 +2061,8 @@ input:focus, select:focus, textarea:focus {
 }
 
 .qa-icon-wrap {
-    width: 46px;
-    height: 46px;
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2070,19 +2083,19 @@ input:focus, select:focus, textarea:focus {
 
 .qa-label {
     font-family: 'Cinzel', serif;
-    font-size: 0.75em;
-    font-weight: 600;
-    letter-spacing: 0.8px;
+    font-size: 1.05em;
+    font-weight: 700;
+    letter-spacing: 1px;
     color: var(--gold-primary);
     text-transform: uppercase;
 }
 
 .qa-desc {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 0.78em;
+    font-size: 1.05em;
     color: var(--text-secondary);
     text-align: center;
-    line-height: 1.2;
+    line-height: 1.3;
 }
 
 /* COMPROVANTE — garantir que modal de imagem seja fullscreen-safe */
@@ -2392,6 +2405,9 @@ input:focus, select:focus, textarea:focus {
     margin-left: var(--sidebar-width);
     min-height: 100vh;
     width: calc(100% - var(--sidebar-width));
+    max-width: calc(100% - var(--sidebar-width));
+    overflow-x: hidden;
+    box-sizing: border-box;
     transition: margin-left var(--transition-speed) ease;
 }
 
@@ -2532,16 +2548,717 @@ html {
 }
 
 /* Container sem margin top */
-.container {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
+/* container — layout antigo removido */
 
-/* Esconder header original (muito grande) */
-header {
-    display: none !important;
-}
+/* header visível */
 
 /* ================================================================
    FIM DO FIX
    ================================================================ */
+
+/* ================================================================
+   NOVO LAYOUT: SIDEBAR + MAIN WRAPPER
+   ================================================================ */
+.app-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    max-width: 100vw;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.sidebar {
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    flex-shrink: 0;
+    background: var(--bg-sidebar, rgba(10, 14, 23, 0.98));
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 100;
+    box-sizing: border-box;
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--glass-border);
+}
+.logo-img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    margin-bottom: 2px;
+    filter: drop-shadow(0 0 12px rgba(212,175,55,0.3));
+}
+.logo-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85em;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gold-light, #F4E5C3), var(--gold-primary, #D4AF37));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+    margin-bottom: 1px;
+}
+.logo-subtitle {
+    font-size: 0.72em;
+    color: var(--gold-dark, #B8942A);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.sidebar-menu {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    gap: 4px;
+    flex: 1;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: var(--glass-border);
+    margin: 10px 0;
+}
+
+.tab-button {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #A0A0A0);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    width: 100%;
+    white-space: nowrap;
+}
+.tab-button:hover {
+    background: rgba(212,175,55,0.08);
+    color: var(--gold-light, #F4E5C3);
+    transform: translateX(4px);
+}
+.tab-button.active {
+    background: linear-gradient(90deg, rgba(212,175,55,0.18), transparent);
+    color: var(--gold-primary, #D4AF37);
+    border-left: 3px solid var(--gold-primary, #D4AF37);
+}
+.tab-button svg { stroke: currentColor; }
+
+.main-wrapper {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    max-width: calc(100vw - 260px);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+/* TOPBAR */
+header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px;
+    background: transparent;
+    border-bottom: 1px solid var(--glass-border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.welcome-area { display: flex; align-items: center; }
+
+.header-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 0 !important;
+}
+
+/* Esconder logo antiga dentro do header (substituída pela sidebar) */
+header .logo-imagem,
+header .logo-texto,
+header h1,
+header .subtitle { display: none !important; }
+
+/* CONTAINER dentro do main-wrapper */
+.container {
+    flex: 1;
+    padding: 20px 16px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+/* TABS HORIZONTAIS — esconder (usamos sidebar) */
+.tabs:not(.sidebar-menu) {
+    display: none !important;
+}
+
+/* RESPONSIVE MOBILE */
+@media (max-width: 992px) {
+    .app-layout { flex-direction: column; }
+    .sidebar {
+        width: 100%;
+        min-width: unset;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--glass-border);
+        padding: 12px 16px;
+    }
+    .logo-container { display: none; }
+    .sidebar-menu {
+        flex-direction: row !important;
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+    .tab-button { width: auto; white-space: nowrap; }
+    .sidebar-divider { display: none; }
+}
+/* ================================================================ */
+
+/* SIDEBAR — LABELS DE SEÇÃO */
+.sidebar-section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65em;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(212,175,55,0.45);
+    padding: 4px 16px 2px;
+    margin-top: 2px;
+}
+
+/* ================================================================
+   FIX CRÍTICO: GARANTIR VISIBILIDADE DO PAINEL DE CONTROLE
+   ================================================================ */
+
+
+
+/* ================================================================
+   TEMA CLARO — SIDEBAR E LEGIBILIDADE
+   ================================================================ */
+
+/* Sidebar: mantém fundo escuro no tema claro */
+body.light-theme .sidebar {
+    background: rgba(10, 14, 23, 0.98) !important;
+    border-right: 1px solid rgba(212,175,55,0.2);
+}
+
+/* Textos dentro da sidebar ficam claros para contrastar com o fundo escuro */
+body.light-theme .sidebar .tab-button {
+    color: rgba(255,255,255,0.75);
+}
+body.light-theme .sidebar .tab-button:hover {
+    color: #D4AF37;
+    background: rgba(212,175,55,0.1);
+}
+body.light-theme .sidebar .tab-button.active {
+    color: #D4AF37;
+    background: linear-gradient(90deg, rgba(212,175,55,0.15), transparent);
+    border-left-color: #D4AF37;
+}
+body.light-theme .sidebar .sidebar-section-label {
+    color: rgba(212,175,55,0.45);
+}
+body.light-theme .sidebar .logo-title {
+    background: linear-gradient(135deg, #F4E5C3, #D4AF37);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+body.light-theme .sidebar .logo-subtitle {
+    color: rgba(255,255,255,0.4);
+}
+
+/* Conteúdo principal: fundo claro */
+body.light-theme .main-wrapper {
+    background: transparent;
+}
+body.light-theme header {
+    background: rgba(255,255,255,0.92);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+body.light-theme .welcome-text { color: #1a202c; }
+
+/* Cards e summary */
+body.light-theme .summary-card {
+    background: rgba(255,255,255,0.95);
+    border-color: rgba(0,0,0,0.08);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+body.light-theme .summary-card h3 { color: #8B6914; }
+body.light-theme .summary-value { color: #1a202c; }
+body.light-theme .summary-card.credit .summary-value { color: #16a34a; }
+body.light-theme .summary-card.debit  .summary-value { color: #dc2626; }
+body.light-theme .summary-card.future .summary-value { color: #d97706; }
+
+/* Textos gerais */
+body.light-theme { color: #1a202c; }
+body.light-theme .transaction-item { background: rgba(0,0,0,0.03); color: #1a202c; }
+body.light-theme input, body.light-theme select, body.light-theme textarea {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.15);
+    color: #1a202c;
+}
+body.light-theme input::placeholder { color: #718096; }
+body.light-theme label { color: #1a202c; }
+body.light-theme h2, body.light-theme h3, body.light-theme h4 { color: #1a202c; }
+body.light-theme .hint-text { color: #718096; }
+
+/* Botões do header */
+body.light-theme .header-btn {
+    background: rgba(0,0,0,0.06);
+    color: #1a202c;
+    border: 1px solid rgba(0,0,0,0.12);
+}
+body.light-theme .header-btn:hover { background: rgba(0,0,0,0.1); }
+body.light-theme #accountSelector { background: rgba(0,0,0,0.05); color: #1a202c; border-color: rgba(0,0,0,0.15); }
+
+/* Quick action buttons */
+body.light-theme .quick-action-btn {
+    background: rgba(0,0,0,0.04) !important;
+    border-color: rgba(0,0,0,0.1) !important;
+    color: #8B6914 !important;
+}
+body.light-theme .quick-action-btn:hover {
+    background: rgba(139,105,20,0.08) !important;
+    border-color: #8B6914 !important;
+}
+body.light-theme .qa-label { color: #8B6914 !important; }
+body.light-theme .qa-desc  { color: #718096 !important; }
+
+/* Settings panel */
+body.light-theme .settings-content {
+    background: rgba(255,255,255,0.99);
+    border-color: rgba(0,0,0,0.12);
+}
+body.light-theme .settings-tab { color: #4a5568; border-color: rgba(0,0,0,0.15); }
+body.light-theme .settings-tab.active { background: #8B6914; color: white; border-color: #8B6914; }
+
+/* Modal */
+body.light-theme .modal-content {
+    background: rgba(255,255,255,0.99);
+    border-color: rgba(0,0,0,0.12);
+}
+body.light-theme .modal-content h2 { color: #8B6914; }
+body.light-theme .modal-content label { color: #1a202c; }
+
+/* Painel controle */
+body.light-theme .control-panel h3 { color: #8B6914; }
+body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a202c; }
+
+
+/* ================================================================
+   STIGA FINANCE - CORREÇÕES MOBILE/TABLET
+   Adicione este CSS no final do style.css
+   ================================================================ */
+
+/* FIX 1: CALENDÁRIO - Borda cortada em mobile */
+@media (max-width: 768px) {
+    /* Forçar calendário a caber na tela sem cortar */
+    .cal-modal-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: none !important;
+        box-sizing: border-box !important;
+    }
+    .cal-modal-left {
+        padding: 12px 4px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
+    .cal-grid,
+    .cal-grid-header {
+        grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+        width: 100% !important;
+        gap: 2px !important;
+        box-sizing: border-box !important;
+    }
+    .cal-day {
+        min-width: 0 !important;
+        width: 100% !important;
+        min-height: unset !important;
+        box-sizing: border-box !important;
+        padding: 2px !important;
+        font-size: 0.75em !important;
+    }
+}
+
+/* FIX 2: METAS - Layout correto */
+@media (max-width: 768px) {
+    .goal-item {
+        padding: 14px 12px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .goal-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+        align-items: center !important;
+    }
+    
+    .goal-actions input {
+        flex: 1 !important;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+    
+    .goal-actions button {
+        width: auto !important;
+        max-width: 110px !important;
+        flex-shrink: 0 !important;
+        padding: 8px 12px !important;
+        min-height: unset !important;
+    }
+}
+
+/* FIX 3: ANEXAR COMPROVANTE - Visualização não funciona */
+#attachmentModal {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.95) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+}
+
+#attachmentModal > div {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    max-width: 90vw !important;
+    max-height: 85vh !important;
+    overflow: auto !important;
+    position: relative !important;
+}
+
+#attachmentModal img {
+    display: block !important;
+    max-width: 100% !important;
+    max-height: 70vh !important;
+    object-fit: contain !important;
+    margin: 0 auto !important;
+    border-radius: 8px !important;
+}
+
+@media (max-width: 768px) {
+    #attachmentModal > div {
+        padding: 16px !important;
+        max-width: 95vw !important;
+    }
+    
+    #attachmentModal img {
+        max-height: 60vh !important;
+    }
+}
+
+/* FIX 4: FILTRO - Dropdown não funciona */
+.filter-section {
+    margin-bottom: 20px !important;
+}
+
+.filter-row {
+    display: flex !important;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+}
+
+.filter-select {
+    padding: 10px 14px !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 8px !important;
+    color: var(--text-primary) !important;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 0.95em !important;
+    cursor: pointer !important;
+    min-width: 150px !important;
+    appearance: auto !important;
+    -webkit-appearance: menulist !important;
+    -moz-appearance: menulist !important;
+}
+
+.filter-select option {
+    background: #1a1f2e !important;
+    color: var(--text-primary) !important;
+    padding: 10px !important;
+}
+
+@media (max-width: 768px) {
+    .filter-row {
+        flex-direction: column !important;
+    }
+    
+    .filter-select {
+        width: 100% !important;
+        min-width: unset !important;
+    }
+}
+
+/* FIX 5: BOTÃO EXCLUIR - Assistente atrapalha */
+@media (max-width: 768px) {
+    .transaction-item {
+        position: relative !important;
+        padding: 14px 12px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .delete-btn {
+        position: static !important;
+        margin-top: 10px !important;
+        width: 100% !important;
+        padding: 8px !important;
+        font-size: 0.85em !important;
+    }
+    .delete-btn-small {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+        padding: 0 !important;
+        margin-top: 0 !important;
+    }
+    
+    /* Assistente (chatbot) - posição corrigida */
+    #chatbotBtn {
+        bottom: 80px !important;
+        right: 15px !important;
+        width: 50px !important;
+        height: 50px !important;
+        z-index: 999 !important;
+    }
+    
+    #chatbotWindow {
+        bottom: 140px !important;
+        right: 15px !important;
+        width: calc(100vw - 30px) !important;
+        max-width: 350px !important;
+        max-height: 400px !important;
+    }
+}
+
+/* FIX 6: R$ CORTADO - Valores monetários */
+@media (max-width: 768px) {
+    .summary-value {
+        font-size: 1.6em !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+        padding-right: 5px !important;
+    }
+    
+    .transaction-item .value,
+    .transaction-item strong {
+        font-size: 1em !important;
+        white-space: nowrap !important;
+        min-width: 100px !important;
+        text-align: right !important;
+    }
+    
+    /* Créditos e débitos - alinhamento */
+    #creditsList .transaction-item,
+    #debitsList .transaction-item {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+    
+    #creditsList .transaction-item > div:last-child,
+    #debitsList .transaction-item > div:last-child {
+        flex-shrink: 0 !important;
+        min-width: 110px !important;
+        text-align: right !important;
+    }
+}
+
+/* FIX 7: COMPRAS PROGRAMADAS - Layout mobile */
+@media (max-width: 768px) {
+    .future-item {
+        padding: 14px 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    
+    .future-item .value {
+        font-size: 1.1em !important;
+        white-space: nowrap !important;
+    }
+    
+    .future-item button {
+        width: 100% !important;
+        margin-top: 8px !important;
+    }
+}
+
+/* FIX 8: CARDS RESUMO - Melhor visualização */
+@media (max-width: 768px) {
+    .summary-cards {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    .summary-card {
+        padding: 18px 14px !important;
+    }
+    
+    .summary-card h3 {
+        font-size: 0.9em !important;
+        margin-bottom: 8px !important;
+    }
+}
+
+/* FIX 9: GRÁFICOS - Responsivos */
+@media (max-width: 768px) {
+    .chart-container canvas {
+        max-height: 250px !important;
+    }
+}
+
+/* FIX 10: MODAIS - Melhor em telas pequenas */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        max-height: 90vh !important;
+        margin: 5vh auto !important;
+        padding: 20px 14px !important;
+        overflow-y: auto !important;
+    }
+    
+    .modal-content h2 {
+        font-size: 1.2em !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .modal-content input,
+    .modal-content select,
+    .modal-content textarea {
+        font-size: 16px !important; /* Evita zoom no iOS */
+    }
+}
+
+/* FIX 11: BOTÕES - Tamanho adequado para toque */
+@media (max-width: 768px) {
+    .btn,
+    .action-btn,
+    .edit-btn,
+    button:not(.close):not(.toggle-password):not(.cal-day):not(.cal-nav-btn):not(.cal-modal-close):not(.delete-btn-small) {
+        min-height: 44px !important;
+        padding: 12px 16px !important;
+        font-size: 0.9em !important;
+    }
+}
+
+/* FIX 12: TABS - Melhor em mobile */
+@media (max-width: 768px) {
+    .tabs {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 8px !important;
+    }
+    
+    .tab-button {
+        white-space: nowrap !important;
+        padding: 10px 16px !important;
+        font-size: 0.85em !important;
+    }
+}
+
+/* ================================================================
+   CORREÇÕES ADICIONAIS DE LAYOUT
+   ================================================================ */
+
+/* Garantir que nada vaze da tela */
+@media (max-width: 768px) {
+    *:not(.cal-day):not(.cal-grid):not(.cal-grid-header):not(.cal-modal-close):not(.cal-modal-close svg):not(.cal-nav-btn):not(.cal-modal-box):not(.cal-modal-left):not(.cal-modal-body) {
+        max-width: 100vw !important;
+        overflow-wrap: break-word !important;
+    }
+    
+    body {
+        overflow-x: hidden !important;
+    }
+    
+    .container {
+        padding: 12px !important;
+    }
+}
+
+/* Melhorar legibilidade de textos pequenos */
+@media (max-width: 768px) {
+    small,
+    .account-info,
+    .no-data {
+        font-size: 0.85em !important;
+        line-height: 1.4 !important;
+    }
+}
+
+/* ================================================================
+   FIM DAS CORREÇÕES
+   ================================================================ */
+
+/* ================================================================
+   FIX ANDROID — BOTÃO × DAS METAS
+   ================================================================ */
+@media (max-width: 768px) {
+    .goal-header .delete-btn,
+    .goal-header .delete-btn-small {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        max-width: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 18px !important;
+        line-height: 30px !important;
+        text-align: center !important;
+        border-radius: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+    }
+}
