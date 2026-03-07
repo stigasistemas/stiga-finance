@@ -27,11 +27,11 @@
     <!-- NOTIFICAÇÃO TOAST -->
     <div id="toast" class="toast"></div>
     <!-- CENTRAL DE NOTIFICAÇÕES -->
-    <div id="notificationCenter" class="notification-center">
+    <div id="notificationCenter" class="notification-center" style="z-index:99999;pointer-events:all;">
         <div class="notification-header">
             <h3>Notificações</h3>
             <button onclick="clearAllNotifications()" class="clear-all-btn">Limpar tudo</button>
-            <span class="close-notifications" onclick="toggleNotificationCenter()" style="cursor:pointer; font-size:1.5em;">×</span>
+            <span class="close-notifications" onclick="toggleNotificationCenter()" style="cursor:pointer; font-size:1.5em; position:relative; z-index:99999; pointer-events:all;">×</span>
         </div>
         <div id="notificationList" class="notification-list">
             <p class="no-notifications">Nenhuma notificação</p>
