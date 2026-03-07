@@ -202,6 +202,35 @@ html, body { overflow-x: hidden; }
         min-width: 34px !important;
         padding: 0 !important;
         flex-shrink: 0 !important;
+        /* Sobrescreve button { color: #0A0E17; background: gold } */
+        color: var(--gold-primary, #D4AF37) !important;
+        background: transparent !important;
+        background-image: none !important;
+        box-shadow: none !important;
+        border: 1px solid rgba(212,175,55,0.25) !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .header-svg-btn:hover {
+        background: rgba(212,175,55,0.1) !important;
+        background-image: none !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .header-svg-btn svg {
+        stroke: currentColor !important;
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    /* Botão sair mantém cor vermelha */
+    .logout-btn.header-svg-btn {
+        color: var(--danger, #E74C3C) !important;
+        border-color: var(--danger, #E74C3C) !important;
     }
 
     /* ---- TAB CONTENT ------------------------------------------ */
@@ -322,68 +351,47 @@ html, body { overflow-x: hidden; }
         box-shadow: 0 -2px 30px rgba(0,0,0,0.6) !important;
     }
 
-    /* ── Sobrescreve button { color: #0A0E17 } do style.css ── */
-    nav.mobile-bottom-nav .mobile-nav-btn {
+    .mobile-nav-btn {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 3px !important;
-        padding: 6px 2px !important;
+        gap: 4px !important;
+        padding: 6px 4px !important;
         background: none !important;
-        background-image: none !important;
         border: none !important;
-        box-shadow: none !important;
         cursor: pointer !important;
         flex: 1 !important;
         min-width: 0 !important;
-        color: rgba(255,255,255,0.6) !important;
+        color: rgba(255,255,255,0.32) !important;
         font-family: 'Cinzel', serif !important;
-        font-size: 9px !important;
-        letter-spacing: 0 !important;
+        font-size: 0.48em !important;
+        letter-spacing: 0.3px !important;
         text-transform: uppercase !important;
         -webkit-tap-highlight-color: transparent !important;
         position: relative !important;
         transition: color 0.2s ease !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
     }
 
-    nav.mobile-bottom-nav .mobile-nav-btn:hover {
-        transform: none !important;
-        box-shadow: none !important;
-        background: none !important;
-        background-image: none !important;
-        color: rgba(255,255,255,0.6) !important;
-    }
-
-    nav.mobile-bottom-nav .mobile-nav-btn svg {
+    .mobile-nav-btn svg {
         width: 20px !important;
         height: 20px !important;
         stroke: currentColor !important;
         fill: none !important;
         stroke-width: 1.8 !important;
-        flex-shrink: 0 !important;
         transition: stroke 0.2s ease !important;
     }
 
-    nav.mobile-bottom-nav .mobile-nav-btn.active {
-        color: #E2BE45 !important;
-        background: none !important;
-        background-image: none !important;
-        box-shadow: none !important;
-    }
-
-    nav.mobile-bottom-nav .mobile-nav-btn.active:hover {
+    .mobile-nav-btn.active {
         color: #E2BE45 !important;
     }
 
-    nav.mobile-bottom-nav .mobile-nav-btn:active {
+    .mobile-nav-btn:active {
         transform: scale(0.85) !important;
     }
 
     /* Indicador dourado na aba ativa */
-    nav.mobile-bottom-nav .mobile-nav-btn.active::before {
+    .mobile-nav-btn.active::before {
         content: '' !important;
         position: absolute !important;
         top: 0 !important;
@@ -440,11 +448,11 @@ html, body { overflow-x: hidden; }
         grid-template-columns: 1fr !important;
     }
 
-    nav.mobile-bottom-nav .mobile-nav-btn {
-        font-size: 8px !important;
+    .mobile-nav-btn {
+        font-size: 0.42em !important;
     }
 
-    nav.mobile-bottom-nav .mobile-nav-btn svg {
+    .mobile-nav-btn svg {
         width: 18px !important;
         height: 18px !important;
     }
