@@ -536,7 +536,8 @@ h1 {
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 .chart-container {
-    min-height: 350px;
+    min-height: 420px;
+    height: 420px;
     display: flex;
     flex-direction: column;
 }
@@ -550,7 +551,10 @@ h1 {
 }
 .chart-container canvas {
     flex: 1;
-    max-height: 280px !important;
+    min-height: 300px !important;
+    max-height: 320px !important;
+    height: 300px !important;
+    width: 100% !important;
 }
 #vencimentoAlert,
 #categoryTotals {
@@ -3144,8 +3148,14 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
 
 /* FIX 9: GRÁFICOS - Responsivos */
 @media (max-width: 768px) {
+    .chart-container {
+        min-height: 300px !important;
+        height: 300px !important;
+    }
     .chart-container canvas {
-        max-height: 250px !important;
+        min-height: 220px !important;
+        max-height: 240px !important;
+        height: 220px !important;
     }
 }
 
@@ -3267,15 +3277,15 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
 /* LINHA DOS GRÁFICOS - 2 colunas contidas */
 .charts-row {
     display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr) !important;
     gap: 20px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
 }
 .charts-row .summary-card {
-    min-width: 0;
+    min-width: 300px;
     max-width: 100%;
     overflow: hidden;
     box-sizing: border-box;

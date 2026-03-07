@@ -192,6 +192,8 @@ function initApp() {
         renderRecurring();
         renderGoalsList();
         updateSummary();
+        // Re-renderizar gráficos após layout estabilizar
+        setTimeout(() => { updateChart(); updateBalanceEvolutionChart(); }, 400);
         setTimeout(processRecurringTransactions, 500);
         setLayoutMode(layoutMode);
         hideLoading();
@@ -1020,6 +1022,8 @@ Pode digitar em linguagem natural! 😊`;
 // GRÁFICOS
 // ========================================
 function updateChart() {
+    const canvas0 = document.getElementById('expenseChart');
+    if (canvas0 && canvas0.offsetWidth === 0) { setTimeout(updateChart, 150); return; }
     const canvas = document.getElementById('expenseChart');
     if (!canvas) return;
     try {
@@ -1039,6 +1043,8 @@ function updateChart() {
     } catch (e) { console.error('Erro no gráfico:', e); }
 }
 function updateBalanceEvolutionChart() {
+    const canvas2 = document.getElementById('balanceEvolutionChart');
+    if (canvas2 && canvas2.offsetWidth === 0) { setTimeout(updateBalanceEvolutionChart, 150); return; }
     const canvas = document.getElementById('balanceEvolutionChart');
     if (!canvas) return;
     try {
@@ -1105,8 +1111,11 @@ function updateSummary() {
     const accName = accounts[currentAccount]?.name || 'Conta';
     ['accountCredit','accountDebit','accountBalance','accountFuture'].forEach(id => el(id, accName));
     renderLists();
-    updateChart();
-    updateBalanceEvolutionChart();
+    // Delay para garantir que o canvas já tem dimensões no DOM
+    setTimeout(() => {
+        updateChart();
+        updateBalanceEvolutionChart();
+    }, 100);
     checkVencimentos();
     showCategoryTotals();
     renderMonthComparison();
