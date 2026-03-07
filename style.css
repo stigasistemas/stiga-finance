@@ -793,6 +793,30 @@ button:hover {
 button:active {
     transform: translateY(0);
 }
+
+/* Botões de ícone: fundo transparente, cor dourada */
+.header-svg-btn,
+.mobile-nav-btn,
+.sidebar-toggle-btn {
+    background: transparent;
+    background-image: none;
+    color: var(--gold-primary);
+    padding: 0;
+    box-shadow: none;
+}
+.header-svg-btn:hover,
+.sidebar-toggle-btn:hover {
+    background: rgba(212,175,55,0.1);
+    background-image: none;
+    box-shadow: none;
+    transform: none;
+}
+.mobile-nav-btn:hover {
+    background: none;
+    background-image: none;
+    box-shadow: none;
+    transform: none;
+}
 .btn-primary {
     width: 100%;
     margin-top: 15px;
