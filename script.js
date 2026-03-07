@@ -384,7 +384,8 @@ function clearAllNotifications() {
 function toggleNotificationCenter() {
     const c = document.getElementById('notificationCenter');
     if (!c) return;
-    if (c.classList.contains('active')) {
+    const isOpen = c.classList.contains('active');
+    if (isOpen) {
         c.classList.remove('active');
         c.style.right = '-400px';
         c.style.pointerEvents = 'none';
