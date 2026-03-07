@@ -383,7 +383,17 @@ function clearAllNotifications() {
 }
 function toggleNotificationCenter() {
     const c = document.getElementById('notificationCenter');
-    if (c) c.classList.toggle('active');
+    if (!c) return;
+    if (c.classList.contains('active')) {
+        c.classList.remove('active');
+        c.style.right = '-400px';
+        c.style.pointerEvents = 'none';
+    } else {
+        c.classList.add('active');
+        c.style.right = '0';
+        c.style.pointerEvents = 'all';
+        c.style.zIndex = '99999';
+    }
 }
 
 // ========================================
