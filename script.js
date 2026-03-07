@@ -460,6 +460,10 @@ function deleteCustomCategory(type, category) {
     updateCategorySelects();
     showToast('Categoria removida', 'info');
 }
+// Função auxiliar que retorna customCategories (usada em initializeFilters e outros locais)
+function getCategories() {
+    return customCategories;
+}
 function renderCustomCategories() {
     const list = document.getElementById('customCategoriesList');
     if (list) list.innerHTML = customCategories[currentCategoryType].map(cat => `
