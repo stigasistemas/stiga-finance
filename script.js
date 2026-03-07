@@ -1433,15 +1433,15 @@ function setupTabs() {
         btn.addEventListener('click', function () {
             const tabId = this.getAttribute('data-tab');
             if (!tabId || tabId === 'calendar' || tabId === 'settings') return;
-
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            this.classList.add('active');
-            const target = document.getElementById(tabId);
-            if (target) target.classList.add('active');
+            navigateToTab(tabId);
+            syncMobileNav(tabId);
         });
     });
+    // Garantir aba inicial visivel
+    const firstActive = document.querySelector('.tab-button.active');
+    const firstTab = firstActive ? firstActive.getAttribute('data-tab') : 'credits';
+    const firstContent = document.getElementById(firstTab);
+    if (firstContent) { firstContent.classList.add('active'); firstContent.style.display = 'block'; }
 }
 
 // ========================================
@@ -2694,13 +2694,28 @@ console.log('✅ Sistema de filtros carregado');// =============================
 
 // TOGGLE SIDEBAR (MOBILE)
 function toggleSidebar() {
-    const sidebar = document.querySelector('.sidebar-pro');
-    const overlay = document.querySelector('.sidebar-overlay');
-    const toggle = document.querySelector('.sidebar-toggle-btn');
-    
-    sidebar?.classList.toggle('active');
-    overlay?.classList.toggle('active');
-    toggle?.classList.toggle('active');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const toggle = document.getElementById('sidebarToggle');
+    if (!sidebar) return;
+    sidebar.classList.toggle('active');
+    if (overlay) overlay.classList.toggle('active');
+    if (toggle) toggle.classList.toggle('active');
+}
+
+function mobileNavTo(tabName) {
+    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+    const map = { credits:'mbnCredits', debits:'mbnDebits', future:'mbnFuture', overview:'mbnOverview' };
+    const b = document.getElementById(map[tabName]);
+    if (b) b.classList.add('active');
+    navigateToTab(tabName);
+}
+
+function syncMobileNav(tabName) {
+    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+    const map = { credits:'mbnCredits', debits:'mbnDebits', future:'mbnFuture', overview:'mbnOverview' };
+    const b = document.getElementById(map[tabName]);
+    if (b) b.classList.add('active');
 }
 
 // NAVEGAÇÃO ENTRE TABS
