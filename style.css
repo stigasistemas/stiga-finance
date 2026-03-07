@@ -263,19 +263,22 @@ h1 {
 .notification-center {
     position: fixed;
     top: 0;
-    right: -400px;
+    right: 0;
     width: 400px;
     height: 100vh;
     background: var(--bg-card);
     border-left: 2px solid var(--gold-primary);
     box-shadow: -5px 0 30px rgba(0,0,0,0.5);
-    z-index: 9998;
-    transition: right 0.4s ease;
+    z-index: 999999;
+    transition: transform 0.4s ease;
     display: flex;
     flex-direction: column;
+    transform: translateX(110%);
+    pointer-events: none;
 }
 .notification-center.active { 
-    right: 0; 
+    transform: translateX(0);
+    pointer-events: all;
 }
 .notification-header {
     padding: 20px;
@@ -1296,12 +1299,13 @@ button:active {
     }
     
     .notification-center { 
-        width: 100%; 
-        right: -100%;
+        width: 100vw;
+        transform: translateX(110%);
+        right: 0;
     }
     
     .notification-center.active {
-        right: 0;
+        transform: translateX(0);
     }
     
     .modal-content {
@@ -3275,19 +3279,4 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
     max-width: 100%;
     overflow: hidden;
     box-sizing: border-box;
-}
-/* Fix: fechar notificações */
-.notification-center {
-    z-index: 9999 !important;
-}
-
-#notificationCenter button,
-#notificationCenter .close-btn {
-    pointer-events: all !important;
-    z-index: 10000 !important;
-    position: relative !important;
-}
-
-iframe {
-    pointer-events: none !important;
 }

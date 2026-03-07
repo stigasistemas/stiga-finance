@@ -384,38 +384,8 @@ function clearAllNotifications() {
 function toggleNotificationCenter() {
     const c = document.getElementById('notificationCenter');
     if (!c) return;
-    const isOpen = c.classList.contains('active');
-    if (isOpen) {
-        c.classList.remove('active');
-    } else {
-        c.classList.add('active');
-        c.style.zIndex = '999999';
-    }
+    c.classList.toggle('active');
 }
-
-// Event listener com capture:true para garantir que o clique no X
-// chegue antes de qualquer iframe do Firebase interceptar
-(function setupNotifClose() {
-    function attach() {
-        const btn = document.getElementById('btnCloseNotif');
-        if (btn) {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleNotificationCenter();
-            }, true);
-            btn.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleNotificationCenter();
-            }, true);
-        }
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', attach);
-    } else {
-        attach();
-    }
-})();
 
 // ========================================
 // CONTAS
