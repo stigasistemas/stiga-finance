@@ -283,6 +283,9 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
 }
 .notification-header h3 {
     font-family: 'Cinzel', serif;
@@ -295,6 +298,16 @@ h1 {
     color: var(--text-secondary);
     line-height: 1;
     transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 99;
+    pointer-events: all !important;
 }
 .close-notifications:hover {
     color: var(--gold-primary);
