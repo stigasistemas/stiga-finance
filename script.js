@@ -202,6 +202,9 @@ function initApp() {
         // Tabs
         setupTabs();
 
+        // Filtros (após Firebase carregar customCategories)
+        setTimeout(initializeFilters, 300);
+
         // Scroll animations
         setTimeout(initScrollAnimations, 600);
         setTimeout(updateReminderBadge, 1000);
@@ -2680,16 +2683,7 @@ function clearFilters() {
     renderLists();
 }
 
-// Inicializar filtros quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Inicializando sistema...');
-    
-    // Aguardar 500ms para garantir que tudo carregou
-    setTimeout(() => {
-        initializeFilters();
-        renderLists();
-    }, 500);
-});
+// initializeFilters é chamado pelo initApp() após Firebase carregar
 
 console.log('✅ Sistema de filtros carregado');// ================================================================
 // SIDEBAR LATERAL PROFISSIONAL - JAVASCRIPT
