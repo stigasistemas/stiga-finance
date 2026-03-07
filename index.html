@@ -16,9 +16,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        iframe { pointer-events: none !important; }
-        #notificationCenter.active { pointer-events: all !important; }
-        #notificationCenter.active * { pointer-events: all !important; }
+        iframe { pointer-events: none !important; z-index: -1 !important; }
+        #notificationCenter { z-index: 999999 !important; }
+        #notificationCenter * { pointer-events: all !important; }
+        #btnCloseNotif {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            z-index: 9999999 !important;
+            position: relative !important;
+            pointer-events: all !important;
+        }
     </style>
 </head>
 <body>
@@ -36,7 +49,7 @@
         <div class="notification-header">
             <h3>Notificações</h3>
             <button onclick="clearAllNotifications()" class="clear-all-btn">Limpar tudo</button>
-            <span class="close-notifications" onclick="toggleNotificationCenter()" style="cursor:pointer; font-size:1.5em;">×</span>
+            <span class="close-notifications" id="btnCloseNotif" style="cursor:pointer; font-size:1.5em;">×</span>
         </div>
         <div id="notificationList" class="notification-list">
             <p class="no-notifications">Nenhuma notificação</p>
