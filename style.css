@@ -2720,25 +2720,9 @@ header .subtitle { display: none !important; }
     display: none !important;
 }
 
-/* RESPONSIVE MOBILE */
+/* RESPONSIVE MOBILE — neutralizado, gerenciado pelo mobile-fixes.css */
 @media (max-width: 992px) {
-    .app-layout { flex-direction: column; }
-    .sidebar {
-        width: 100%;
-        min-width: unset;
-        height: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--glass-border);
-        padding: 12px 16px;
-    }
-    .logo-container { display: none; }
-    .sidebar-menu {
-        flex-direction: row !important;
-        overflow-x: auto;
-        padding-bottom: 8px;
-    }
-    .tab-button { width: auto; white-space: nowrap; }
-    .sidebar-divider { display: none; }
+    /* regras movidas para mobile-fixes.css */
 }
 /* ================================================================ */
 
