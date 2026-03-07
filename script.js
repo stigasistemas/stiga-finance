@@ -634,42 +634,119 @@ function exportToCSV() {
     showToast('📥 CSV exportado!', 'success');
 }
 function backupData() {
-    const backup = { version:'2.0', user:currentUser, date:new Date().toISOString(), accounts, settings, customCategories, recurringTransactions, notifications, budgets, goals };
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type:'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `stiga_backup_${currentUser}_${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    showToast('💾 Backup realizado!', 'success');
+    try {
+        // Garante que a conta atual está salva no objeto accounts
+        accounts[currentAccount] = {
+            ...(accounts[currentAccount] || {}),
+            credits,
+            debits,
+            futurePurchases
+        };
+        const backup = {
+            version: '2.1',
+            user: currentUser,
+            date: new Date().toISOString(),
+            accounts,
+            settings,
+            customCategories,
+            recurringTransactions,
+            notifications,
+            budgets,
+            goals,
+            theme,
+            layoutMode,
+            currentAccount
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `stiga_backup_${(currentUser||'user').replace(/[^a-z0-9]/gi,'_')}_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+        showToast('💾 Backup realizado com sucesso!', 'success');
+    } catch(e) {
+        console.error('Erro no backup:', e);
+        showToast('❌ Erro ao gerar backup', 'error');
+    }
 }
+
 function restoreData() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
     input.onchange = (e) => {
         const file = e.target.files[0];
+        if (!file) { document.body.removeChild(input); return; }
+
         const reader = new FileReader();
         reader.onload = (ev) => {
+            document.body.removeChild(input);
             try {
                 const bkp = JSON.parse(ev.target.result);
-                if (!bkp.version || !bkp.accounts) { showToast('❌ Arquivo inválido', 'error'); return; }
-                if (confirm('Restaurar backup? Isso substituirá todos os dados atuais!')) {
-                    accounts = bkp.accounts;
-                    settings = bkp.settings || settings;
-                    customCategories = bkp.customCategories || customCategories;
-                    recurringTransactions = bkp.recurringTransactions || [];
-                    notifications = bkp.notifications || [];
-                    budgets = bkp.budgets || {};
-                    goals = bkp.goals || [];
-                    saveToFirestore().then(() => {
-                        showToast('✅ Backup restaurado!', 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    });
+
+                // Validação básica
+                if (!bkp.accounts) {
+                    showToast('❌ Arquivo de backup inválido', 'error');
+                    return;
                 }
-            } catch (err) { showToast('❌ Erro ao ler backup', 'error'); }
+
+                if (!confirm('Restaurar backup?\n\nIsso substituirá TODOS os dados atuais.\nUm reload será feito em seguida.')) return;
+
+                // Restaurar todas as variáveis
+                accounts              = bkp.accounts;
+                settings              = bkp.settings              || settings;
+                customCategories      = bkp.customCategories      || customCategories;
+                recurringTransactions = bkp.recurringTransactions  || [];
+                notifications         = bkp.notifications          || [];
+                budgets               = bkp.budgets                || {};
+                goals                 = bkp.goals                  || [];
+                theme                 = bkp.theme                  || theme || 'dark';
+                layoutMode            = bkp.layoutMode             || layoutMode || 'tabs';
+
+                // Restaurar conta atual
+                const restoredAccount = bkp.currentAccount || 'main';
+                currentAccount = Object.keys(accounts).includes(restoredAccount) ? restoredAccount : Object.keys(accounts)[0] || 'main';
+
+                // Atualizar variáveis locais da conta
+                credits         = accounts[currentAccount]?.credits         || [];
+                debits          = accounts[currentAccount]?.debits          || [];
+                futurePurchases = accounts[currentAccount]?.futurePurchases || [];
+
+                showToast('⏳ Restaurando dados...', 'info');
+
+                if (currentUserUID && db) {
+                    saveToFirestore()
+                        .then(() => {
+                            showToast('✅ Backup restaurado com sucesso!', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        })
+                        .catch((err) => {
+                            console.error('Erro Firestore:', err);
+                            showToast('❌ Erro ao salvar no servidor', 'error');
+                        });
+                } else {
+                    // Sem Firestore: salva local e recarrega
+                    showToast('✅ Backup restaurado!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                }
+
+            } catch (err) {
+                console.error('Erro ao restaurar:', err);
+                showToast('❌ Arquivo corrompido ou inválido', 'error');
+            }
+        };
+        reader.onerror = () => {
+            document.body.removeChild(input);
+            showToast('❌ Erro ao ler o arquivo', 'error');
         };
         reader.readAsText(file);
     };
+
     input.click();
 }
 
@@ -1138,21 +1215,10 @@ function deleteItem(type, i) {
 }
 function payItem(i) {
     const item = futurePurchases[i];
-    // Usa a data original da fatura (dueDate), não a data de hoje
-    const faturaDate = item.dueDate || new Date().toISOString().split('T')[0];
-    debits.unshift({
-        amount: item.amount,
-        category: item.category || 'Contas',
-        date: faturaDate,
-        description: `PAGO: ${item.description}`,
-        tags: ['pago'],
-        account: item.account || currentAccount,
-        _originalDueDate: faturaDate
-    });
+    debits.unshift({ amount: item.amount, category: "Contas", date: new Date().toISOString().split('T')[0], description: `PAGO: ${item.description}`, tags: ['pago'] });
     futurePurchases.splice(i, 1);
     saveAccounts();
     updateSummary();
-    renderLists();
     showToast('💳 Pagamento registrado!', 'success');
     addNotification('✅ Pagamento', `${item.description} foi pago`, 'success');
 }
@@ -1175,12 +1241,11 @@ function undoPayment(index) {
     // Extrair descrição original (sem o "PAGO:")
     const originalDescription = debit.description.replace('PAGO: ', '');
     
-    // Criar item em compras futuras restaurando a data original da fatura
+    // Criar item em compras futuras
     const futureItem = {
         amount: debit.amount,
-        dueDate: debit._originalDueDate || debit.date,
+        dueDate: debit.date,
         description: originalDescription,
-        category: debit.category,
         account: debit.account || currentAccount
     };
     
@@ -3559,47 +3624,36 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===== FIX 2: BOTÃO TESTAR ALERTA =====
 function testAlert() {
     console.log('🔔 Testando alerta...');
-
-    // ── Toca o mesmo som de playNotificationSound() ──
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const play = () => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.frequency.value = 800;
-            osc.type = 'sine';
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.5);
-        };
-        if (ctx.state === 'suspended') { ctx.resume().then(play); } else { play(); }
-    } catch(e) { console.warn('Erro AudioContext:', e); }
-
-    // ── Notificação do navegador ──
+    
+    // Verificar permissão de notificações
     if ('Notification' in window) {
         if (Notification.permission === 'granted') {
+            // Criar notificação
             new Notification('🎯 Teste de Alerta - Stiga Finance', {
-                body: 'Sistema de alertas funcionando corretamente!',
-                icon: 'logo-stiga.png'
+                body: 'Esta é uma notificação de teste. Sistema funcionando corretamente!',
+                icon: 'logo-stiga.png',
+                badge: 'logo-stiga.png'
             });
-            showToast('🔔 Alerta testado com sucesso!', 'success');
+            showToast('🔔 Notificação enviada!', 'success');
         } else if (Notification.permission !== 'denied') {
+            // Pedir permissão
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
-                    new Notification('🎯 Stiga Finance', { body: 'Alertas ativados!', icon: 'logo-stiga.png' });
+                    new Notification('🎯 Teste de Alerta - Stiga Finance', {
+                        body: 'Permissão concedida! Agora você receberá alertas de vencimento.',
+                        icon: 'logo-stiga.png'
+                    });
                     showToast('✅ Permissão concedida!', 'success');
                 } else {
-                    showToast('🔔 Som testado! (Notificações bloqueadas no navegador)', 'info');
+                    showToast('❌ Permissão negada pelo navegador', 'error');
                 }
             });
         } else {
-            showToast('🔔 Som testado! (Notificações bloqueadas no navegador)', 'info');
+            showToast('❌ Notificações bloqueadas. Ative nas configurações do navegador.', 'error');
         }
     } else {
-        showToast('🔔 Som testado!', 'success');
+        // Navegador não suporta
+        showToast('⚠️ Seu navegador não suporta notificações', 'info');
     }
 }
 
