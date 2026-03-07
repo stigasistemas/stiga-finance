@@ -3263,3 +3263,18 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
     overflow: hidden;
     box-sizing: border-box;
 }
+/* Fix: fechar notificações */
+.notification-center {
+    z-index: 9999 !important;
+}
+
+#notificationCenter button,
+#notificationCenter .close-btn {
+    pointer-events: all !important;
+    z-index: 10000 !important;
+    position: relative !important;
+}
+
+iframe {
+    pointer-events: none !important;
+}
