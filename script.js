@@ -1138,10 +1138,21 @@ function deleteItem(type, i) {
 }
 function payItem(i) {
     const item = futurePurchases[i];
-    debits.unshift({ amount: item.amount, category: "Contas", date: new Date().toISOString().split('T')[0], description: `PAGO: ${item.description}`, tags: ['pago'] });
+    // Usa a data original da fatura (dueDate), não a data de hoje
+    const faturaDate = item.dueDate || new Date().toISOString().split('T')[0];
+    debits.unshift({
+        amount: item.amount,
+        category: item.category || 'Contas',
+        date: faturaDate,
+        description: `PAGO: ${item.description}`,
+        tags: ['pago'],
+        account: item.account || currentAccount,
+        _originalDueDate: faturaDate
+    });
     futurePurchases.splice(i, 1);
     saveAccounts();
     updateSummary();
+    renderLists();
     showToast('💳 Pagamento registrado!', 'success');
     addNotification('✅ Pagamento', `${item.description} foi pago`, 'success');
 }
@@ -1164,11 +1175,12 @@ function undoPayment(index) {
     // Extrair descrição original (sem o "PAGO:")
     const originalDescription = debit.description.replace('PAGO: ', '');
     
-    // Criar item em compras futuras
+    // Criar item em compras futuras restaurando a data original da fatura
     const futureItem = {
         amount: debit.amount,
-        dueDate: debit.date,
+        dueDate: debit._originalDueDate || debit.date,
         description: originalDescription,
+        category: debit.category,
         account: debit.account || currentAccount
     };
     
@@ -3547,36 +3559,47 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===== FIX 2: BOTÃO TESTAR ALERTA =====
 function testAlert() {
     console.log('🔔 Testando alerta...');
-    
-    // Verificar permissão de notificações
+
+    // ── Toca o mesmo som de playNotificationSound() ──
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const play = () => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 800;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.5);
+        };
+        if (ctx.state === 'suspended') { ctx.resume().then(play); } else { play(); }
+    } catch(e) { console.warn('Erro AudioContext:', e); }
+
+    // ── Notificação do navegador ──
     if ('Notification' in window) {
         if (Notification.permission === 'granted') {
-            // Criar notificação
             new Notification('🎯 Teste de Alerta - Stiga Finance', {
-                body: 'Esta é uma notificação de teste. Sistema funcionando corretamente!',
-                icon: 'logo-stiga.png',
-                badge: 'logo-stiga.png'
+                body: 'Sistema de alertas funcionando corretamente!',
+                icon: 'logo-stiga.png'
             });
-            showToast('🔔 Notificação enviada!', 'success');
+            showToast('🔔 Alerta testado com sucesso!', 'success');
         } else if (Notification.permission !== 'denied') {
-            // Pedir permissão
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
-                    new Notification('🎯 Teste de Alerta - Stiga Finance', {
-                        body: 'Permissão concedida! Agora você receberá alertas de vencimento.',
-                        icon: 'logo-stiga.png'
-                    });
+                    new Notification('🎯 Stiga Finance', { body: 'Alertas ativados!', icon: 'logo-stiga.png' });
                     showToast('✅ Permissão concedida!', 'success');
                 } else {
-                    showToast('❌ Permissão negada pelo navegador', 'error');
+                    showToast('🔔 Som testado! (Notificações bloqueadas no navegador)', 'info');
                 }
             });
         } else {
-            showToast('❌ Notificações bloqueadas. Ative nas configurações do navegador.', 'error');
+            showToast('🔔 Som testado! (Notificações bloqueadas no navegador)', 'info');
         }
     } else {
-        // Navegador não suporta
-        showToast('⚠️ Seu navegador não suporta notificações', 'info');
+        showToast('🔔 Som testado!', 'success');
     }
 }
 

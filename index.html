@@ -37,6 +37,9 @@
             <p class="no-notifications">Nenhuma notificação</p>
         </div>
     </div>
+    <!-- OVERLAY SIDEBAR MOBILE -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <div class="app-layout">
         <!-- ===== SIDEBAR LATERAL ===== -->
         <aside class="sidebar" id="sidebar">
@@ -162,7 +165,7 @@
                         </select>
                     </div>
                     
-                    <button onclick="testNotification()" class="btn-secondary">Testar Alerta</button>
+                    <button onclick="testAlert()" class="btn-secondary">Testar Alerta</button>
                 </div>
                 <!-- ABA CONTAS -->
                 <div id="accounts-settings" class="settings-tab-content">
@@ -253,7 +256,7 @@
             </div>
         </div>
         <!-- SEÇÃO DE GRÁFICOS E DASHBOARD -->
-        <div class="summary-cards" style="grid-template-columns: 1fr 1fr;">
+        <div class="summary-cards charts-row">
             <div class="summary-card chart-container">
                 <h3>Distribuição de Gastos</h3>
                 <canvas id="expenseChart" style="max-height: 300px;"></canvas>
@@ -790,5 +793,30 @@
 
     </div>
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- BOTTOM NAVIGATION (MOBILE) -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <button class="mobile-nav-btn active" id="mbnCredits" onclick="mobileNavTo('credits')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Créditos
+        </button>
+        <button class="mobile-nav-btn" id="mbnDebits" onclick="mobileNavTo('debits')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Débitos
+        </button>
+        <button class="mobile-nav-btn" id="mbnFuture" onclick="mobileNavTo('future')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Futuras
+        </button>
+        <button class="mobile-nav-btn" id="mbnOverview" onclick="mobileNavTo('overview')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </button>
+        <button class="mobile-nav-btn" id="mbnMore" onclick="toggleSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
+            Mais
+        </button>
+    </nav>
+
 </body>
 </html>

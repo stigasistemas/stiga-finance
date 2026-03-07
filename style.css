@@ -977,7 +977,7 @@ button:active {
 .chatbot {
     position: fixed;
     bottom: 80px;
-    right: 20px;
+    left: 20px;
     width: 350px;
     height: 480px;
     background: var(--bg-card);
@@ -1080,7 +1080,7 @@ button:active {
 .chatbot-button {
     position: fixed;
     bottom: 20px;
-    right: 20px;
+    left: 20px;
     width: 58px;
     height: 58px;
     border-radius: 50%;
@@ -3261,4 +3261,21 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
         -webkit-appearance: none !important;
         appearance: none !important;
     }
+}
+
+/* LINHA DOS GRÁFICOS - 2 colunas contidas */
+.charts-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.charts-row .summary-card {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
