@@ -1776,13 +1776,9 @@ function renderGoalsList() {
     const emptyHTML = `
         <div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
             <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;margin-bottom:18px;display:block;margin-left:auto;margin-right:auto;">
-                <circle cx="12" cy="12" r="10"/>
-                <circle cx="12" cy="12" r="6"/>
-                <circle cx="12" cy="12" r="2"/>
-                <line x1="12" y1="2" x2="12" y2="4"/>
-                <line x1="12" y1="20" x2="12" y2="22"/>
-                <line x1="2" y1="12" x2="4" y2="12"/>
-                <line x1="20" y1="12" x2="22" y2="12"/>
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
             </svg>
             <h3 style="font-family:'Cinzel',serif;color:var(--gold-primary);margin-bottom:8px;font-size:1.05em;letter-spacing:1px;">Nenhuma meta definida</h3>
             <p style="font-size:0.88em;max-width:360px;margin:0 auto;line-height:1.6;">Defina objetivos como viagem, reserva de emergencia ou uma compra especial.</p>
@@ -1791,28 +1787,27 @@ function renderGoalsList() {
     const html = (!goals || goals.length === 0) ? emptyHTML : goals.map((g, i) => {
         const cur = parseFloat(g.current || 0);
         const tgt = parseFloat(g.target || 1);
-        const pct = Math.min(cur / tgt * 100, 100).toFixed(1);
+        const pct = Math.min(cur / tgt * 100, 100).toFixed(0);
         const remaining = tgt - cur;
         const color = remaining <= 0 ? 'var(--success)' : 'var(--gold-primary)';
         return `
-        <div style="margin-bottom:14px;padding:14px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:10px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <strong style="color:var(--gold-light);font-size:1.35em;letter-spacing:0.3px;">${g.name}</strong>
-                <button onclick="deleteGoal(${i})" style="padding:3px 9px;font-size:0.85em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;">&times;</button>
+        <div style="margin-bottom:14px;padding:14px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span style="color:var(--text-primary);font-weight:600;font-size:1.2em;">${g.name}</span>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:1.5em;color:${color};font-weight:700;">${pct}% \u2014 ${formatCurrency(cur)} / ${formatCurrency(tgt)}</span>
+                    <button onclick="deleteGoal(${i})" style="padding:3px 8px;font-size:0.8em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;">&times;</button>
+                </div>
             </div>
-            <div style="height:10px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;margin-bottom:10px;">
-                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-primary));border-radius:3px;transition:width 0.5s;"></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:1.25em;margin-bottom:12px;">
-                <span style="color:var(--text-secondary)">${formatCurrency(cur)} de ${formatCurrency(tgt)} (${pct}%)</span>
-                <span style="color:${color}">${remaining <= 0 ? '&#10003; Meta atingida!' : 'Faltam ' + formatCurrency(remaining)}</span>
+            <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;margin-bottom:10px;">
+                <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;transition:width 0.5s;"></div>
             </div>
             <div style="display:flex;gap:8px;">
                 <input type="number" id="goalAdd_${i}" placeholder="Valor a adicionar" step="0.01" min="0"
                     style="flex:1;padding:10px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--glass-border);border-radius:7px;color:var(--text-primary);font-size:1em;">
                 <button onclick="addToGoalDirect(${i})" style="padding:10px 18px;border-radius:7px;background:linear-gradient(135deg,var(--gold-dark),var(--gold-primary));border:none;color:#0A0E17;font-weight:700;cursor:pointer;font-size:1em;">+ Adicionar</button>
             </div>
-            ${g.deadline ? '<small style="color:var(--text-secondary);margin-top:8px;display:block;font-size:1.1em;">Prazo: ' + formatDate(g.deadline) + '</small>' : ''}
+            ${g.deadline ? '<small style="color:var(--text-secondary);margin-top:8px;display:block;font-size:0.85em;">Prazo: ' + formatDate(g.deadline) + '</small>' : ''}
         </div>`;
     }).join('');
 
