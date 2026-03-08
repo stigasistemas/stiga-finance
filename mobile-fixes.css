@@ -202,35 +202,6 @@ html, body { overflow-x: hidden; }
         min-width: 34px !important;
         padding: 0 !important;
         flex-shrink: 0 !important;
-        /* Sobrescreve button { color: #0A0E17; background: gold } */
-        color: var(--gold-primary, #D4AF37) !important;
-        background: transparent !important;
-        background-image: none !important;
-        box-shadow: none !important;
-        border: 1px solid rgba(212,175,55,0.25) !important;
-        border-radius: 50% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    .header-svg-btn:hover {
-        background: rgba(212,175,55,0.1) !important;
-        background-image: none !important;
-        transform: none !important;
-        box-shadow: none !important;
-    }
-
-    .header-svg-btn svg {
-        stroke: currentColor !important;
-        width: 16px !important;
-        height: 16px !important;
-    }
-
-    /* Botão sair mantém cor vermelha */
-    .logout-btn.header-svg-btn {
-        color: var(--danger, #E74C3C) !important;
-        border-color: var(--danger, #E74C3C) !important;
     }
 
     /* ---- TAB CONTENT ------------------------------------------ */
@@ -456,4 +427,71 @@ html, body { overflow-x: hidden; }
         width: 18px !important;
         height: 18px !important;
     }
+}
+
+/* ================================================================
+   ALINHAMENTO ÍCONES HEADER + SCROLL AUTOMÁTICO
+   ================================================================ */
+@media (max-width: 768px) {
+
+    /* Ícones centralizados dentro dos botões circulares */
+    .header-svg-btn {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+    }
+
+    .header-svg-btn svg {
+        display: block !important;
+        width: 16px !important;
+        height: 16px !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+        position: static !important;
+    }
+
+    /* Remover gap/span extras que desalinham */
+    .header-svg-btn span:not(.notification-badge):not(.reminder-header-badge) {
+        display: none !important;
+    }
+}
+
+/* ================================================================
+   BOTÃO SAIR — SIDEBAR MOBILE
+   ================================================================ */
+@media (max-width: 768px) {
+    /* Esconder botão Sair do header no mobile (sem espaço) */
+    .logout-btn.header-svg-btn {
+        display: none !important;
+    }
+
+    /* Botão Sair na sidebar */
+    .sidebar-logout-btn {
+        display: flex !important;
+        margin-top: 12px !important;
+        color: var(--danger, #E74C3C) !important;
+        border: 1px solid rgba(231,76,60,0.3) !important;
+        background: rgba(231,76,60,0.05) !important;
+        background-image: none !important;
+        width: 100% !important;
+        padding: 12px 16px !important;
+        border-radius: 10px !important;
+        box-shadow: none !important;
+    }
+    .sidebar-logout-btn:hover {
+        background: rgba(231,76,60,0.12) !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    .sidebar-logout-btn svg { stroke: currentColor !important; }
+}
+
+/* Esconder na sidebar no desktop (aparece no header) */
+@media (min-width: 769px) {
+    .sidebar-logout-btn { display: none !important; }
 }

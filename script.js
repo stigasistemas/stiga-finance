@@ -2714,8 +2714,15 @@ function toggleSidebar() {
 function mobileNavTo(tabName) {
     document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
     const map = { credits:'mbnCredits', debits:'mbnDebits', future:'mbnFuture', overview:'mbnOverview' };
-    const b = document.getElementById(map[tabName]);
-    if (b) b.classList.add('active');
+    const btn = document.getElementById(map[tabName]);
+    if (btn) btn.classList.add('active');
+
+    // Overview = scrollar até os cards do topo (não é uma tab separada)
+    if (tabName === 'overview') {
+        const dash = document.getElementById('dashboard-area');
+        if (dash) dash.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
     navigateToTab(tabName);
 }
 
@@ -2752,11 +2759,6 @@ function setupSidebarNavigation() {
             if (window.innerWidth <= 768) {
                 toggleSidebar();
             }
-            
-            // scroll pelo sistema unificado
-            
-            // Atualiza URL
-            history.pushState(null, null, `#${tabName}`);
             
             // Log para debug
             console.log(`Navegou para: ${tabName}`);
@@ -2802,20 +2804,7 @@ function initSidebar() {
     updateSidebarUser();
     updateSidebarCalendarBadge();
     
-    // Navegar para tab inicial ou hash da URL
-    const hash = window.location.hash.replace('#', '');
-    if (hash) {
-        const targetButton = document.querySelector(`[data-tab="${hash}"]`);
-        if (targetButton) {
-            targetButton.click();
-        }
-    } else {
-        // Ativa Dashboard por padrão
-        const dashboardBtn = document.querySelector('[data-tab="dashboard"]');
-        if (dashboardBtn) {
-            dashboardBtn.click();
-        }
-    }
+    // Nenhuma navegação automática por hash (evita loops)
 }
 
 // ATUALIZAR SIDEBAR QUANDO DADOS MUDAREM
@@ -3171,19 +3160,12 @@ function navigateToTab(tabName) {
     if (tabName === 'budgets') { syncBudgetsMain(); }
     if (tabName === 'goals') { syncGoalsMain(); renderGoalsList(); }
 
-    // Em mobile: fechar sidebar após clicar
+    // Em mobile: fechar sidebar (scroll gerenciado pelo mobile-fixes.js)
     if (window.innerWidth <= 768) {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-    }
-    
-
-    
-    // Atualizar histórico do navegador (opcional)
-    if (history.pushState) {
-        history.pushState(null, null, `#${tabName}`);
+        if (sidebar) sidebar.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
     }
     
     // Renderizar conteúdo se necessário
