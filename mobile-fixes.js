@@ -18,6 +18,25 @@
         });
     }
 
+    // Scroll até o formulário da aba ativa
+    function scrollToTabContent(tabName) {
+        // Tenta scrollar até o form-section da aba
+        const tab = document.getElementById(tabName);
+        if (!tab) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+
+        const formSection = tab.querySelector('.form-section, .section-header, h2');
+        const target = formSection || tab;
+
+        // Usa scrollIntoView para garantir que vai até lá
+        setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Ajuste extra para não ficar atrás do header fixo (56px)
+            setTimeout(() => {
+                window.scrollBy({ top: -64, behavior: 'smooth' });
+            }, 300);
+        }, 80);
+    }
+
     // Função central de navegação mobile — única fonte da verdade
     function mobileNavigate(tabName) {
         // 1. Atualizar estado do bottom nav
@@ -30,11 +49,13 @@
         // 2. Overview = scroll até os cards do topo (não é tab)
         if (tabName === 'overview') {
             const dash = document.getElementById('dashboard-area');
-            if (dash) dash.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (dash) {
+                setTimeout(() => dash.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+            }
             return;
         }
 
-        // 3. Mostrar a tab correta (sem chamar navigateToTab para evitar conflito de scroll)
+        // 3. Mostrar a tab correta
         document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
         const activeBtn = document.querySelector(`.tab-button[data-tab="${tabName}"]`);
         if (activeBtn) activeBtn.classList.add('active');
@@ -50,10 +71,12 @@
         }
 
         // 4. Renderizar dados da tab
-        if (typeof renderLists === 'function' && ['credits','debits','future'].includes(tabName)) renderLists();
-        if (tabName === 'recurring' && typeof renderRecurring === 'function') { if(typeof syncRecurringMain==='function') syncRecurringMain(); renderRecurring(); }
-        if (tabName === 'budgets'   && typeof renderBudgets   === 'function') { if(typeof syncBudgetsMain  ==='function') syncBudgetsMain();   renderBudgets(); }
-        if (tabName === 'goals'     && typeof renderGoals     === 'function') { if(typeof syncGoalsMain    ==='function') syncGoalsMain();     renderGoals(); renderGoalsList && renderGoalsList(); }
+        try {
+            if (['credits','debits','future'].includes(tabName) && typeof renderLists === 'function') renderLists();
+            if (tabName === 'recurring' && typeof renderRecurring === 'function') { if(typeof syncRecurringMain==='function') syncRecurringMain(); renderRecurring(); }
+            if (tabName === 'budgets'   && typeof renderBudgets   === 'function') { if(typeof syncBudgetsMain  ==='function') syncBudgetsMain();   renderBudgets(); }
+            if (tabName === 'goals'     && typeof renderGoals     === 'function') { if(typeof syncGoalsMain    ==='function') syncGoalsMain();     renderGoals(); if(typeof renderGoalsList==='function') renderGoalsList(); }
+        } catch(e) { console.warn('Render error:', e); }
 
         // 5. Fechar sidebar se aberta
         const sidebar = document.getElementById('sidebar');
@@ -61,8 +84,8 @@
         if (sidebar) sidebar.classList.remove('active');
         if (overlay) overlay.classList.remove('active');
 
-        // 6. Scroll ao topo — único, sem conflito
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // 6. Scroll até o formulário da aba
+        scrollToTabContent(tabName);
     }
 
     function initMobile() {
@@ -81,16 +104,21 @@
         if (typeof syncMobileNav === 'function') syncMobileNav(firstTab);
         updateNavIcons();
 
-        // Substituir mobileNavTo pela versão sem conflito
+        // Substituir mobileNavTo pela versão centralizada
         window.mobileNavTo = mobileNavigate;
 
-        // Interceptar cliques na sidebar para também fazer scroll ao topo
+        // Interceptar cliques na sidebar (Recorrentes, Orçamentos, Metas, etc.)
+        // Esses botões chamam navigateToTab via onclick — precisamos adicionar o scroll depois
         document.querySelectorAll('.sidebar .tab-button').forEach(btn => {
             btn.addEventListener('click', function() {
                 const tabName = this.getAttribute('data-tab');
                 if (!tabName || tabName === 'calendar' || tabName === 'settings') return;
-                // Pequeno delay para deixar o navigateToTab (onclick) executar primeiro
-                setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 150);
+                // Fechar sidebar e scrollar até o form
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                if (sidebar) sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+                scrollToTabContent(tabName);
             });
         });
 
