@@ -497,46 +497,40 @@ html, body { overflow-x: hidden; }
 }
 
 /* ================================================================
-   HEADER COMPACTO — caber todos os ícones sem cortar
+   HEADER — reequilibrar espaço sem remover ocultar
    ================================================================ */
 @media (max-width: 768px) {
 
-    /* Esconder botão de privacidade (ocultar) no header mobile — menos usado */
+    /* Mostrar ocultar de volta */
     .privacy-btn.header-svg-btn {
+        display: flex !important;
+    }
+
+    /* Esconder nome do usuário (welcome-area) — libera espaço */
+    .welcome-area {
         display: none !important;
     }
 
-    /* Botões ainda menores para caber tudo */
+    /* Botões ainda menores */
     .header-svg-btn {
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        padding: 0 !important;
-        border-radius: 50% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex-shrink: 0 !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
     }
 
     .header-svg-btn svg {
-        width: 14px !important;
-        height: 14px !important;
-        flex-shrink: 0 !important;
-        display: block !important;
-        margin: 0 !important;
-        position: static !important;
+        width: 13px !important;
+        height: 13px !important;
     }
 
     .header-controls {
-        gap: 4px !important;
-        flex-wrap: nowrap !important;
+        gap: 3px !important;
     }
 
     .account-selector {
-        max-width: 105px !important;
-        font-size: 0.66em !important;
-        padding: 4px 4px !important;
-        height: 30px !important;
+        max-width: 115px !important;
+        font-size: 0.67em !important;
+        height: 28px !important;
+        padding: 3px 4px !important;
     }
 }
