@@ -2717,22 +2717,6 @@ html {
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(212, 175, 55, 0.3) transparent;
-}
-
-.main-wrapper::-webkit-scrollbar {
-    width: 6px;
-}
-.main-wrapper::-webkit-scrollbar-track {
-    background: transparent;
-}
-.main-wrapper::-webkit-scrollbar-thumb {
-    background: rgba(212, 175, 55, 0.3);
-    border-radius: 6px;
-}
-.main-wrapper::-webkit-scrollbar-thumb:hover {
-    background: rgba(212, 175, 55, 0.5);
 }
 
 /* TOPBAR */
@@ -2743,7 +2727,7 @@ header {
     justify-content: space-between;
     padding: 16px 16px;
     background: transparent;
-    border-bottom: none;
+    border-bottom: 1px solid var(--glass-border);
     flex-shrink: 0;
     flex-wrap: wrap;
     gap: 10px;
@@ -3331,4 +3315,10 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
     max-width: 100%;
     overflow: hidden;
     box-sizing: border-box;
+}
+
+/* STIGA IA - Animação digitando */
+@keyframes botDot {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50%       { opacity: 1;   transform: scale(1.2); }
 }

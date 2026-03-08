@@ -769,16 +769,18 @@ function toggleChatbot() {
     if (!chatbot) return;
     chatbot.classList.toggle('active', chatbotOpen);
     if (chatbotOpen && document.getElementById('chatMessages').children.length === 0)
-        addChatMessage('bot', 'Olá! Sou seu assistente financeiro da Stiga Finance. Como posso ajudar?');
+        addChatMessage('bot', 'Olá! 👋 Sou a <b>Stiga IA</b>, sua assistente financeira inteligente.<br><br>Pode me perguntar <b>qualquer coisa</b> — sobre suas finanças, dicas, como usar o app, ou qualquer dúvida. Estou aqui para ajudar! 💰');
 }
+
 function sendChatMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
     if (!message) return;
     addChatMessage('user', message);
     input.value = '';
-    setTimeout(() => addChatMessage('bot', processChatMessage(message)), 500);
+    sendToStigaIA(message);
 }
+
 function addChatMessage(sender, text) {
     const container = document.getElementById('chatMessages');
     if (!container) return;
@@ -787,236 +789,132 @@ function addChatMessage(sender, text) {
     div.innerHTML = `<div class="message-bubble">${text}</div>`;
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
+    return div;
 }
-function processChatMessage(message) {
-    const msg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-    // ── Utilitários internos ──────────────────────────────────────
-    const totalC = credits.reduce((s, c) => s + parseFloat(c.amount || 0), 0);
-    const totalD = debits.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
-    const saldo  = totalC - totalD;
-    const hoje   = new Date();
+async function sendToStigaIA(userMessage) {
+    const hoje = new Date();
     const mesAtual = hoje.getMonth();
     const anoAtual = hoje.getFullYear();
+    const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long' });
 
-    const credMes = credits.filter(c => {
+    const totalC = (credits || []).reduce((s, c) => s + parseFloat(c.amount || 0), 0);
+    const totalD = (debits  || []).reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+    const saldo  = totalC - totalD;
+
+    const credMes = (credits || []).filter(c => {
         const d = new Date(c.date + 'T00:00:00');
         return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
     }).reduce((s, c) => s + parseFloat(c.amount || 0), 0);
 
-    const debitMes = debits.filter(d => {
+    const debitMes = (debits || []).filter(d => {
         const dt = new Date(d.date + 'T00:00:00');
         return dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual;
     }).reduce((s, d) => s + parseFloat(d.amount || 0), 0);
 
-    const proximos = futurePurchases
-        .filter(f => new Date(f.dueDate) >= hoje)
-        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-
     const catGastos = {};
-    debits.forEach(d => {
+    (debits || []).forEach(d => {
         const cat = d.category || 'Outro';
         catGastos[cat] = (catGastos[cat] || 0) + parseFloat(d.amount || 0);
     });
-    const maiorCat = Object.entries(catGastos).sort((a,b) => b[1]-a[1]);
+    const topCats = Object.entries(catGastos).sort((a,b) => b[1]-a[1]).slice(0,5)
+        .map(([c,v]) => `${c}: R$ ${v.toFixed(2)}`).join(', ');
 
-    const has = (...words) => words.some(w => msg.includes(w));
+    const proximos = (futurePurchases || [])
+        .filter(f => new Date(f.dueDate) >= hoje)
+        .sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate))
+        .slice(0,3)
+        .map(f => `${f.description}: R$ ${parseFloat(f.amount).toFixed(2)} vence ${f.dueDate}`)
+        .join('; ');
 
-    // ── SAUDAÇÕES ─────────────────────────────────────────────────
-    if (has('oi', 'ola', 'hello', 'bom dia', 'boa tarde', 'boa noite', 'hey', 'tudo bem', 'tudo bom'))
-        return `Olá! 👋 Sou o Assistente Stiga, seu consultor financeiro pessoal.<br><br>Posso te ajudar com:<br>💰 <b>Saldo e resumo</b><br>📊 <b>Gastos por categoria</b><br>📅 <b>Contas a vencer</b><br>📈 <b>Análise financeira</b><br>💡 <b>Dicas de economia</b><br>🎯 <b>Metas e orçamentos</b><br><br>O que deseja saber?`;
+    const metasInfo = (goals || []).slice(0,4).map(g => {
+        const pct = g.target > 0 ? ((g.current/g.target)*100).toFixed(0) : 0;
+        return `${g.name}: R$ ${g.current}/${g.target} (${pct}%)`;
+    }).join('; ');
 
-    // ── SALDO ─────────────────────────────────────────────────────
-    if (has('saldo', 'quanto tenho', 'quanto tem', 'meu dinheiro', 'sobrou', 'disponivel', 'disponível')) {
-        const emoji = saldo >= 0 ? '✅' : '⚠️';
-        const status = saldo >= 0 ? 'positivo' : 'negativo';
-        return `${emoji} Seu saldo atual é <b>${formatCurrency(saldo)}</b> (${status}).<br><br>📥 Total de entradas: <b>${formatCurrency(totalC)}</b><br>📤 Total de saídas: <b>${formatCurrency(totalD)}</b>`;
+    const budgetsArr = Array.isArray(budgets) ? budgets : Object.entries(budgets||{}).map(([cat,lim]) => ({category:cat, limit:lim}));
+    const orcInfo = budgetsArr.slice(0,4).map(b => {
+        const gasto = (debits||[]).filter(d => d.category === b.category).reduce((s,d) => s + parseFloat(d.amount||0), 0);
+        return `${b.category}: gasto R$ ${gasto.toFixed(2)} / limite R$ ${b.limit}`;
+    }).join('; ');
+
+    const contexto = `DADOS FINANCEIROS REAIS DO USUARIO (Stiga Finance):
+- Data: ${hoje.toLocaleDateString('pt-BR')} (${nomeMes}/${anoAtual})
+- Saldo total: R$ ${saldo.toFixed(2)} (${saldo >= 0 ? 'positivo' : 'NEGATIVO'})
+- Entradas total: R$ ${totalC.toFixed(2)} (${(credits||[]).length} transacoes)
+- Saidas total: R$ ${totalD.toFixed(2)} (${(debits||[]).length} transacoes)
+- Entradas em ${nomeMes}: R$ ${credMes.toFixed(2)}
+- Saidas em ${nomeMes}: R$ ${debitMes.toFixed(2)}
+- Top categorias de gasto: ${topCats || 'nenhum'}
+- Contas futuras proximas: ${proximos || 'nenhuma'}
+- Metas: ${metasInfo || 'nenhuma'}
+- Orcamentos: ${orcInfo || 'nenhum'}`;
+
+    // Indicador de digitando
+    const container = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'chat-message bot';
+    typingDiv.innerHTML = '<div class="message-bubble" style="display:flex;gap:5px;align-items:center;padding:14px 16px;"><span style="width:8px;height:8px;background:var(--gold-primary);border-radius:50%;animation:botDot 1.2s ease-in-out infinite 0s;display:inline-block;"></span><span style="width:8px;height:8px;background:var(--gold-primary);border-radius:50%;animation:botDot 1.2s ease-in-out infinite 0.2s;display:inline-block;"></span><span style="width:8px;height:8px;background:var(--gold-primary);border-radius:50%;animation:botDot 1.2s ease-in-out infinite 0.4s;display:inline-block;"></span></div>';
+    container.appendChild(typingDiv);
+    container.scrollTop = container.scrollHeight;
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 800,
+                system: `Voce e a Stiga IA, assistente financeira inteligente do app Stiga Finance.
+Voce tem acesso aos dados financeiros reais do usuario e deve responder de forma natural, simpatica e util em portugues brasileiro.
+Use formatacao HTML simples (<b>, <br>) quando ajudar a clareza. Use emojis com moderacao.
+Responda QUALQUER pergunta - financeira, sobre o app, dicas de vida, conversa casual, curiosidades.
+Para perguntas nao financeiras, responda com simpatia e brevidade.
+Nunca diga que nao tem acesso aos dados - voce TEM os dados abaixo e deve usa-los.
+Seja conciso (max 4 paragrafos curtos). Interprete os dados, nao apenas os repita.
+
+${contexto}`,
+                messages: [{ role: 'user', content: userMessage }]
+            })
+        });
+
+        typingDiv.remove();
+
+        if (!response.ok) throw new Error(response.status);
+
+        const data = await response.json();
+        const reply = data.content?.[0]?.text || 'Desculpe, nao consegui processar.';
+        addChatMessage('bot', reply.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>'));
+
+    } catch (error) {
+        typingDiv.remove();
+        console.error('Stiga IA:', error);
+        addChatMessage('bot', respostaLocal(userMessage));
     }
-
-    // ── GASTOS TOTAIS / MÊS ──────────────────────────────────────
-    if (has('quanto gastei', 'total gasto', 'gastei esse mes', 'gastei este mes', 'meus gastos', 'debitos', 'débitos', 'debito', 'débito')) {
-        const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long' });
-        return `📊 Em <b>${nomeMes}</b> você gastou <b>${formatCurrency(debitMes)}</b>.<br><br>💳 Total geral de gastos: <b>${formatCurrency(totalD)}</b>`;
-    }
-
-    // ── ENTRADAS / RECEITAS ──────────────────────────────────────
-    if (has('receita', 'recebi', 'quanto recebi', 'entradas', 'credito', 'crédito', 'salario', 'salário', 'renda')) {
-        const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long' });
-        return `💰 Em <b>${nomeMes}</b> você recebeu <b>${formatCurrency(credMes)}</b>.<br><br>📥 Total geral de entradas: <b>${formatCurrency(totalC)}</b>`;
-    }
-
-    // ── CATEGORIAS ────────────────────────────────────────────────
-    if (has('categoria', 'categorias', 'onde gastei mais', 'maior gasto', 'o que mais gastei')) {
-        if (!maiorCat.length) return '📊 Nenhum gasto registrado ainda.';
-        const lista = maiorCat.slice(0, 5).map((c, i) => `${i+1}. <b>${c[0]}</b>: ${formatCurrency(c[1])}`).join('<br>');
-        return `📊 Seus maiores gastos por categoria:<br><br>${lista}`;
-    }
-
-    // ── VENCIMENTOS / CONTAS A PAGAR ─────────────────────────────
-    if (has('venci', 'vencimento', 'vencer', 'conta', 'pagar', 'boleto', 'parcela', 'futuras', 'programadas')) {
-        if (!proximos.length) return '✅ Ótima notícia! Você não tem contas a vencer.';
-        const lista = proximos.slice(0, 5).map(f =>
-            `📅 <b>${f.description}</b>: ${formatCurrency(f.amount)} — ${formatDate(f.dueDate)}`
-        ).join('<br>');
-        const totalFut = proximos.reduce((s, f) => s + parseFloat(f.amount || 0), 0);
-        return `📋 Próximas contas a pagar:<br><br>${lista}<br><br>💳 Total futuro: <b>${formatCurrency(totalFut)}</b>`;
-    }
-
-    // ── PRÓXIMA CONTA ─────────────────────────────────────────────
-    if (has('proxima conta', 'próxima conta', 'qual conta', 'primeira conta', 'mais urgente')) {
-        if (!proximos.length) return '✅ Nenhuma conta urgente! Você está em dia.';
-        const f = proximos[0];
-        const dias = Math.ceil((new Date(f.dueDate) - hoje) / 86400000);
-        return `⚡ Conta mais urgente:<br><br><b>${f.description}</b><br>💰 Valor: ${formatCurrency(f.amount)}<br>📅 Vence em: ${formatDate(f.dueDate)} (<b>${dias} dia${dias !== 1 ? 's' : ''}</b>)`;
-    }
-
-    // ── ANÁLISE / DIAGNÓSTICO ─────────────────────────────────────
-    if (has('analise', 'análise', 'diagnostico', 'diagnóstico', 'como estou', 'minha situacao', 'minha situação', 'financas', 'finanças')) {
-        const pct = totalC > 0 ? ((totalD / totalC) * 100).toFixed(1) : 0;
-        let status, dica;
-        if (pct < 60)  { status = '🟢 Excelente';  dica = 'Continue assim! Você está economizando muito bem.'; }
-        else if (pct < 80) { status = '🟡 Atenção'; dica = 'Seus gastos estão altos. Tente reduzir despesas não essenciais.'; }
-        else { status = '🔴 Crítico'; dica = 'Gastos muito altos! Revise urgentemente seu orçamento.'; }
-        return `📈 <b>Diagnóstico Financeiro</b><br><br>Status: <b>${status}</b><br>📥 Receitas: ${formatCurrency(totalC)}<br>📤 Despesas: ${formatCurrency(totalD)}<br>📊 Comprometimento: <b>${pct}%</b> da renda<br>💰 Saldo: ${formatCurrency(saldo)}<br><br>💡 <i>${dica}</i>`;
-    }
-
-    // ── ECONOMIA / QUANTO ECONOMIZEI ─────────────────────────────
-    if (has('economiz', 'poupei', 'poupa', 'guardar', 'reserva', 'quanto sobrou')) {
-        const pct = totalC > 0 ? ((saldo / totalC) * 100).toFixed(1) : 0;
-        if (saldo <= 0) return `⚠️ Você está no negativo em ${formatCurrency(Math.abs(saldo))}. Reduza os gastos para começar a economizar.`;
-        return `💚 Você economizou <b>${formatCurrency(saldo)}</b>, o equivalente a <b>${pct}%</b> das suas receitas.<br><br>🏆 Meta ideal: poupar pelo menos 20% da renda.`;
-    }
-
-    // ── MÉDIA DE GASTOS ───────────────────────────────────────────
-    if (has('media', 'média', 'gasto medio', 'gasto médio', 'por dia', 'diario', 'diário')) {
-        const diasNoMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
-        const mediaDia = debitMes / diasNoMes;
-        const mediaTrans = debits.length > 0 ? totalD / debits.length : 0;
-        return `📊 Médias financeiras:<br><br>📅 Gasto médio/dia este mês: <b>${formatCurrency(mediaDia)}</b><br>🧾 Média por transação: <b>${formatCurrency(mediaTrans)}</b><br>💳 Total de transações: <b>${debits.length}</b>`;
-    }
-
-    // ── NÚMERO DE TRANSAÇÕES ──────────────────────────────────────
-    if (has('quantas transacao', 'quantas transações', 'quantos lancamento', 'quantos lançamento', 'historico', 'histórico', 'quantas vezes')) {
-        return `🧾 Histórico de transações:<br><br>📥 Entradas: <b>${credits.length}</b><br>📤 Saídas: <b>${debits.length}</b><br>📋 Contas futuras: <b>${futurePurchases.length}</b><br>📊 Total: <b>${credits.length + debits.length}</b> transações`;
-    }
-
-    // ── DICAS DE ECONOMIA ─────────────────────────────────────────
-    if (has('dica', 'dicas', 'conselho', 'como economizar', 'economizar mais', 'poupar mais')) {
-        const dicas = [
-            '🛒 Faça listas de compras e evite compras por impulso.',
-            '💡 Compare preços antes de comprar qualquer produto.',
-            '🍽️ Cozinhar em casa pode economizar até 60% vs restaurantes.',
-            '📱 Revise assinaturas e cancele as que não usa.',
-            '⛽ Agrupe compromissos para economizar combustível.',
-            '💳 Evite parcelamentos com juros — prefira à vista.',
-            '🎯 Siga a regra 50/30/20: necessidades, desejos, poupança.',
-            '🏦 Crie uma reserva de emergência de 3 a 6 meses de gastos.'
-        ];
-        const d = dicas[Math.floor(Math.random() * dicas.length)];
-        return `💡 <b>Dica financeira:</b><br><br>${d}<br><br>Quer mais dicas? Pergunte de novo! 😊`;
-    }
-
-    // ── ORÇAMENTO ─────────────────────────────────────────────────
-    if (has('orcamento', 'orçamento', 'budget', 'limite', 'meta gasto')) {
-        if (!budgets || !budgets.length) return '📋 Você ainda não configurou orçamentos. Acesse a aba <b>Orçamentos</b> para definir limites por categoria.';
-        const lista = budgets.slice(0, 5).map(b => {
-            const gasto = debits.filter(d => d.category === b.category).reduce((s, d) => s + parseFloat(d.amount || 0), 0);
-            const pct = b.limit > 0 ? ((gasto / b.limit) * 100).toFixed(0) : 0;
-            const emoji = pct >= 100 ? '🔴' : pct >= 80 ? '🟡' : '🟢';
-            return `${emoji} <b>${b.category}</b>: ${formatCurrency(gasto)} / ${formatCurrency(b.limit)} (${pct}%)`;
-        }).join('<br>');
-        return `🎯 <b>Status dos Orçamentos:</b><br><br>${lista}`;
-    }
-
-    // ── METAS ─────────────────────────────────────────────────────
-    if (has('meta', 'metas', 'objetivo', 'objetivos', 'sonho', 'viagem', 'comprar')) {
-        if (!goals || !goals.length) return '🎯 Você ainda não tem metas cadastradas. Acesse a aba <b>Metas</b> para criar seus objetivos financeiros!';
-        const lista = goals.slice(0, 4).map(g => {
-            const pct = g.target > 0 ? Math.min(100, ((g.current / g.target) * 100).toFixed(0)) : 0;
-            return `🎯 <b>${g.name}</b>: ${formatCurrency(g.current)} / ${formatCurrency(g.target)} (${pct}%)`;
-        }).join('<br>');
-        return `🏆 <b>Suas Metas:</b><br><br>${lista}`;
-    }
-
-    // ── ADICIONAR TRANSAÇÃO ───────────────────────────────────────
-    if (has('como adicionar', 'como lancar', 'como lançar', 'como registrar', 'como colocar')) {
-        return `➕ <b>Como registrar transações:</b><br><br>📥 <b>Crédito (entrada):</b> Aba "Créditos" → preencha valor, categoria, data e clique em Adicionar.<br><br>📤 <b>Débito (saída):</b> Aba "Débitos" → mesmo processo.<br><br>📅 <b>Compra futura:</b> Aba "Compras Futuras" → informe valor total e número de parcelas.`;
-    }
-
-    // ── COMPROVANTE ───────────────────────────────────────────────
-    if (has('comprovante', 'anexar', 'arquivo', 'foto', 'nota fiscal', 'recibo')) {
-        return `📎 <b>Como anexar comprovantes:</b><br><br>1. Vá para a aba <b>Créditos</b> ou <b>Débitos</b><br>2. Preencha os dados da transação<br>3. Clique em <b>"Escolher arquivo"</b> no campo de comprovante<br>4. Selecione a imagem ou PDF<br>5. Clique em <b>Adicionar</b><br><br>Para visualizar: clique no ícone 📎 ao lado da transação.`;
-    }
-
-    // ── EXPORTAR / BACKUP ─────────────────────────────────────────
-    if (has('exportar', 'backup', 'baixar', 'relatorio', 'relatório', 'pdf', 'csv')) {
-        return `📄 <b>Exportar dados:</b><br><br>📊 <b>PDF:</b> Clique no botão <b>"Gerar PDF"</b> no menu principal.<br><br>💾 <b>Backup:</b> Menu → <b>Exportar/Importar</b> para salvar todos os seus dados em JSON.<br><br>📋 <b>CSV:</b> Disponível na opção de importação de dados.`;
-    }
-
-    // ── CONTAS BANCÁRIAS ──────────────────────────────────────────
-    if (has('conta bancaria', 'conta corrente', 'conta poupanca', 'minhas contas', 'trocar conta', 'nova conta')) {
-        return `🏦 <b>Gerenciar contas:</b><br><br>Você pode ter múltiplas contas no Stiga Finance (ex: Nubank, Bradesco, Cartão).<br><br>➕ Para adicionar: clique no seletor de contas no topo e selecione <b>"+ Nova Conta"</b>.<br><br>🔄 Para trocar: use o menu suspenso de contas no topo da página.`;
-    }
-
-    // ── RECORRENTES ───────────────────────────────────────────────
-    if (has('recorrente', 'recorrentes', 'automatico', 'automático', 'todo mes', 'todo mês', 'mensal', 'mensal')) {
-        return `🔄 <b>Transações Recorrentes:</b><br><br>Para lançamentos fixos mensais (aluguel, assinaturas etc.), use a aba <b>Recorrentes</b>.<br><br>✅ O sistema lança automaticamente todo mês sem você precisar digitar de novo!`;
-    }
-
-    // ── PRIVACIDADE ───────────────────────────────────────────────
-    if (has('privacidade', 'privado', 'esconder', 'ocultar', 'ninguem ver', 'ninguém ver', 'modo privado')) {
-        return `👁️ <b>Modo Privacidade:</b><br><br>Clique no ícone 👁️ no topo da página para ocultar todos os valores financeiros.<br><br>Útil quando estiver em locais públicos ou não quiser mostrar seus dados.`;
-    }
-
-    // ── PERÍODO / FILTROS ─────────────────────────────────────────
-    if (has('filtrar', 'filtro', 'periodo', 'período', 'mes passado', 'mês passado', 'buscar')) {
-        return `🔍 <b>Filtros disponíveis:</b><br><br>📁 <b>Por conta:</b> Use o seletor de contas no topo.<br><br>📂 <b>Por categoria:</b> Use o filtro de pastas nas listas.<br><br>📅 <b>Por período:</b> Clique no ícone de calendário no topo para filtrar por data.`;
-    }
-
-    // ── TEMA ──────────────────────────────────────────────────────
-    if (has('tema', 'claro', 'escuro', 'dark', 'light', 'cor', 'aparencia', 'aparência')) {
-        return `🎨 <b>Temas:</b><br><br>Clique no ícone ☀️/🌙 no canto superior direito para alternar entre tema claro e escuro.<br><br>A preferência fica salva automaticamente!`;
-    }
-
-    // ── NOTIFICAÇÕES ──────────────────────────────────────────────
-    if (has('notificacao', 'notificação', 'notificacoes', 'notificações', 'alerta', 'aviso')) {
-        return `🔔 <b>Notificações:</b><br><br>O sino no topo mostra alertas sobre:<br>• Contas próximas do vencimento<br>• Orçamentos no limite<br>• Metas atingidas<br>• Novas transações registradas<br><br>Clique no 🔔 para ver todas.`;
-    }
-
-    // ── AJUDA GERAL ───────────────────────────────────────────────
-    if (has('ajuda', 'help', 'o que voce faz', 'o que você faz', 'comandos', 'perguntas', 'menu')) {
-        return `🤖 <b>Tudo que posso responder:</b><br><br>
-💰 <b>Saldo e finanças:</b> "qual meu saldo?", "como estou financeiramente?"<br>
-📊 <b>Gastos:</b> "quanto gastei?", "maiores categorias", "média de gastos"<br>
-📥 <b>Receitas:</b> "quanto recebi?", "minhas entradas"<br>
-📅 <b>Vencimentos:</b> "contas a pagar", "próxima conta"<br>
-🎯 <b>Metas e orçamentos:</b> "minhas metas", "meu orçamento"<br>
-💡 <b>Dicas:</b> "dicas de economia", "como economizar"<br>
-📎 <b>Sistema:</b> "como adicionar", "como exportar", "como usar"<br>
-🏦 <b>Contas:</b> "minhas contas", "trocar conta"<br>
-🔄 <b>Recorrentes:</b> "transações automáticas"<br><br>
-Pode digitar em linguagem natural! 😊`;
-    }
-
-    // ── AGRADECIMENTO ─────────────────────────────────────────────
-    if (has('obrigado', 'obrigada', 'valeu', 'thanks', 'muito bom', 'otimo', 'ótimo', 'excelente', 'perfeito'))
-        return `😊 Fico feliz em ajudar! Se precisar de mais alguma coisa, é só chamar. Boas finanças! 💰`;
-
-    // ── DESPEDIDA ─────────────────────────────────────────────────
-    if (has('tchau', 'ate logo', 'até logo', 'bye', 'xau', 'ate mais', 'até mais', 'fechar'))
-        return `👋 Até logo! Lembre-se: cada centavo conta. Boa sorte nas suas finanças! 💪`;
-
-    // ── NÃO ENTENDEU ──────────────────────────────────────────────
-    const sugestoes = [
-        '"qual meu saldo?"',
-        '"quanto gastei esse mês?"',
-        '"contas a pagar"',
-        '"dicas de economia"',
-        '"como estou financeiramente?"'
-    ];
-    const s = sugestoes[Math.floor(Math.random() * sugestoes.length)];
-    return `🤔 Não entendi bem. Tente perguntar como:<br><br><i>${s}</i><br><br>Ou digite <b>"ajuda"</b> para ver tudo que posso responder!`;
 }
+
+function respostaLocal(message) {
+    const msg = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const totalC = (credits||[]).reduce((s,c) => s + parseFloat(c.amount||0), 0);
+    const totalD = (debits||[]).reduce((s,d) => s + parseFloat(d.amount||0), 0);
+    const saldo  = totalC - totalD;
+    const has = (...w) => w.some(x => msg.includes(x));
+
+    if (has('oi','ola','hello','bom dia','boa tarde','boa noite','hey'))
+        return `Olá! 👋 Sou a Stiga IA. Estou com instabilidade no servidor agora, mas posso responder com seus dados locais!`;
+    if (has('saldo','quanto tenho','disponivel'))
+        return `💰 Saldo: <b>R$ ${saldo.toFixed(2)}</b><br>📥 Entradas: R$ ${totalC.toFixed(2)} | 📤 Saídas: R$ ${totalD.toFixed(2)}`;
+    if (has('gastei','gasto','debito','saida'))
+        return `📊 Total de saídas: <b>R$ ${totalD.toFixed(2)}</b> em ${(debits||[]).length} transações.`;
+    if (has('recebi','entrada','credito','receita'))
+        return `💚 Total de entradas: <b>R$ ${totalC.toFixed(2)}</b> em ${(credits||[]).length} transações.`;
+    if (has('obrigado','valeu','thanks'))
+        return `😊 Fico feliz em ajudar! Estou aqui quando precisar. 💰`;
+    if (has('tchau','ate logo','bye'))
+        return `👋 Até logo! Boas finanças! 💪`;
+    return `🤖 Estou com dificuldade de conexão agora. Tente em instantes! Posso responder sobre saldo, gastos ou entradas enquanto isso.`;
+}
+
 
 // ========================================
 // GRÁFICOS
@@ -1776,9 +1674,13 @@ function renderGoalsList() {
     const emptyHTML = `
         <div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
             <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;margin-bottom:18px;display:block;margin-left:auto;margin-right:auto;">
-                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-                <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
-                <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="6"/>
+                <circle cx="12" cy="12" r="2"/>
+                <line x1="12" y1="2" x2="12" y2="4"/>
+                <line x1="12" y1="20" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="4" y2="12"/>
+                <line x1="20" y1="12" x2="22" y2="12"/>
             </svg>
             <h3 style="font-family:'Cinzel',serif;color:var(--gold-primary);margin-bottom:8px;font-size:1.05em;letter-spacing:1px;">Nenhuma meta definida</h3>
             <p style="font-size:0.88em;max-width:360px;margin:0 auto;line-height:1.6;">Defina objetivos como viagem, reserva de emergencia ou uma compra especial.</p>
@@ -1787,27 +1689,28 @@ function renderGoalsList() {
     const html = (!goals || goals.length === 0) ? emptyHTML : goals.map((g, i) => {
         const cur = parseFloat(g.current || 0);
         const tgt = parseFloat(g.target || 1);
-        const pct = Math.min(cur / tgt * 100, 100).toFixed(0);
+        const pct = Math.min(cur / tgt * 100, 100).toFixed(1);
         const remaining = tgt - cur;
         const color = remaining <= 0 ? 'var(--success)' : 'var(--gold-primary)';
         return `
-        <div style="margin-bottom:14px;padding:14px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <span style="color:var(--text-primary);font-weight:600;font-size:1.2em;">${g.name}</span>
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:1.5em;color:${color};font-weight:700;">${pct}% \u2014 ${formatCurrency(cur)} / ${formatCurrency(tgt)}</span>
-                    <button onclick="deleteGoal(${i})" style="padding:3px 8px;font-size:0.8em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;">&times;</button>
-                </div>
+        <div style="margin-bottom:14px;padding:14px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong style="color:var(--gold-light);font-size:1.35em;letter-spacing:0.3px;">${g.name}</strong>
+                <button onclick="deleteGoal(${i})" style="padding:3px 9px;font-size:0.85em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;">&times;</button>
             </div>
-            <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;margin-bottom:10px;">
-                <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;transition:width 0.5s;"></div>
+            <div style="height:10px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;margin-bottom:10px;">
+                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-primary));border-radius:3px;transition:width 0.5s;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:1.25em;margin-bottom:12px;">
+                <span style="color:var(--text-secondary)">${formatCurrency(cur)} de ${formatCurrency(tgt)} (${pct}%)</span>
+                <span style="color:${color}">${remaining <= 0 ? '&#10003; Meta atingida!' : 'Faltam ' + formatCurrency(remaining)}</span>
             </div>
             <div style="display:flex;gap:8px;">
                 <input type="number" id="goalAdd_${i}" placeholder="Valor a adicionar" step="0.01" min="0"
                     style="flex:1;padding:10px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--glass-border);border-radius:7px;color:var(--text-primary);font-size:1em;">
                 <button onclick="addToGoalDirect(${i})" style="padding:10px 18px;border-radius:7px;background:linear-gradient(135deg,var(--gold-dark),var(--gold-primary));border:none;color:#0A0E17;font-weight:700;cursor:pointer;font-size:1em;">+ Adicionar</button>
             </div>
-            ${g.deadline ? '<small style="color:var(--text-secondary);margin-top:8px;display:block;font-size:0.85em;">Prazo: ' + formatDate(g.deadline) + '</small>' : ''}
+            ${g.deadline ? '<small style="color:var(--text-secondary);margin-top:8px;display:block;font-size:1.1em;">Prazo: ' + formatDate(g.deadline) + '</small>' : ''}
         </div>`;
     }).join('');
 
