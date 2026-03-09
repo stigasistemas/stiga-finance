@@ -4,12 +4,20 @@
     {
       "src": "api/kiwify-webhook.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/stiga-ia.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/kiwify-webhook",
       "dest": "/api/kiwify-webhook.js"
+    },
+    {
+      "src": "/api/stiga-ia",
+      "dest": "/api/stiga-ia.js"
     }
   ]
 }
