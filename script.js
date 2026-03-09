@@ -825,10 +825,10 @@ async function sendToStigaIA(message) {
 
     const contasFuturas = proximos.map(f => `${f.description}: ${formatCurrency(f.amount)} vence ${f.dueDate}`).join(', ');
 
-    const systemPrompt = `Você é a Stiga IA, assistente financeira inteligente do app Stiga Finance.
-Responda QUALQUER pergunta do usuário — financeira, sobre o app, dicas, conversa casual — de forma simpática e útil.
-Use os dados reais do usuário abaixo quando relevante. Responda em português, de forma clara e objetiva.
-Use HTML básico (<b>, <br>) para formatar se precisar.
+    const systemPrompt = `Você é a Stiga IA, assistente financeira do app Stiga Finance.
+Seja DIRETO e BREVE — máximo 3 linhas por resposta. Sem listas longas, sem explicações desnecessárias.
+Use os dados reais do usuário quando relevante. Responda em português.
+Nunca use markdown como ** ou *. Use apenas <b> e <br> para formatar.
 
 DADOS FINANCEIROS DO USUÁRIO:
 - Saldo atual: ${formatCurrency(saldo)}
