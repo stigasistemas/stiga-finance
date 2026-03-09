@@ -777,7 +777,111 @@ function sendChatMessage() {
     if (!message) return;
     addChatMessage('user', message);
     input.value = '';
-    setTimeout(() => addChatMessage('bot', processChatMessage(message)), 500);
+    sendToStigaIA(message);
+}
+
+async function sendToStigaIA(message) {
+    // Monta contexto financeiro real do usuário
+    const totalC = credits.reduce((s, c) => s + parseFloat(c.amount || 0), 0);
+    const totalD = debits.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+    const saldo  = totalC - totalD;
+    const hoje   = new Date();
+    const mesAtual = hoje.getMonth();
+    const anoAtual = hoje.getFullYear();
+    const nomeMes  = hoje.toLocaleString('pt-BR', { month: 'long' });
+
+    const credMes = credits.filter(c => {
+        const d = new Date(c.date + 'T00:00:00');
+        return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+    }).reduce((s, c) => s + parseFloat(c.amount || 0), 0);
+
+    const debitMes = debits.filter(d => {
+        const dt = new Date(d.date + 'T00:00:00');
+        return dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual;
+    }).reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+
+    const proximos = futurePurchases
+        .filter(f => new Date(f.dueDate) >= hoje)
+        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+        .slice(0, 5);
+
+    const catGastos = {};
+    debits.forEach(d => {
+        const cat = d.category || 'Outro';
+        catGastos[cat] = (catGastos[cat] || 0) + parseFloat(d.amount || 0);
+    });
+    const topCats = Object.entries(catGastos).sort((a,b) => b[1]-a[1]).slice(0,5)
+        .map(([cat, val]) => `${cat}: ${formatCurrency(val)}`).join(', ');
+
+    const metasList = (goals || []).slice(0,4)
+        .map(g => `${g.name}: ${formatCurrency(g.current)}/${formatCurrency(g.target)}`).join(', ');
+
+    const orcList = (budgets || []).slice(0,4)
+        .map(b => {
+            const gasto = debits.filter(d => d.category === b.category).reduce((s,d) => s+parseFloat(d.amount||0),0);
+            return `${b.category}: ${formatCurrency(gasto)}/${formatCurrency(b.limit)}`;
+        }).join(', ');
+
+    const contasFuturas = proximos.map(f => `${f.description}: ${formatCurrency(f.amount)} vence ${f.dueDate}`).join(', ');
+
+    const systemPrompt = `Você é a Stiga IA, assistente financeira inteligente do app Stiga Finance.
+Responda QUALQUER pergunta do usuário — financeira, sobre o app, dicas, conversa casual — de forma simpática e útil.
+Use os dados reais do usuário abaixo quando relevante. Responda em português, de forma clara e objetiva.
+Use HTML básico (<b>, <br>) para formatar se precisar.
+
+DADOS FINANCEIROS DO USUÁRIO:
+- Saldo atual: ${formatCurrency(saldo)}
+- Entradas totais: ${formatCurrency(totalC)} | Saídas totais: ${formatCurrency(totalD)}
+- Entradas em ${nomeMes}: ${formatCurrency(credMes)} | Saídas em ${nomeMes}: ${formatCurrency(debitMes)}
+- Maiores categorias de gasto: ${topCats || 'nenhuma'}
+- Contas futuras: ${contasFuturas || 'nenhuma'}
+- Metas: ${metasList || 'nenhuma'}
+- Orçamentos: ${orcList || 'nenhum'}`;
+
+    // Mostrar indicador "digitando"
+    const typingId = 'typing_' + Date.now();
+    const container = document.getElementById('chatMessages');
+    if (container) {
+        const div = document.createElement('div');
+        div.id = typingId;
+        div.className = 'chat-message bot';
+        div.innerHTML = `<div class="message-bubble" style="opacity:0.7">
+            <span style="display:inline-flex;gap:4px;align-items:center">
+                <span style="width:7px;height:7px;border-radius:50%;background:#D4AF37;animation:botDot 1s infinite 0s"></span>
+                <span style="width:7px;height:7px;border-radius:50%;background:#D4AF37;animation:botDot 1s infinite 0.2s"></span>
+                <span style="width:7px;height:7px;border-radius:50%;background:#D4AF37;animation:botDot 1s infinite 0.4s"></span>
+            </span>
+        </div>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    try {
+        const response = await fetch('https://stiga-finance.vercel.app/api/stiga-ia', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                system: systemPrompt,
+                messages: [{ role: 'user', content: message }]
+            })
+        });
+
+        // Remover indicador de digitando
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
+
+        if (!response.ok) throw new Error('API error ' + response.status);
+
+        const data = await response.json();
+        const text = data.content?.[0]?.text || 'Não consegui processar sua pergunta.';
+        addChatMessage('bot', text);
+
+    } catch (err) {
+        console.warn('Stiga IA offline, usando fallback:', err);
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
+        addChatMessage('bot', processChatMessage(message));
+    }
 }
 function addChatMessage(sender, text) {
     const container = document.getElementById('chatMessages');

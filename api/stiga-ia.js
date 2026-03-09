@@ -1,70 +1,47 @@
-// ============================================================
-// STIGA IA — Endpoint Vercel (api/stiga-ia.js)
-// A chave fica segura em variável de ambiente no Vercel
-// ============================================================
-
-const https = require('https');
-
+// api/stiga-ia.js — Proxy Vercel para Claude API
 module.exports = async (req, res) => {
-    // CORS
+    // CORS — libera para qualquer origem
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') {
-        res.status(204).end();
-        return;
+        return res.status(200).end();
     }
 
     if (req.method !== 'POST') {
-        res.status(405).json({ error: 'Method not allowed' });
-        return;
-    }
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-        res.status(500).json({ error: 'API key não configurada. Adicione ANTHROPIC_API_KEY nas variáveis de ambiente do Vercel.' });
-        return;
+        return res.status(405).json({ error: 'Método não permitido' });
     }
 
     try {
         const { system, messages } = req.body;
 
-        const postData = JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 800,
-            system: system || '',
-            messages: messages || []
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.ANTHROPIC_API_KEY,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 1024,
+                system: system || 'Você é a Stiga IA, assistente financeira do app Stiga Finance.',
+                messages: messages
+            })
         });
 
-        const response = await new Promise((resolve, reject) => {
-            const options = {
-                hostname: 'api.anthropic.com',
-                path: '/v1/messages',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-version': '2023-06-01',
-                    'Content-Length': Buffer.byteLength(postData)
-                }
-            };
+        const data = await response.json();
 
-            const apiReq = https.request(options, apiRes => {
-                let data = '';
-                apiRes.on('data', chunk => data += chunk);
-                apiRes.on('end', () => resolve({ status: apiRes.statusCode, body: data }));
-            });
+        if (!response.ok) {
+            console.error('Erro Anthropic:', data);
+            return res.status(response.status).json({ error: data });
+        }
 
-            apiReq.on('error', reject);
-            apiReq.write(postData);
-            apiReq.end();
-        });
-
-        res.status(response.status).send(response.body);
+        return res.status(200).json(data);
 
     } catch (err) {
-        console.error('Stiga IA erro:', err);
-        res.status(500).json({ error: err.message });
+        console.error('Erro interno:', err);
+        return res.status(500).json({ error: 'Erro interno no servidor' });
     }
 };
