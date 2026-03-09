@@ -1,5 +1,10 @@
-// api/stiga-ia.js — Proxy Vercel para Claude API
+// ============================================================
+// STIGA IA — Endpoint Vercel (api/stiga-ia.js)
+// A chave fica segura em variável de ambiente no Vercel
+// ============================================================
+
 module.exports = async (req, res) => {
+
     // CORS — libera para qualquer origem
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -11,6 +16,10 @@ module.exports = async (req, res) => {
 
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método não permitido' });
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+        return res.status(500).json({ error: 'API key não configurada. Adicione ANTHROPIC_API_KEY nas variáveis de ambiente do Vercel.' });
     }
 
     try {
