@@ -859,7 +859,7 @@ async function sendToStigaIA(userMessage) {
     container.scrollTop = container.scrollHeight;
 
     try {
-        const response = await fetch((window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')?'http://localhost:3001/chat':'https://stiga-finance-webhook.vercel.app/api/stiga-ia', {
+        const response = await fetch((window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1')?'http://localhost:3001/chat':'https://stiga-finance-git-main-stiga-sistemas-projects.vercel.app/api/stiga-ia', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
