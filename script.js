@@ -816,7 +816,8 @@ async function sendToStigaIA(message) {
     const metasList = (goals || []).slice(0,4)
         .map(g => `${g.name}: ${formatCurrency(g.current)}/${formatCurrency(g.target)}`).join(', ');
 
-    const orcList = (budgets || []).slice(0,4)
+    const orcArray = Array.isArray(budgets) ? budgets : Object.entries(budgets || {}).map(([cat, lim]) => ({ category: cat, limit: lim }));
+    const orcList = orcArray.slice(0,4)
         .map(b => {
             const gasto = debits.filter(d => d.category === b.category).reduce((s,d) => s+parseFloat(d.amount||0),0);
             return `${b.category}: ${formatCurrency(gasto)}/${formatCurrency(b.limit)}`;
