@@ -571,25 +571,38 @@ html, body { overflow-x: hidden; }
 }
 
 /* ================================================================
-   FIX: Linha cortando números do calendário no Chrome mobile
-   Causa: border-bottom do cal-modal-header sticky aparece sobre o grid
+   FIX CHROME MOBILE: linha no calendário
+   Causa: position:sticky no cal-modal-header dentro de overflow-y:auto
+   cria artefato visual só no Chrome. Solução: remover sticky,
+   mover o scroll para o overlay em vez do box.
    ================================================================ */
 @media (max-width: 768px) {
-    .cal-modal-header {
-        border-bottom: none !important;
-        box-shadow: 0 1px 0 var(--glass-border, rgba(212,175,55,0.15)) !important;
-        /* box-shadow não cria artefatos no sticky, border-bottom sim */
+    /* Scroll no overlay, não no box */
+    .cal-modal-overlay {
+        overflow-y: scroll !important;
+        -webkit-overflow-scrolling: touch !important;
+        align-items: flex-end !important;
+        padding: 0 !important;
     }
 
     .cal-modal-box {
-        /* Garantir que o header sticky não vaze sobre o conteúdo */
-        isolation: isolate !important;
+        /* Sem overflow — o overlay que scrolla */
+        overflow: visible !important;
+        max-height: none !important;
+        /* Espaço inferior para não colar no fundo */
+        margin-bottom: 0 !important;
+        width: 100% !important;
+        border-radius: 16px 16px 0 0 !important;
     }
 
-    .cal-modal-left,
-    .cal-modal-body {
-        /* Evitar que o grid fique por cima do header sticky */
+    .cal-modal-header {
+        /* Remover sticky — era a causa do artefato no Chrome */
         position: relative !important;
-        z-index: 1 !important;
+        top: auto !important;
+        z-index: 2 !important;
+        border-bottom: 1px solid rgba(212,175,55,0.15) !important;
+        border-radius: 16px 16px 0 0 !important;
+        padding: 12px 14px !important;
+        background: var(--bg-card, #0f1420) !important;
     }
 }
