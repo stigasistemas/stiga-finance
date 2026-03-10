@@ -534,3 +534,62 @@ html, body { overflow-x: hidden; }
         padding: 3px 4px !important;
     }
 }
+
+/* ================================================================
+   ACESSIBILIDADE — GARANTIR BOTÕES VISÍVEIS EM FONTE GRANDE
+   ================================================================ */
+@media (max-width: 768px) {
+    /* Quando fonte grande, header-controls não pode overflow-hidden */
+    header {
+        overflow: visible !important;
+    }
+    .header-controls {
+        flex-wrap: nowrap !important;
+        overflow: visible !important;
+    }
+    /* Garantir que privacy-btn sempre apareça */
+    #privacyBtn,
+    .privacy-btn.header-svg-btn {
+        display: flex !important;
+        flex-shrink: 0 !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+    }
+    /* Esconder calendário e notificações se não houver espaço (menor prioridade) */
+    .cal-header-btn {
+        flex-shrink: 1 !important;
+    }
+    /* budget-header mobile — nunca deixar número comer letra */
+    .budget-header {
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+    .budget-header > *:first-child {
+        font-weight: 700;
+    }
+}
+
+/* ================================================================
+   FIX: Linha cortando números do calendário no Chrome mobile
+   Causa: border-bottom do cal-modal-header sticky aparece sobre o grid
+   ================================================================ */
+@media (max-width: 768px) {
+    .cal-modal-header {
+        border-bottom: none !important;
+        box-shadow: 0 1px 0 var(--glass-border, rgba(212,175,55,0.15)) !important;
+        /* box-shadow não cria artefatos no sticky, border-bottom sim */
+    }
+
+    .cal-modal-box {
+        /* Garantir que o header sticky não vaze sobre o conteúdo */
+        isolation: isolate !important;
+    }
+
+    .cal-modal-left,
+    .cal-modal-body {
+        /* Evitar que o grid fique por cima do header sticky */
+        position: relative !important;
+        z-index: 1 !important;
+    }
+}
