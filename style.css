@@ -586,7 +586,10 @@ h1 {
 }
 .budget-header {
     display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
     justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 10px;
 }
 .budget-bar {
@@ -1157,10 +1160,10 @@ button:active {
     .chatbot-button {
         right: auto;
         left: 15px;
-        bottom: 15px;
-        width: 52px;
-        height: 52px;
-        font-size: 1.3em;
+        bottom: 75px;
+        width: 46px;
+        height: 46px;
+        font-size: 1.2em;
     }
 }
 /* Level badge */
@@ -2693,7 +2696,8 @@ html {
     transition: all 0.3s ease;
     text-align: left;
     width: 100%;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
 }
 .tab-button:hover {
     background: rgba(212,175,55,0.08);
@@ -2959,6 +2963,14 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
 
 /* FIX 2: METAS - Layout correto */
 @media (max-width: 768px) {
+    .budget-header {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .budget-header span, .budget-header div {
+        max-width: 100% !important;
+        flex-shrink: 1 !important;
+    }
     .goal-item {
         padding: 14px 12px !important;
         margin-bottom: 12px !important;
@@ -3250,6 +3262,11 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
         padding: 10px 16px !important;
         font-size: 0.85em !important;
     }
+    /* sidebar: deixar quebrar linha */
+    .sidebar .tab-button {
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
 }
 
 /* ================================================================
@@ -3332,3 +3349,100 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
     overflow: hidden;
     box-sizing: border-box;
 }
+
+/* ================================================================
+   ACESSIBILIDADE — BOTÕES A+/A- (sidebar)
+   ================================================================ */
+.sidebar-font-size {
+    padding: 8px 12px 12px;
+}
+.font-size-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(212,175,55,0.06);
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 10px;
+    padding: 6px 8px;
+    gap: 6px;
+}
+.font-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.08));
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 8px;
+    color: var(--gold-primary, #D4AF37);
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(212,175,55,0.1);
+}
+.font-btn:hover {
+    background: linear-gradient(135deg, rgba(212,175,55,0.35), rgba(212,175,55,0.2));
+    border-color: rgba(212,175,55,0.8);
+    transform: scale(1.08);
+    box-shadow: 0 4px 14px rgba(212,175,55,0.25);
+}
+.font-btn:active { transform: scale(0.95); }
+#fontSizeLabel {
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    color: var(--gold-primary, #D4AF37);
+    min-width: 40px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* ================================================================
+   SIDEBAR — botão configurações (mobile only)
+   ================================================================ */
+.sidebar-settings-btn {
+    display: none !important;
+}
+@media (max-width: 768px) {
+    /* Mostrar configurações na sidebar */
+    .sidebar-settings-btn {
+        display: flex !important;
+    }
+    /* Esconder configurações do header */
+    .settings-btn.header-svg-btn {
+        display: none !important;
+    }
+    /* Header compacto — todos os botões menores */
+    .header-svg-btn {
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        padding: 0 !important;
+        border-radius: 7px !important;
+        flex-shrink: 0 !important;
+    }
+    .header-svg-btn svg {
+        width: 15px !important;
+        height: 15px !important;
+    }
+    .header-controls {
+        gap: 5px !important;
+        flex-wrap: nowrap !important;
+    }
+    /* Ocultar sempre visível */
+    #privacyBtn, .privacy-btn.header-svg-btn {
+        display: flex !important;
+        flex-shrink: 0 !important;
+    }
+    /* Conta principal mais compacta */
+    .account-selector {
+        max-width: 120px !important;
+        font-size: 0.72em !important;
+        padding: 4px 6px !important;
+    }
+}
+
+

@@ -552,12 +552,12 @@ function renderBudgets() {
             const delBtn = showDelete ? `<button onclick="deleteBudget('${cat}')" style="padding:3px 8px;font-size:0.8em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;">&times;</button>` : '';
             return `
             <div style="margin-bottom:14px;padding:14px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                    <span style="color:var(--text-primary);font-weight:600;font-size:1.2em;">${cat}</span>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:1.5em;color:${color};font-weight:700;">${pct}% — ${formatCurrency(spent)} / ${formatCurrency(lim)}</span>
-                        ${delBtn}
-                    </div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;">
+                    <span style="color:var(--text-primary);font-weight:600;font-size:1.1em;flex-shrink:0;">${cat}</span>
+                    ${delBtn}
+                </div>
+                <div style="margin-bottom:8px;">
+                    <span style="font-size:1.1em;color:${color};font-weight:700;word-break:break-word;display:block;">${pct}% — ${formatCurrency(spent)} / ${formatCurrency(lim)}</span>
                 </div>
                 <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;">
                     <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;transition:width 0.6s ease;"></div>
@@ -4362,3 +4362,27 @@ console.log('✅ Fix 6: Observer de tabs');
         setTimeout(attachListeners, 800);
     }
 })();
+// ========================================
+// ACESSIBILIDADE — TAMANHO DE FONTE
+// ========================================
+(function() {
+    const MIN = 80, MAX = 140, STEP = 10;
+    let current = parseInt(localStorage.getItem('stigaFontSize') || '100');
+
+    function applyFontSize(size) {
+        document.documentElement.style.fontSize = size + '%';
+        const label = document.getElementById('fontSizeLabel');
+        if (label) label.textContent = size + '%';
+        localStorage.setItem('stigaFontSize', size);
+        current = size;
+    }
+
+    window.changeFontSize = function(dir) {
+        const next = Math.min(MAX, Math.max(MIN, current + dir * STEP));
+        applyFontSize(next);
+    };
+
+    window.addEventListener('DOMContentLoaded', () => applyFontSize(current));
+    window.addEventListener('load', () => applyFontSize(current));
+})();
+
