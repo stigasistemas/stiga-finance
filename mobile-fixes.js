@@ -117,6 +117,51 @@
 
         console.log('✅ Mobile — aba inicial:', firstTab);
     }
+    // ================================================================
+    // FIX CHROME MOBILE — botão X do calendário
+    // CSS não resolve: Chrome tem bug com overlay + close button
+    // Solução: interceptar clique via JS com stopPropagation
+    // ================================================================
+    function fixCalendarModal() {
+        const closeBtn = document.querySelector('.cal-modal-close');
+        const overlay = document.getElementById('calendarModal');
+        if (!closeBtn || !overlay) return;
+
+        // Recriar botão para remover listeners antigos
+        const newBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newBtn, closeBtn);
+
+        newBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            if (typeof closeCalendarModal === 'function') {
+                closeCalendarModal();
+            } else {
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }, { capture: true });
+
+        // Garantir que o overlay só fecha clicando fora do box
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                if (typeof closeCalendarModal === 'function') closeCalendarModal();
+            }
+        });
+
+        console.log('✅ Fix calendário Chrome aplicado');
+    }
+
+    // Aplicar quando o calendário abrir
+    const origOpen = window.openCalendarModal;
+    window.openCalendarModal = function() {
+        if (origOpen) origOpen.apply(this, arguments);
+        setTimeout(fixCalendarModal, 50);
+    };
+
+    // Também aplicar na inicialização caso já exista
+    fixCalendarModal();
+
 
     window.addEventListener('load', () => setTimeout(initMobile, 800));
 
