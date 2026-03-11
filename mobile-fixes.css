@@ -569,3 +569,88 @@ html, body { overflow-x: hidden; }
         font-weight: 700;
     }
 }
+/* ================================================================
+   FIX DEFINITIVO CHROME MOBILE — CALENDÁRIO
+   ================================================================ */
+@media (max-width: 768px) {
+    .cal-modal-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        -webkit-transform: translateZ(0) !important;
+        transform: translateZ(0) !important;
+    }
+
+    .cal-modal-box {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+        min-height: 100vh !important;
+        max-height: none !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        -webkit-transform: translateZ(0) !important;
+        transform: translateZ(0) !important;
+    }
+
+    .cal-modal-header {
+        position: relative !important;
+        top: auto !important;
+        z-index: 2 !important;
+        padding: 14px 16px !important;
+        background: var(--bg-card, #0f1420) !important;
+        border-bottom: 1px solid rgba(212,175,55,0.15) !important;
+        border-radius: 0 !important;
+        -webkit-transform: translateZ(0) !important;
+        transform: translateZ(0) !important;
+    }
+
+    .cal-modal-close {
+        position: relative !important;
+        z-index: 3 !important;
+        pointer-events: all !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+    }
+}
+
+/* ================================================================
+   FIX CHROME MOBILE — HISTÓRICO (linha cortando ao scrollar)
+   ================================================================ */
+@media (max-width: 768px) {
+    .transaction-item {
+        align-items: flex-start !important;
+        will-change: auto !important;
+        transform: none !important;
+        overflow: visible !important;
+        contain: layout style !important;
+    }
+    .transaction-item:hover {
+        transform: none !important;
+    }
+    .action-btns {
+        flex-direction: column !important;
+        gap: 6px !important;
+        margin-left: 10px !important;
+        flex-shrink: 0 !important;
+        align-self: flex-start !important;
+        margin-top: 2px !important;
+    }
+    .edit-btn,
+    .delete-btn,
+    .delete-btn-small,
+    .pay-btn {
+        min-height: 36px !important;
+        min-width: 36px !important;
+        padding: 6px 10px !important;
+        font-size: 0.8em !important;
+        border-width: 1px !important;
+        box-sizing: border-box !important;
+    }
+}
