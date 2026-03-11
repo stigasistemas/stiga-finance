@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&display=swap');
+
 *, *::before, *::after { box-sizing: border-box !important; }
 
  /* DIAMOND FINANCE - VERSÃO CORRIGIDA */
@@ -3443,6 +3445,48 @@ body.light-theme #vencimentoAlert, body.light-theme #categoryTotals { color: #1a
         font-size: 0.72em !important;
         padding: 4px 6px !important;
     }
+}
+
+/* ================================================================
+   FONTE NUMÉRICA — Playfair Display (números alinhados/formais)
+   Aplicada em todos os campos de input, select, textarea e valores
+   ================================================================ */
+input,
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+    font-family: 'Playfair Display', serif !important;
+    font-variant-numeric: lining-nums tabular-nums !important;
+}
+
+/* Valores monetários exibidos nas listas e cards */
+.value,
+.transaction-value,
+.transaction-amount,
+.summary-value,
+.summary-card .value,
+.card-value,
+.amount,
+.balance-value,
+.goal-amount,
+.budget-value,
+.recurring-value,
+.future-value,
+.installment-value {
+    font-family: 'Playfair Display', serif !important;
+    font-variant-numeric: lining-nums tabular-nums !important;
+}
+
+/* Modal inputs */
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+    font-family: 'Playfair Display', serif !important;
+    font-variant-numeric: lining-nums tabular-nums !important;
 }
 
 
