@@ -1740,7 +1740,11 @@ function openCalendarModal() {
     const modal = document.getElementById('calendarModal');
     if (!modal) return;
     modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    // Chrome mobile: overflow:hidden no body bloqueia toque no botão X
+    // Usar apenas no desktop
+    if (window.innerWidth > 768) {
+        document.body.style.overflow = 'hidden';
+    }
     loadRemindersFromFirestore().then(() => {
         initCalendar();
         renderRemindersList();
@@ -1760,6 +1764,7 @@ function closeCalendarModal() {
     if (!modal) return;
     modal.classList.remove('active');
     document.body.style.overflow = '';
+    document.body.style.touchAction = '';
 }
 
 function closeCalendarModalOverlay(e) { if (e.target === e.currentTarget) closeCalendarModal(); }
