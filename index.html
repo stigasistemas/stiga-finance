@@ -8,15 +8,7 @@
     <!-- FAVICON -->
     <link rel="icon" href="logo-stiga.png" type="image/svg+xml">
     
-    <!-- PWA -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#D4AF37">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Stiga Finance">
-    <link rel="apple-touch-icon" href="logo-stiga.png">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="mobile-fixes.css">
@@ -856,15 +848,5 @@
         </button>
     </nav>
 
-    <!-- Service Worker (PWA) -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/stiga-finance/service-worker.js')
-                    .then(() => console.log('✅ PWA Service Worker registrado'))
-                    .catch(err => console.warn('SW erro:', err));
-            });
-        }
-    </script>
 </body>
 </html>
