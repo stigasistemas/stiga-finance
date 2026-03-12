@@ -557,7 +557,7 @@ function renderBudgets() {
                     ${delBtn}
                 </div>
                 <div style="margin-bottom:8px;">
-                    <span style="font-size:1.1em;color:${color};font-weight:700;word-break:break-word;display:block;">${pct}% — ${formatCurrency(spent)} / ${formatCurrency(lim)}</span>
+                    <span style="font-size:1.1em;color:${color};font-weight:700;word-break:break-word;display:block;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${pct}% — ${formatCurrency(spent)} / ${formatCurrency(lim)}</span>
                 </div>
                 <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;">
                     <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;transition:width 0.6s ease;"></div>
@@ -622,9 +622,9 @@ function renderMonthComparison() {
         const bDiff = (lastC - lastD) !== 0 ? (((thisC - thisD) - (lastC - lastD)) / Math.abs(lastC - lastD) * 100) : 0;
         cont.innerHTML = `
             <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
-                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Créditos:</span><span class="${cDiff > 0 ? 'positive' : 'negative'}">${cDiff > 0 ? '+' : ''}${cDiff.toFixed(1)}% ${cDiff > 0 ? '⬆️' : '⬇️'}</span></div>
-                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Débitos:</span><span class="${dDiff < 0 ? 'positive' : 'negative'}">${dDiff > 0 ? '+' : ''}${dDiff.toFixed(1)}% ${dDiff > 0 ? '⬆️' : '⬇️'}</span></div>
-                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Saldo:</span><span class="${bDiff > 0 ? 'positive' : 'negative'}">${bDiff > 0 ? '+' : ''}${bDiff.toFixed(1)}% ${bDiff > 0 ? '🎉' : '⚠️'}</span></div>
+                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Créditos:</span><span class="${cDiff > 0 ? 'positive' : 'negative'}" style="font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${cDiff > 0 ? '+' : ''}${cDiff.toFixed(1)}% ${cDiff > 0 ? '⬆️' : '⬇️'}</span></div>
+                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Débitos:</span><span class="${dDiff < 0 ? 'positive' : 'negative'}" style="font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${dDiff > 0 ? '+' : ''}${dDiff.toFixed(1)}% ${dDiff > 0 ? '⬆️' : '⬇️'}</span></div>
+                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Saldo:</span><span class="${bDiff > 0 ? 'positive' : 'negative'}" style="font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${bDiff > 0 ? '+' : ''}${bDiff.toFixed(1)}% ${bDiff > 0 ? '🎉' : '⚠️'}</span></div>
             </div>`;
     } catch (e) { cont.innerHTML = '<p class="no-data">Erro ao carregar comparação mensal</p>'; }
 }
@@ -1251,7 +1251,7 @@ function showCategoryTotals() {
             <div style="margin-bottom:10px">
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px">
                     <span style="font-size:0.95em;color:var(--text-primary);font-weight:600;">${cat}</span>
-                    <strong style="color:var(--gold-light);font-size:0.95em;font-weight:700;">${formatCurrency(val)}</strong>
+                    <strong style="color:var(--gold-light);font-size:0.95em;font-weight:700;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${formatCurrency(val)}</strong>
                 </div>
                 <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
                     <div style="height:100%;width:${(val/maxVal*100).toFixed(0)}%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-primary));border-radius:2px;transition:width 0.5s"></div>
@@ -1271,7 +1271,7 @@ function showCategoryTotals() {
                 const color = pct >= 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning)' : 'var(--success)';
                 return `<div style="margin-bottom:16px;padding:14px;background:rgba(0,0,0,0.2);border-radius:10px;border-left:4px solid ${color};">
                     <div style="font-size:1em !important;color:var(--text-primary) !important;font-weight:700 !important;margin-bottom:4px !important;line-height:1.2;">${cat}</div>
-                    <div style="font-size:1.8em !important;color:${color} !important;font-weight:800 !important;margin-bottom:10px !important;line-height:1.3;">${pct}% &nbsp;|&nbsp; ${formatCurrency(spent)} / ${formatCurrency(lim)}</div>
+                    <div style="font-size:1.8em !important;color:${color} !important;font-weight:800 !important;margin-bottom:10px !important;line-height:1.3;font-family:'Playfair Display',serif !important;font-variant-numeric:lining-nums tabular-nums !important;">${pct}% &nbsp;|&nbsp; ${formatCurrency(spent)} / ${formatCurrency(lim)}</div>
                     <div style="height:14px;background:rgba(255,255,255,0.07);border-radius:7px;overflow:hidden;">
                         <div style="height:100%;width:${pct}%;background:${color};border-radius:7px;transition:width 0.5s"></div>
                     </div>
@@ -1288,7 +1288,7 @@ function showCategoryTotals() {
                 const pct = Math.min((g.current || 0)/g.target*100, 100).toFixed(0);
                 return `<div style="margin-bottom:16px;padding:14px;background:rgba(0,0,0,0.2);border-radius:10px;border-left:4px solid var(--gold-primary);">
                     <div style="font-size:1em !important;color:var(--text-primary) !important;font-weight:700 !important;margin-bottom:4px !important;line-height:1.2;">${g.name}</div>
-                    <div style="font-size:1.1em !important;color:var(--gold-primary) !important;font-weight:700 !important;margin-bottom:8px !important;line-height:1.3;">${pct}% — ${formatCurrency(g.current || 0)} / ${formatCurrency(g.target)}</div>
+                    <div style="font-size:1.1em !important;color:var(--gold-primary) !important;font-weight:700 !important;margin-bottom:8px !important;line-height:1.3;font-family:'Playfair Display',serif !important;font-variant-numeric:lining-nums tabular-nums !important;">${pct}% — ${formatCurrency(g.current || 0)} / ${formatCurrency(g.target)}</div>
                     <div style="height:14px;background:rgba(255,255,255,0.07);border-radius:7px;overflow:hidden;">
                         <div style="height:100%;width:${pct}%;background:var(--gold-primary);border-radius:7px;transition:width 0.5s"></div>
                     </div>
@@ -1827,7 +1827,7 @@ function renderRecurringList() {
                 <small style="color:var(--text-secondary)">${r.category} — ${freqLabel[r.frequency] || r.frequency} — Dia ${r.day}</small>
             </div>
             <div style="display:flex;align-items:center;gap:10px">
-                <span style="color:${r.type==='credit'?'var(--success)':'var(--danger)'};font-weight:bold">${r.type==='credit'?'+':'-'}${formatCurrency(r.amount)}</span>
+                <span style="color:${r.type==='credit'?'var(--success)':'var(--danger)'};font-weight:bold;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${r.type==='credit'?'+':'-'}${formatCurrency(r.amount)}</span>
                 <button onclick="deleteRecurring(${i})" class="delete-btn" style="padding:5px 10px;font-size:0.8em">×</button>
             </div>
         </div>`).join('');
@@ -1905,7 +1905,7 @@ function renderGoalsList() {
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                 <span style="color:var(--text-primary);font-weight:600;font-size:1.2em;">${g.name}</span>
                 <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:1.5em;color:${color};font-weight:700;">${pct}% \u2014 ${formatCurrency(cur)} / ${formatCurrency(tgt)}</span>
+                    <span style="font-size:1.5em;color:${color};font-weight:700;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${pct}% \u2014 ${formatCurrency(cur)} / ${formatCurrency(tgt)}</span>
                     <button onclick="deleteGoal(${i})" style="padding:3px 8px;font-size:0.8em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;">&times;</button>
                 </div>
             </div>
@@ -1975,7 +1975,7 @@ function updateOverviewTab() {
                     <div style="margin-bottom:14px">
                         <div style="display:flex;justify-content:space-between;margin-bottom:5px">
                             <span style="color:var(--text-primary)">${cat}</span>
-                            <span style="color:var(--gold-primary);font-weight:600">${formatCurrency(val)}</span>
+                            <span style="color:var(--gold-primary);font-weight:600;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${formatCurrency(val)}</span>
                         </div>
                         <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
                             <div style="height:100%;width:${(val/maxVal*100).toFixed(0)}%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-primary));border-radius:3px;transition:width 0.6s ease"></div>
@@ -1994,7 +1994,7 @@ function updateOverviewTab() {
                             <div style="color:var(--text-primary);font-size:0.95em">${t.description}</div>
                             <div style="color:var(--text-secondary);font-size:0.8em">${t.category} • ${formatDate(t.date)}</div>
                         </div>
-                        <span style="font-weight:600;color:${t._type==='credit'?'var(--success)':'var(--danger)'}">${t._type==='credit'?'+':'-'}${formatCurrency(t.amount)}</span>
+                        <span style="font-weight:600;color:${t._type==='credit'?'var(--success)':'var(--danger)'};font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${t._type}==='credit'?'+':'-'}${formatCurrency(t.amount)}</span>
                     </div>`).join('');
         }
     } catch(e) { console.error('updateOverviewTab:', e); }
@@ -2697,7 +2697,7 @@ function renderLists() {
                         ${c.category} - ${c.description}
                         ${c.tags && c.tags.length ? `<br><small class="tags">${c.tags.map(t => `🏷️${t}`).join(' ')}</small>` : ''}
                     </div>
-                    <div class="summary-value ${privClass}" style="color:#2ECC71">${formatCurrency(c.amount)}</div>
+                    <div class="summary-value ${privClass}" style="color:#2ECC71;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${formatCurrency(c.amount)}</div>
                     <div class="action-btns">
                         ${c.attachment ? `<button class="edit-btn" title="Ver comprovante" onclick="viewAttachment('credits',${originalIndex})">📎</button>` : ''}
                         <button class="edit-btn" onclick="editItem('credits',${originalIndex})">✏️</button>
@@ -2735,7 +2735,7 @@ function renderLists() {
                         ${d.category} - ${d.description}
                         ${d.tags && d.tags.length ? `<br><small class="tags">${d.tags.map(t => `🏷️${t}`).join(' ')}</small>` : ''}
                     </div>
-                    <div class="summary-value ${privClass}" style="color:#E74C3C">-${formatCurrency(d.amount)}</div>
+                    <div class="summary-value ${privClass}" style="color:#E74C3C;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">-${formatCurrency(d.amount)}</div>
                     <div class="action-btns">
                         ${d.attachment ? `<button class="edit-btn" title="Ver comprovante" onclick="viewAttachment('debits',${originalIndex})">📎</button>` : ''}
                         ${undoButton}
@@ -2772,7 +2772,7 @@ function renderLists() {
                         <b>Vencimento: ${formatDate(f.dueDate)}</b>${urgLabel}<br>
                         ${f.description}
                     </div>
-                    <div class="summary-value ${privClass}" style="color:#F39C12">${formatCurrency(f.amount)}</div>
+                    <div class="summary-value ${privClass}" style="color:#F39C12;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${formatCurrency(f.amount)}</div>
                     <div class="action-btns">
                         <button class="btn btn-small pay-btn" onclick="payItem(${f._origIdx})">💳 Pagar</button>
                         <button class="delete-btn" onclick="deleteItem('futurePurchases',${f._origIdx})">×</button>
@@ -3379,13 +3379,14 @@ function renderRecurring() {
 
             <!-- Valor -->
             <div style="
-                font-family:'Cinzel',serif;
+                font-family:'Playfair Display',serif;
                 font-size:1.2em;
                 font-weight:700;
                 color:${color};
                 white-space:nowrap;
                 flex-shrink:0;
                 margin-right:4px;
+                font-variant-numeric:lining-nums tabular-nums;
             ">${isCredit ? '+' : '-'}${formatCurrency(r.amount)}</div>
 
             <!-- Botão excluir -->
@@ -3903,11 +3904,12 @@ function renderRecurringTransactions() {
                     ">
                         <!-- VALOR -->
                         <span style="
-                            font-family: 'Cinzel', serif;
+                            font-family: 'Playfair Display', serif;
                             font-size: 1.15em;
                             font-weight: bold;
                             color: ${color};
                             white-space: nowrap;
+                            font-variant-numeric: lining-nums tabular-nums;
                         ">
                             ${isCredit ? '+' : '-'} ${formatCurrency(item.amount)}
                         </span>

@@ -509,7 +509,8 @@ h1 {
 .summary-value { 
     font-size: 1.8em; 
     font-weight: 600;
-    font-family: 'Cinzel', serif;
+    font-family: 'Playfair Display', serif;
+    font-variant-numeric: lining-nums tabular-nums;
 }
 .account-info {
     display: block;
@@ -1974,9 +1975,10 @@ input:focus, select:focus, textarea:focus {
     margin-bottom: 10px;
 }
 .ov-card-value {
-    font-family: 'Cinzel', serif;
+    font-family: 'Playfair Display', serif;
     font-size: 1.6em;
     font-weight: 700;
+    font-variant-numeric: lining-nums tabular-nums;
 }
 .ov-credit  .ov-card-value { color: var(--success); }
 .ov-debit   .ov-card-value { color: var(--danger); }
@@ -3490,3 +3492,11 @@ select {
 }
 
 
+
+/* ================================================================
+   FONTE NUMÉRICA — saldo sidebar
+   ================================================================ */
+#sidebarUserBalance {
+    font-family: 'Playfair Display', serif !important;
+    font-variant-numeric: lining-nums tabular-nums !important;
+}
