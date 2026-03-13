@@ -13,57 +13,86 @@ const firebaseConfig = {
   appId: "1:148799450086:web:743faed370d44b146ac427"
 };
 
-// Inicializar Firebase (será carregado via CDN no HTML)
+// ========================================
+// RATE LIMITING — Proteção contra força bruta
+// ========================================
+const RATE_LIMIT = {
+    MAX_ATTEMPTS: 5,
+    BLOCK_DURATION_MS: 5 * 60 * 1000, // 5 minutos
+
+    getKey() { return 'stiga_login_rl'; },
+
+    getData() {
+        try {
+            return JSON.parse(sessionStorage.getItem(this.getKey())) || { attempts: 0, blockedUntil: null };
+        } catch { return { attempts: 0, blockedUntil: null }; }
+    },
+
+    save(data) {
+        sessionStorage.setItem(this.getKey(), JSON.stringify(data));
+    },
+
+    isBlocked() {
+        const data = this.getData();
+        if (data.blockedUntil && Date.now() < data.blockedUntil) {
+            const remaining = Math.ceil((data.blockedUntil - Date.now()) / 1000 / 60);
+            return { blocked: true, remaining };
+        }
+        // Expirou o bloqueio — resetar
+        if (data.blockedUntil && Date.now() >= data.blockedUntil) {
+            this.reset();
+        }
+        return { blocked: false };
+    },
+
+    increment() {
+        const data = this.getData();
+        data.attempts += 1;
+        if (data.attempts >= this.MAX_ATTEMPTS) {
+            data.blockedUntil = Date.now() + this.BLOCK_DURATION_MS;
+        }
+        this.save(data);
+        return data.attempts;
+    },
+
+    reset() {
+        sessionStorage.removeItem(this.getKey());
+    }
+};
+
+// Inicializar Firebase
 let auth = null;
 let db = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar se Firebase foi carregado
     if (typeof firebase === 'undefined') {
-        console.error('Firebase não carregado. Adicione os scripts no HTML.');
         showToast('Erro ao carregar sistema de autenticação', 'error');
         return;
     }
 
-    // Inicializar Firebase
     try {
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         auth = firebase.auth();
         db = firebase.firestore();
-        
-        // CONFIGURAR PERSISTÊNCIA (MANTER LOGADO)
-        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-            .then(() => {
-                console.log('✅ Persistência configurada: LOCAL');
-            })
-            .catch((error) => {
-                console.error('Erro ao configurar persistência:', error);
-            });
-        
-        console.log('Firebase inicializado com sucesso');
+
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+
     } catch (error) {
-        console.error('Erro ao inicializar Firebase:', error);
         showToast('Erro de configuração. Contate o suporte.', 'error');
     }
 
     // Verificar se já está logado
     auth.onAuthStateChanged(user => {
         if (user) {
-            console.log('✅ Usuário já está logado:', user.email);
-            // Salvar email para referência
             localStorage.setItem('currentUser', user.email);
-            // Redirecionar para app
             window.location.href = 'index.html';
         } else {
-            console.log('⚠️ Nenhum usuário logado');
-            // Carregar email salvo (se tiver)
             loadRememberedEmail();
         }
     });
 
-    // Configurar formulário de login
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
@@ -75,7 +104,14 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========================================
 async function handleLogin(e) {
     e.preventDefault();
-    
+
+    // ── Verificar rate limit ANTES de qualquer coisa ──
+    const limitStatus = RATE_LIMIT.isBlocked();
+    if (limitStatus.blocked) {
+        showToast(`⏰ Muitas tentativas. Aguarde ${limitStatus.remaining} min.`, 'error');
+        return;
+    }
+
     const email = document.getElementById('loginUsername')?.value?.trim();
     const password = document.getElementById('loginPassword')?.value;
     const remember = document.getElementById('rememberMe')?.checked;
@@ -93,41 +129,39 @@ async function handleLogin(e) {
     showLoading();
 
     try {
-        // ESCOLHER TIPO DE PERSISTÊNCIA
-        const persistenceType = remember 
-            ? firebase.auth.Auth.Persistence.LOCAL  // Mantém logado mesmo fechando navegador
-            : firebase.auth.Auth.Persistence.SESSION; // Só mantém logado na sessão atual
-        
-        // Configurar persistência ANTES de fazer login
+        const persistenceType = remember
+            ? firebase.auth.Auth.Persistence.LOCAL
+            : firebase.auth.Auth.Persistence.SESSION;
+
         await auth.setPersistence(persistenceType);
-        console.log('📌 Persistência definida:', remember ? 'LOCAL (lembrar)' : 'SESSION (só esta sessão)');
-        
-        // Autenticar com Firebase
+
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        // Salvar email no localStorage (para referência rápida)
+        // Login bem-sucedido — resetar contador
+        RATE_LIMIT.reset();
+
         localStorage.setItem('currentUser', user.email);
-        
-        // Se marcou "lembrar-me", salvar email para preencher depois
+
         if (remember) {
             localStorage.setItem('rememberedEmail', email);
-            console.log('💾 Email salvo para próximo login');
         } else {
             localStorage.removeItem('rememberedEmail');
         }
 
         showToast('✅ Login realizado com sucesso!', 'success');
-        
-        // Redirecionar após 500ms
+
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 500);
 
     } catch (error) {
         hideLoading();
-        console.error('Erro no login:', error);
-        
+
+        // Incrementar tentativas falhas
+        const attempts = RATE_LIMIT.increment();
+        const remaining = RATE_LIMIT.MAX_ATTEMPTS - attempts;
+
         let message = 'Erro ao fazer login';
         switch (error.code) {
             case 'auth/invalid-email':
@@ -137,21 +171,24 @@ async function handleLogin(e) {
                 message = '🚫 Usuário desabilitado. Contate o suporte.';
                 break;
             case 'auth/user-not-found':
-                message = '❌ Usuário não encontrado. Verifique seu email.';
-                break;
             case 'auth/wrong-password':
-                message = '🔑 Senha incorreta';
+            case 'auth/invalid-credential':
+                // Mensagem genérica — não revela se é email ou senha
+                message = remaining > 0
+                    ? `🔑 Credenciais inválidas. ${remaining} tentativa(s) restante(s).`
+                    : '🔒 Conta bloqueada por 5 minutos.';
                 break;
             case 'auth/too-many-requests':
                 message = '⏰ Muitas tentativas. Tente novamente mais tarde.';
+                RATE_LIMIT.reset(); // Firebase já bloqueou
                 break;
             case 'auth/network-request-failed':
                 message = '🌐 Erro de conexão. Verifique sua internet.';
                 break;
             default:
-                message = 'Erro: ' + error.message;
+                message = '❌ Erro ao fazer login. Tente novamente.';
         }
-        
+
         showToast(message, 'error');
     }
 }
@@ -164,15 +201,8 @@ function loadRememberedEmail() {
     if (rememberedEmail) {
         const emailInput = document.getElementById('loginUsername');
         const rememberCheckbox = document.getElementById('rememberMe');
-        
-        if (emailInput) {
-            emailInput.value = rememberedEmail;
-            console.log('📧 Email pré-preenchido:', rememberedEmail);
-        }
-        
-        if (rememberCheckbox) {
-            rememberCheckbox.checked = true;
-        }
+        if (emailInput) emailInput.value = rememberedEmail;
+        if (rememberCheckbox) rememberCheckbox.checked = true;
     }
 }
 
@@ -204,7 +234,6 @@ function hideLoading() {
 }
 
 function showToast(message, type = 'info') {
-    // Criar toast se não existir
     let toast = document.getElementById('loginToast');
     if (!toast) {
         toast = document.createElement('div');
@@ -212,13 +241,9 @@ function showToast(message, type = 'info') {
         toast.className = 'login-toast';
         document.body.appendChild(toast);
     }
-
     toast.textContent = message;
     toast.className = 'login-toast show ' + type;
-
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
+    setTimeout(() => { toast.classList.remove('show'); }, 3500);
 }
 
 function togglePasswordVisibility(inputId, button) {
@@ -240,7 +265,9 @@ function togglePasswordVisibility(inputId, button) {
     }
 }
 
-// Particles animation (opcional - visual)
+// ========================================
+// PARTÍCULAS (visual)
+// ========================================
 class Particle {
     constructor(canvas) {
         this.canvas = canvas;
@@ -281,7 +308,3 @@ if (canvas) {
         canvas.height = canvas.offsetHeight;
     });
 }
-
-console.log('✅ Sistema de login carregado!');
-console.log('📌 Persistência: Firebase Auth gerencia sessões automaticamente');
-console.log('💡 Marque "Lembrar-me" para manter login mesmo fechando o navegador');

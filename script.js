@@ -134,6 +134,8 @@ async function saveToFirestore() {
         showToast('Erro ao salvar dados', 'error');
     } finally {
         isSaving = false;
+        // Limpar cache de abas para forçar re-render após salvar
+        loadedTabs.clear();
     }
 }
 
@@ -236,12 +238,35 @@ function setTodayAsDefault() {
 function showLoading() {
     const o = document.getElementById('loadingOverlay');
     if (o) o.classList.add('active');
+    showSkeletonCards();
 }
 function hideLoading() {
     setTimeout(() => {
         const o = document.getElementById('loadingOverlay');
         if (o) o.classList.remove('active');
+        hideSkeletonCards();
     }, 300);
+}
+
+function showSkeletonCards() {
+    // Adicionar skeleton nos 4 cards de resumo
+    ['totalCredits','totalDebits','currentBalance','futurePurchases'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.dataset.originalText = el.textContent;
+            el.innerHTML = '<span class="skeleton-value"></span>';
+        }
+    });
+    // Skeleton nos cards de resumo
+    document.querySelectorAll('.summary-card').forEach(card => {
+        card.classList.add('skeleton');
+    });
+}
+
+function hideSkeletonCards() {
+    document.querySelectorAll('.summary-card').forEach(card => {
+        card.classList.remove('skeleton');
+    });
 }
 
 // ========================================
@@ -607,25 +632,65 @@ function deleteBudget(cat) {
 // ========================================
 // COMPARAÇÃO MENSAL
 // ========================================
+let monthComparisonChart = null;
 function renderMonthComparison() {
     const cont = document.getElementById('monthComparison');
     if (!cont) return;
     try {
-        const thisM = new Date().getMonth();
-        const lastM = thisM === 0 ? 11 : thisM - 1;
-        const sum = (arr, month) => arr.filter(x => { try { return new Date(x.date).getMonth() === month; } catch { return false; } })
+        const now = new Date();
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            months.push({ month: d.getMonth(), year: d.getFullYear(), label: d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }) });
+        }
+        const sum = (arr, month, year) => arr
+            .filter(x => { try { const d = new Date(x.date + 'T00:00:00'); return d.getMonth() === month && d.getFullYear() === year; } catch { return false; } })
             .reduce((s, x) => s + parseFloat(x.amount || 0), 0);
-        const thisC = sum(credits, thisM), lastC = sum(credits, lastM);
-        const thisD = sum(debits, thisM), lastD = sum(debits, lastM);
+
+        const credData = months.map(m => sum(credits, m.month, m.year));
+        const debData  = months.map(m => sum(debits,  m.month, m.year));
+        const labels   = months.map(m => m.label);
+
+        // Comparativo mês atual vs anterior
+        const thisC = credData[5], lastC = credData[4];
+        const thisD = debData[5],  lastD = debData[4];
         const cDiff = lastC > 0 ? ((thisC - lastC) / lastC * 100) : 0;
         const dDiff = lastD > 0 ? ((thisD - lastD) / lastD * 100) : 0;
         const bDiff = (lastC - lastD) !== 0 ? (((thisC - thisD) - (lastC - lastD)) / Math.abs(lastC - lastD) * 100) : 0;
+
         cont.innerHTML = `
-            <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
-                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Créditos:</span><span class="${cDiff > 0 ? 'positive' : 'negative'}" style="font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${cDiff > 0 ? '+' : ''}${cDiff.toFixed(1)}% ${cDiff > 0 ? '⬆️' : '⬇️'}</span></div>
-                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Débitos:</span><span class="${dDiff < 0 ? 'positive' : 'negative'}" style="font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${dDiff > 0 ? '+' : ''}${dDiff.toFixed(1)}% ${dDiff > 0 ? '⬆️' : '⬇️'}</span></div>
-                <div class="transaction-item" style="font-size:0.95em;padding:6px 0;"><span>Saldo:</span><span class="${bDiff > 0 ? 'positive' : 'negative'}" style="font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${bDiff > 0 ? '+' : ''}${bDiff.toFixed(1)}% ${bDiff > 0 ? '🎉' : '⚠️'}</span></div>
-            </div>`;
+            <h4 style="color:var(--gold-primary);font-family:'Cinzel',serif;font-size:0.85em;letter-spacing:1px;text-transform:uppercase;margin:10px 0 8px">Comparativo Mensal</h4>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                <span style="font-size:0.9em;font-family:'Cinzel',serif;">Créditos: <strong style="font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;" class="${cDiff >= 0 ? 'positive' : 'negative'}">${cDiff >= 0 ? '+' : ''}${cDiff.toFixed(1)}% ${cDiff >= 0 ? '⬆️' : '⬇️'}</strong></span>
+                <span style="font-size:0.9em;font-family:'Cinzel',serif;">Débitos: <strong style="font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;" class="${dDiff <= 0 ? 'positive' : 'negative'}">${dDiff >= 0 ? '+' : ''}${dDiff.toFixed(1)}% ${dDiff >= 0 ? '⬆️' : '⬇️'}</strong></span>
+                <span style="font-size:0.9em;font-family:'Cinzel',serif;">Saldo: <strong style="font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;" class="${bDiff >= 0 ? 'positive' : 'negative'}">${bDiff >= 0 ? '+' : ''}${bDiff.toFixed(1)}% ${bDiff >= 0 ? '🎉' : '⚠️'}</strong></span>
+            </div>
+            <div style="position:relative;height:180px;"><canvas id="monthComparisonChart"></canvas></div>`;
+
+        setTimeout(() => {
+            const canvas = document.getElementById('monthComparisonChart');
+            if (!canvas) return;
+            if (monthComparisonChart) { try { monthComparisonChart.destroy(); } catch(e) {} }
+            const ctx = canvas.getContext('2d');
+            monthComparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Créditos', data: credData, backgroundColor: 'rgba(46,204,113,0.7)', borderColor: '#2ECC71', borderWidth: 1, borderRadius: 4 },
+                        { label: 'Débitos',  data: debData,  backgroundColor: 'rgba(231,76,60,0.7)',  borderColor: '#E74C3C', borderWidth: 1, borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { color: theme === 'dark' ? '#A0A0A0' : '#333', font: { size: 10 }, padding: 8 } } },
+                    scales: {
+                        y: { ticks: { color: theme === 'dark' ? '#A0A0A0' : '#333', callback: v => 'R$' + v.toLocaleString('pt-BR') }, grid: { color: theme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)' } },
+                        x: { ticks: { color: theme === 'dark' ? '#A0A0A0' : '#333' }, grid: { display: false } }
+                    }
+                }
+            });
+        }, 100);
     } catch (e) { cont.innerHTML = '<p class="no-data">Erro ao carregar comparação mensal</p>'; }
 }
 
@@ -2620,6 +2685,10 @@ console.log('📝 Para testar, abra o Console (F12) e importe um CSV');
 // Variáveis globais de filtro
 let filterCreditCategoryValue = '';
 let filterDebitCategoryValue = '';
+let filterCreditDateStart = '';
+let filterCreditDateEnd = '';
+let filterDebitDateStart = '';
+let filterDebitDateEnd = '';
 
 // FUNÇÃO: Inicializar filtros
 function initializeFilters() {
@@ -2647,6 +2716,22 @@ function initializeFilters() {
         console.log('✅ Filtro de créditos inicializado');
     }
     
+    // Filtros de período - Créditos
+    const creditDateStart = document.getElementById('filterCreditDateStart');
+    const creditDateEnd = document.getElementById('filterCreditDateEnd');
+    if (creditDateStart) {
+        creditDateStart.addEventListener('change', function() {
+            filterCreditDateStart = this.value;
+            renderLists();
+        });
+    }
+    if (creditDateEnd) {
+        creditDateEnd.addEventListener('change', function() {
+            filterCreditDateEnd = this.value;
+            renderLists();
+        });
+    }
+    
     // Preencher opções de filtro de débitos
     const filterDebitSelect = document.getElementById('filterDebitCategory');
     if (filterDebitSelect) {
@@ -2668,6 +2753,22 @@ function initializeFilters() {
         
         console.log('✅ Filtro de débitos inicializado');
     }
+
+    // Filtros de período - Débitos
+    const debitDateStart = document.getElementById('filterDebitDateStart');
+    const debitDateEnd = document.getElementById('filterDebitDateEnd');
+    if (debitDateStart) {
+        debitDateStart.addEventListener('change', function() {
+            filterDebitDateStart = this.value;
+            renderLists();
+        });
+    }
+    if (debitDateEnd) {
+        debitDateEnd.addEventListener('change', function() {
+            filterDebitDateEnd = this.value;
+            renderLists();
+        });
+    }
 }
 
 // FUNÇÃO: Renderizar listas COM FILTROS
@@ -2681,9 +2782,12 @@ function renderLists() {
     
     // Aplicar filtro de categoria
     if (filterCreditCategoryValue) {
-        creditosParaMostrar = credits.filter(c => c.category === filterCreditCategoryValue);
+        creditosParaMostrar = creditosParaMostrar.filter(c => c.category === filterCreditCategoryValue);
         console.log(`🔍 Filtro créditos aplicado: "${filterCreditCategoryValue}" → ${creditosParaMostrar.length} resultados`);
     }
+    // Aplicar filtro de período
+    if (filterCreditDateStart) creditosParaMostrar = creditosParaMostrar.filter(c => c.date >= filterCreditDateStart);
+    if (filterCreditDateEnd) creditosParaMostrar = creditosParaMostrar.filter(c => c.date <= filterCreditDateEnd);
     
     const credList = document.getElementById('creditsList');
     if (credList) {
@@ -2715,9 +2819,12 @@ function renderLists() {
     
     // Aplicar filtro de categoria
     if (filterDebitCategoryValue) {
-        debitosParaMostrar = debits.filter(d => d.category === filterDebitCategoryValue);
+        debitosParaMostrar = debitosParaMostrar.filter(d => d.category === filterDebitCategoryValue);
         console.log(`🔍 Filtro débitos aplicado: "${filterDebitCategoryValue}" → ${debitosParaMostrar.length} resultados`);
     }
+    // Aplicar filtro de período
+    if (filterDebitDateStart) debitosParaMostrar = debitosParaMostrar.filter(d => d.date >= filterDebitDateStart);
+    if (filterDebitDateEnd) debitosParaMostrar = debitosParaMostrar.filter(d => d.date <= filterDebitDateEnd);
     
     const debList = document.getElementById('debitsList');
     if (debList) {
@@ -2787,12 +2894,21 @@ function renderLists() {
 function clearFilters() {
     filterCreditCategoryValue = '';
     filterDebitCategoryValue = '';
+    filterCreditDateStart = '';
+    filterCreditDateEnd = '';
+    filterDebitDateStart = '';
+    filterDebitDateEnd = '';
     
     const filterCreditSelect = document.getElementById('filterCreditCategory');
     if (filterCreditSelect) filterCreditSelect.value = '';
     
     const filterDebitSelect = document.getElementById('filterDebitCategory');
     if (filterDebitSelect) filterDebitSelect.value = '';
+
+    ['filterCreditDateStart','filterCreditDateEnd','filterDebitDateStart','filterDebitDateEnd'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
     
     console.log('🔍 Filtros limpos');
     renderLists();
@@ -3247,6 +3363,9 @@ console.log('✅ Metas e Orçamentos carregados (versão limpa)!');
 
 
 function scrollToTop() { /* desativado */ }
+// Lazy loading: controla quais abas já foram carregadas
+const loadedTabs = new Set();
+
 function navigateToTab(tabName) {
     // Atualizar botões da sidebar
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
@@ -3260,32 +3379,33 @@ function navigateToTab(tabName) {
     const tabContent = document.getElementById(tabName);
     if (tabContent) { tabContent.classList.add('active'); tabContent.style.display = 'block'; }
 
-    // Renderizar dados na tab aberta
-    if (tabName === 'recurring') { syncRecurringMain(); renderRecurring(); }
-    if (tabName === 'budgets') { syncBudgetsMain(); }
-    if (tabName === 'goals') { syncGoalsMain(); renderGoalsList(); }
-
-    // Em mobile: fechar sidebar (scroll gerenciado pelo mobile-fixes.js)
+    // Em mobile: fechar sidebar
     if (window.innerWidth <= 768) {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
         if (sidebar) sidebar.classList.remove('active');
         if (overlay) overlay.classList.remove('active');
     }
-    
-    // Renderizar conteúdo se necessário
-    if (tabName === 'dashboard') {
-        updateDashboard();
-    } else if (tabName === 'credits' || tabName === 'debits' || tabName === 'future') {
+
+    // LAZY LOADING: só renderiza se ainda não foi carregada ou se são dados dinâmicos
+    const alreadyLoaded = loadedTabs.has(tabName);
+
+    if (tabName === 'credits' || tabName === 'debits' || tabName === 'future') {
+        // Sempre re-renderiza pois dados mudam frequentemente
         renderLists();
+    } else if (tabName === 'recurring') {
+        if (!alreadyLoaded) { syncRecurringMain(); renderRecurring(); loadedTabs.add(tabName); }
+        else renderRecurring();
+    } else if (tabName === 'budgets') {
+        if (!alreadyLoaded) { syncBudgetsMain(); loadedTabs.add(tabName); }
+        else syncBudgetsMain();
+    } else if (tabName === 'goals') {
+        if (!alreadyLoaded) { syncGoalsMain(); renderGoalsList(); loadedTabs.add(tabName); }
+        else renderGoalsList();
+    } else if (tabName === 'dashboard') {
+        updateDashboard();
     } else if (tabName === 'calendar') {
         openCalendarModal();
-    } else if (tabName === 'goals') {
-        renderGoals();
-    } else if (tabName === 'budgets') {
-        renderBudgets();
-    } else if (tabName === 'recurring') {
-        renderRecurring();
     }
 }
 

@@ -1,11 +1,33 @@
-// api/stiga-ia.js — Proxy Vercel para Groq API (gratuito)
+// api/stiga-ia.js — Proxy Vercel para Groq API
+// CORS restrito aos domínios oficiais do Stiga Finance
+
+const ALLOWED_ORIGINS = [
+    'https://stigasistemas.github.io',
+    'https://stiga-finance.vercel.app'
+];
+
 module.exports = async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin || '';
+
+    // ── Verificar se a origem é permitida ──
+    if (ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+    } else {
+        // Origem não autorizada — bloquear
+        return res.status(403).json({ error: 'Origem não autorizada' });
+    }
+
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
+
+    // ── Verificar se a chave Groq está configurada ──
+    if (!process.env.GROQ_API_KEY) {
+        return res.status(500).json({ error: 'Serviço de IA não configurado' });
+    }
 
     try {
         let body = req.body;
@@ -23,6 +45,12 @@ module.exports = async (req, res) => {
 
         if (!messages || !Array.isArray(messages)) {
             return res.status(400).json({ error: 'Campo messages é obrigatório' });
+        }
+
+        // ── Limitar tamanho da requisição (anti-abuso) ──
+        const totalChars = messages.reduce((acc, m) => acc + (m.content?.length || 0), 0);
+        if (totalChars > 8000) {
+            return res.status(400).json({ error: 'Mensagem muito longa' });
         }
 
         // Groq usa o mesmo formato da OpenAI
@@ -46,18 +74,15 @@ module.exports = async (req, res) => {
         const data = await response.json();
 
         if (!response.ok) {
-            console.error('Erro Groq:', JSON.stringify(data));
-            return res.status(response.status).json({ error: data });
+            return res.status(response.status).json({ error: 'Erro no serviço de IA' });
         }
 
-        // Retornar no mesmo formato que o script.js espera
         const text = data.choices?.[0]?.message?.content || 'Não consegui processar.';
         return res.status(200).json({
             content: [{ type: 'text', text }]
         });
 
     } catch (err) {
-        console.error('Erro interno:', err.message);
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ error: 'Erro interno no servidor' });
     }
 };

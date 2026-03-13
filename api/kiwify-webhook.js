@@ -1,18 +1,19 @@
 // ============================================================
 // STIGA FINANCE — WEBHOOK KIWIFY
 // Variáveis de ambiente (conforme configurado na Vercel):
-//   EMAIL_USER  = stigasistemas@gmail.com
-//   EMAIL_PASS  = App Password do Google (16 chars)
+//   EMAIL_USER        = stigasistemas@gmail.com
+//   EMAIL_PASS        = App Password do Google (16 chars)
+//   KIWIFY_SECRET     = segredo do webhook configurado na Kiwify
 //   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
 // ============================================================
 
 const admin      = require('firebase-admin');
 const nodemailer = require('nodemailer');
+const crypto     = require('crypto');
 
 // ── Firebase Admin via variáveis de ambiente ────────────────
 if (!admin.apps.length) {
     try {
-        // Tenta primeiro via variáveis de ambiente
         if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PROJECT_ID) {
             admin.initializeApp({
                 credential: admin.credential.cert({
@@ -21,15 +22,48 @@ if (!admin.apps.length) {
                     privateKey:  process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
                 })
             });
-            console.log('✅ Firebase via variáveis de ambiente');
         } else {
-            // Fallback: arquivo local
             const serviceAccount = require('../firebase-key.json');
             admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-            console.log('✅ Firebase via firebase-key.json');
         }
     } catch (e) {
         console.error('❌ Erro Firebase:', e.message);
+    }
+}
+
+// ── Verificar assinatura da Kiwify ──────────────────────────
+function verifyKiwifySignature(req) {
+    const secret = process.env.KIWIFY_SECRET;
+
+    // Se não tiver secret configurado, bloquear tudo por segurança
+    if (!secret) {
+        console.error('❌ KIWIFY_SECRET não configurado!');
+        return false;
+    }
+
+    // Kiwify envia a assinatura no header
+    const signature = req.headers['x-kiwify-signature'] || req.headers['x-signature'] || '';
+
+    if (!signature) {
+        console.error('❌ Header de assinatura ausente');
+        return false;
+    }
+
+    // Recalcular assinatura com o body cru
+    const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    const expected = crypto
+        .createHmac('sha256', secret)
+        .update(body)
+        .digest('hex');
+
+    // Comparação segura contra timing attacks
+    try {
+        return crypto.timingSafeEqual(
+            Buffer.from(signature),
+            Buffer.from(expected)
+        );
+    } catch {
+        return false;
     }
 }
 
@@ -47,13 +81,11 @@ function buildEmailHTML(name, email, password) {
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#0A0E17;font-family:Georgia,serif;">
-<!-- Fundo com detalhes dourados -->
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F5;padding:40px 20px;">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
 <!-- HEADER -->
-<!-- Linha dourada topo -->
 <tr><td style="background:linear-gradient(135deg,#D4AF37,#B8942A);height:3px;border-radius:20px 20px 0 0;"></td></tr>
 <tr><td style="background:linear-gradient(160deg,#1a1f2e,#0f1420);border-radius:0;border:1px solid rgba(212,175,55,0.25);border-top:none;border-bottom:none;padding:48px 40px 36px;text-align:center;">
   <img src="https://stigasistemas.github.io/stiga-finance/logo-stiga.png" alt="Stiga Finance" width="100" height="100" style="display:block;margin:0 auto 24px;border-radius:50%;filter:drop-shadow(0 0 20px rgba(212,175,55,0.5));">
@@ -83,7 +115,6 @@ function buildEmailHTML(name, email, password) {
 <!-- CORPO PRINCIPAL -->
 <tr><td style="background:#12172a;border-left:1px solid rgba(212,175,55,0.25);border-right:1px solid rgba(212,175,55,0.25);padding:36px 40px 32px;">
 
-  <!-- O que voce ganhou -->
   <p style="margin:0 0 16px;font-size:10px;letter-spacing:3px;color:#D4AF37;text-transform:uppercase;font-family:Arial,sans-serif;">O que voce tem acesso agora</p>
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
     <tr>
@@ -128,7 +159,6 @@ function buildEmailHTML(name, email, password) {
     </tr>
   </table>
 
-  <!-- Divisor -->
   <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.3),transparent);margin-bottom:28px;"></div>
 
   <!-- Credenciais -->
@@ -144,17 +174,15 @@ function buildEmailHTML(name, email, password) {
     </td></tr>
   </table>
 
-  <!-- Aviso seguranca -->
   <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.2);border-left:3px solid #D4AF37;border-radius:8px;margin-bottom:28px;">
-    <tr><td style="padding:14px 18px;">
-      <p style="margin:0;font-size:13px;color:#F4E5C3;font-family:Arial,sans-serif;line-height:1.5;">
+    <tr><td style="padding:12px 16px;">
+      <p style="margin:0;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;line-height:1.6;">
         &#9888; <strong>Guarde suas credenciais em local seguro.</strong><br>
         <span style="color:#8A95A3;font-size:12px;">Recomendamos alterar sua senha apos o primeiro acesso.</span>
       </p>
     </td></tr>
   </table>
 
-  <!-- Botao -->
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center">
       <a href="https://stigasistemas.github.io/stiga-finance/" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#B8942A);color:#0A0E17;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;padding:16px 48px;border-radius:10px;box-shadow:0 6px 24px rgba(212,175,55,0.35);">
@@ -183,7 +211,6 @@ function buildEmailHTML(name, email, password) {
 </td></tr>
 
 <!-- FOOTER -->
-<!-- Linha dourada rodape -->
 <tr><td style="background:linear-gradient(135deg,#B8942A,#D4AF37);height:2px;"></td></tr>
 <tr><td style="background:#080b12;border-radius:0 0 20px 20px;border:1px solid rgba(212,175,55,0.15);border-top:none;padding:20px 40px;text-align:center;">
   <p style="margin:0 0 4px;font-size:11px;color:#4a5568;font-family:Arial,sans-serif;">© ${year} Stiga Sistemas. Todos os direitos reservados.</p>
@@ -197,49 +224,40 @@ function buildEmailHTML(name, email, password) {
 </html>`;
 }
 
-
 // ── Handler principal ───────────────────────────────────────
 module.exports = async (req, res) => {
-    console.log('📨 Webhook recebido:', req.method);
-
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Metodo nao permitido' });
     }
 
-    // ── Verificar variáveis obrigatórias ──
+    // 🔒 VERIFICAR ASSINATURA DA KIWIFY
+    const isValid = verifyKiwifySignature(req);
+    if (!isValid) {
+        console.error('❌ Assinatura inválida — requisição bloqueada');
+        return res.status(401).json({ error: 'Assinatura inválida' });
+    }
+
     const emailUser = process.env.EMAIL_USER;
     const emailPass = process.env.EMAIL_PASS;
 
-    if (!emailPass) {
-        console.error('❌ EMAIL_PASS nao configurada!');
-        return res.status(500).json({ error: 'EMAIL_PASS ausente nas variaveis de ambiente da Vercel' });
-    }
-    if (!emailUser) {
-        console.error('❌ EMAIL_USER nao configurada!');
-        return res.status(500).json({ error: 'EMAIL_USER ausente nas variaveis de ambiente da Vercel' });
-    }
+    if (!emailPass) return res.status(500).json({ error: 'EMAIL_PASS ausente' });
+    if (!emailUser) return res.status(500).json({ error: 'EMAIL_USER ausente' });
 
     try {
         const payload = req.body;
-        console.log('📦 Payload:', JSON.stringify(payload));
 
-        // Aceitar qualquer variação de status pago
         const status = payload?.order_status || payload?.status;
         if (status !== 'paid' && status !== 'approved' && status !== 'complete') {
             return res.status(200).json({ message: 'Evento ignorado, status: ' + status });
         }
 
-        // Extrair dados do comprador — suporta vários formatos da Kiwify
         const customer = payload?.Customer || payload?.customer || {};
         const email    = customer.email || payload?.customer_email || payload?.email;
         const name     = customer.name || customer.full_name || customer.first_name || payload?.customer_name || 'Cliente';
 
         if (!email) {
-            console.error('❌ Email nao encontrado no payload');
-            return res.status(400).json({ error: 'Email do cliente nao encontrado', payload });
+            return res.status(400).json({ error: 'Email do cliente nao encontrado' });
         }
-
-        console.log(`👤 Processando: ${name} <${email}>`);
 
         // ── Criar usuário no Firebase Auth ──
         const password = generatePassword(10);
@@ -248,13 +266,11 @@ module.exports = async (req, res) => {
         try {
             const userRecord = await admin.auth().createUser({ email, password, displayName: name });
             uid = userRecord.uid;
-            console.log('✅ Usuario criado:', uid);
         } catch (err) {
             if (err.code === 'auth/email-already-exists') {
                 const existing = await admin.auth().getUserByEmail(email);
                 await admin.auth().updateUser(existing.uid, { password });
                 uid = existing.uid;
-                console.log('♻️ Senha atualizada para usuario existente:', uid);
             } else {
                 throw err;
             }
@@ -270,7 +286,6 @@ module.exports = async (req, res) => {
                     main: { name: '💰 Conta Principal', credits: [], debits: [], futurePurchases: [] }
                 }
             }, { merge: true });
-            console.log('✅ Dados salvos no Firestore');
         } catch (fsErr) {
             console.error('⚠️ Erro Firestore (nao critico):', fsErr.message);
         }
@@ -287,7 +302,6 @@ module.exports = async (req, res) => {
             subject: 'Bem-vindo ao Stiga Finance - Suas Credenciais de Acesso',
             html: buildEmailHTML(name, email, password)
         });
-        console.log('✅ Email enviado para:', email);
 
         return res.status(200).json({ success: true, uid, message: `Usuario ${email} criado com sucesso` });
 

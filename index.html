@@ -460,10 +460,13 @@
                     </form>
                 </div>
                 <div class="filter-section" style="margin-top: 20px; margin-bottom: 20px;">
-                    <div class="filter-row" style="display: flex; gap: 10px;">
+                    <div class="filter-row" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <select id="filterCreditCategory" class="filter-select" style="padding: 10px;">
                             <option value="">📁 Todas as categorias</option>
                         </select>
+                        <input type="date" id="filterCreditDateStart" class="filter-select" style="padding: 10px;" title="Data inicial">
+                        <input type="date" id="filterCreditDateEnd" class="filter-select" style="padding: 10px;" title="Data final">
+                        <button onclick="clearFilters()" class="btn-secondary" style="padding: 10px 16px;">🗑️ Limpar</button>
                     </div>
                 </div>
                 <div class="transactions-list">
@@ -514,10 +517,13 @@
                     </form>
                 </div>
                 <div class="filter-section" style="margin-top: 20px; margin-bottom: 20px;">
-                    <div class="filter-row" style="display: flex; gap: 10px;">
+                    <div class="filter-row" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <select id="filterDebitCategory" class="filter-select" style="padding: 10px;">
                             <option value="">📁 Todas as categorias</option>
                         </select>
+                        <input type="date" id="filterDebitDateStart" class="filter-select" style="padding: 10px;" title="Data inicial">
+                        <input type="date" id="filterDebitDateEnd" class="filter-select" style="padding: 10px;" title="Data final">
+                        <button onclick="clearFilters()" class="btn-secondary" style="padding: 10px 16px;">🗑️ Limpar</button>
                     </div>
                 </div>
                 <div class="transactions-list">
