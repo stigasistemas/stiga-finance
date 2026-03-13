@@ -34,37 +34,14 @@ if (!admin.apps.length) {
 // ── Verificar assinatura da Kiwify ──────────────────────────
 function verifyKiwifySignature(req) {
     const secret = process.env.KIWIFY_SECRET;
-
-    // Se não tiver secret configurado, bloquear tudo por segurança
-    if (!secret) {
-        console.error('❌ KIWIFY_SECRET não configurado!');
-        return false;
-    }
-
-    // Kiwify envia a assinatura no header
+    if (!secret) return false;
     const signature = req.headers['x-kiwify-signature'] || req.headers['x-signature'] || '';
-
-    if (!signature) {
-        console.error('❌ Header de assinatura ausente');
-        return false;
-    }
-
-    // Recalcular assinatura com o body cru
+    if (!signature) return false;
     const body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-    const expected = crypto
-        .createHmac('sha256', secret)
-        .update(body)
-        .digest('hex');
-
-    // Comparação segura contra timing attacks
+    const expected = crypto.createHmac('sha256', secret).update(body).digest('hex');
     try {
-        return crypto.timingSafeEqual(
-            Buffer.from(signature),
-            Buffer.from(expected)
-        );
-    } catch {
-        return false;
-    }
+        return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+    } catch { return false; }
 }
 
 // ── Gera senha aleatória ────────────────────────────────────
@@ -77,145 +54,236 @@ function generatePassword(len = 10) {
 function buildEmailHTML(name, email, password) {
     const firstName = (name || 'Cliente').split(' ')[0];
     const year = new Date().getFullYear();
+    const orderDate = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
     return `<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#0A0E17;font-family:Georgia,serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F5;padding:40px 20px;">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Bem-vindo ao Stiga Finance</title>
+</head>
+<body style="margin:0;padding:0;background:#F0F2F5;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F0F2F5;padding:40px 16px;">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-<!-- HEADER -->
-<tr><td style="background:linear-gradient(135deg,#D4AF37,#B8942A);height:3px;border-radius:20px 20px 0 0;"></td></tr>
-<tr><td style="background:linear-gradient(160deg,#1a1f2e,#0f1420);border-radius:0;border:1px solid rgba(212,175,55,0.25);border-top:none;border-bottom:none;padding:48px 40px 36px;text-align:center;">
-  <img src="https://stigasistemas.github.io/stiga-finance/logo-stiga.png" alt="Stiga Finance" width="100" height="100" style="display:block;margin:0 auto 24px;border-radius:50%;filter:drop-shadow(0 0 20px rgba(212,175,55,0.5));">
-  <p style="font-size:10px;letter-spacing:4px;color:#D4AF37;text-transform:uppercase;margin:0 0 8px;font-family:Arial,sans-serif;">Bem-vindo a</p>
-  <h1 style="margin:0;font-size:30px;font-weight:bold;letter-spacing:5px;color:#F4E5C3;font-family:Georgia,serif;">STIGA FINANCE</h1>
-  <p style="margin:8px 0 0;font-size:12px;letter-spacing:2px;color:#8A95A3;font-family:Arial,sans-serif;">Gestao Financeira Inteligente</p>
-  <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,#D4AF37,transparent);margin:28px auto 0;"></div>
-</td></tr>
+  <!-- TOPO DOURADO -->
+  <tr><td style="background:linear-gradient(90deg,#B8942A,#D4AF37,#F4E5C3,#D4AF37,#B8942A);height:4px;border-radius:16px 16px 0 0;"></td></tr>
 
-<!-- AGRADECIMENTO PELA COMPRA -->
-<tr><td style="background:#12172a;border-left:1px solid rgba(212,175,55,0.25);border-right:1px solid rgba(212,175,55,0.25);padding:32px 40px;">
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr>
-      <td style="text-align:center;">
-        <div style="font-size:36px;margin-bottom:12px;">&#127881;</div>
-        <h2 style="margin:0 0 12px;font-size:20px;color:#D4AF37;font-family:Georgia,serif;letter-spacing:1px;">Compra Confirmada!</h2>
-        <p style="margin:0;font-size:14px;color:#F4E5C3;line-height:1.8;font-family:Arial,sans-serif;">
-          Parabens, <strong>${firstName}</strong>! Sua compra foi processada com sucesso.<br>
-          Voce agora faz parte da familia <strong style="color:#D4AF37;">Stiga Finance</strong> e tem acesso completo<br>
-          a uma ferramenta que vai transformar sua vida financeira.
+  <!-- HEADER -->
+  <tr><td style="background:linear-gradient(160deg,#0d1117 0%,#1a1f2e 60%,#0d1117 100%);padding:44px 40px 36px;text-align:center;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <img src="https://stigasistemas.github.io/stiga-finance/logo-stiga.png" alt="Stiga Finance" width="88" height="88" style="display:block;margin:0 auto 20px;border-radius:50%;border:2px solid rgba(212,175,55,0.4);box-shadow:0 0 32px rgba(212,175,55,0.3);">
+    <p style="margin:0 0 6px;font-size:11px;letter-spacing:5px;color:#D4AF37;text-transform:uppercase;font-family:Georgia,serif;">Gestão Financeira Inteligente</p>
+    <h1 style="margin:0;font-size:28px;font-weight:bold;letter-spacing:6px;color:#F4E5C3;font-family:Georgia,serif;">STIGA FINANCE</h1>
+    <div style="width:100px;height:1px;background:linear-gradient(90deg,transparent,#D4AF37,transparent);margin:20px auto 0;"></div>
+  </td></tr>
+
+  <!-- BADGE COMPRA CONFIRMADA -->
+  <tr><td style="background:#12172a;padding:28px 40px 0;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="background:linear-gradient(135deg,rgba(46,204,113,0.12),rgba(46,204,113,0.06));border:1px solid rgba(46,204,113,0.3);border-radius:12px;padding:18px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td width="48" style="vertical-align:middle;">
+              <div style="width:44px;height:44px;background:rgba(46,204,113,0.15);border-radius:50%;text-align:center;line-height:44px;font-size:22px;">&#10003;</div>
+            </td>
+            <td style="vertical-align:middle;padding-left:16px;">
+              <p style="margin:0 0 2px;font-size:16px;font-weight:bold;color:#2ECC71;font-family:Arial,sans-serif;">Compra Confirmada!</p>
+              <p style="margin:0;font-size:12px;color:#8A95A3;font-family:Arial,sans-serif;">Pedido processado em ${orderDate}</p>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <!-- SAUDAÇÃO -->
+  <tr><td style="background:#12172a;padding:28px 40px 24px;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <p style="margin:0 0 12px;font-size:22px;font-weight:bold;color:#F4E5C3;font-family:Georgia,serif;">Olá, ${firstName}! 👋</p>
+    <p style="margin:0;font-size:14px;color:#8A95A3;line-height:1.8;font-family:Arial,sans-serif;">
+      Seja muito bem-vindo ao <strong style="color:#D4AF37;">Stiga Finance</strong>! Sua jornada rumo ao controle financeiro começa agora. Abaixo você encontra tudo o que precisa para dar o primeiro passo.
+    </p>
+  </td></tr>
+
+  <!-- DIVISOR -->
+  <tr><td style="background:#12172a;padding:0 40px;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.25),transparent);"></div>
+  </td></tr>
+
+  <!-- CREDENCIAIS -->
+  <tr><td style="background:#12172a;padding:28px 40px;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <p style="margin:0 0 16px;font-size:11px;letter-spacing:3px;color:#D4AF37;text-transform:uppercase;font-family:Arial,sans-serif;">&#128273; Suas Credenciais de Acesso</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(0,0,0,0.5);border:1px solid rgba(212,175,55,0.25);border-radius:14px;overflow:hidden;">
+      <tr>
+        <td style="padding:18px 24px 14px;border-bottom:1px solid rgba(212,175,55,0.1);">
+          <p style="margin:0 0 5px;font-size:10px;color:#8A95A3;text-transform:uppercase;letter-spacing:2px;font-family:Arial,sans-serif;">&#128231; Email de Acesso</p>
+          <p style="margin:0;font-size:15px;color:#F4E5C3;font-family:'Courier New',monospace;font-weight:bold;">${email}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:14px 24px 18px;">
+          <p style="margin:0 0 5px;font-size:10px;color:#8A95A3;text-transform:uppercase;letter-spacing:2px;font-family:Arial,sans-serif;">&#128274; Senha Inicial</p>
+          <p style="margin:0;font-size:26px;color:#D4AF37;font-family:'Courier New',monospace;letter-spacing:4px;font-weight:bold;">${password}</p>
+        </td>
+      </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
+      <tr><td style="background:rgba(212,175,55,0.06);border-left:3px solid #D4AF37;border-radius:0 8px 8px 0;padding:12px 16px;">
+        <p style="margin:0;font-size:12px;color:#F4E5C3;line-height:1.6;font-family:Arial,sans-serif;">
+          <strong>&#9888; Importante:</strong> Guarde suas credenciais em local seguro. Recomendamos alterar sua senha após o primeiro acesso.
         </p>
-      </td>
-    </tr>
-  </table>
-</td></tr>
+      </td></tr>
+    </table>
+  </td></tr>
 
-<!-- CORPO PRINCIPAL -->
-<tr><td style="background:#12172a;border-left:1px solid rgba(212,175,55,0.25);border-right:1px solid rgba(212,175,55,0.25);padding:36px 40px 32px;">
+  <!-- DIVISOR -->
+  <tr><td style="background:#12172a;padding:0 40px;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.25),transparent);"></div>
+  </td></tr>
 
-  <p style="margin:0 0 16px;font-size:10px;letter-spacing:3px;color:#D4AF37;text-transform:uppercase;font-family:Arial,sans-serif;">O que voce tem acesso agora</p>
-  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-    <tr>
-      <td width="50%" style="padding:0 6px 10px 0;vertical-align:top;">
-        <table width="100%" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;">
-          <tr><td style="padding:14px 16px;">
-            <p style="margin:0 0 4px;font-size:18px;">&#128179;</p>
-            <p style="margin:0 0 2px;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;font-weight:bold;">Controle de Gastos</p>
-            <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;">Entradas, saidas e categorias</p>
-          </td></tr>
-        </table>
-      </td>
-      <td width="50%" style="padding:0 0 10px 6px;vertical-align:top;">
-        <table width="100%" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;">
-          <tr><td style="padding:14px 16px;">
-            <p style="margin:0 0 4px;font-size:18px;">&#128202;</p>
-            <p style="margin:0 0 2px;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;font-weight:bold;">Graficos e Relatorios</p>
-            <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;">Visualize sua saude financeira</p>
-          </td></tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td width="50%" style="padding:0 6px 0 0;vertical-align:top;">
-        <table width="100%" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;">
-          <tr><td style="padding:14px 16px;">
-            <p style="margin:0 0 4px;font-size:18px;">&#127919;</p>
-            <p style="margin:0 0 2px;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;font-weight:bold;">Metas Financeiras</p>
-            <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;">Defina e conquiste objetivos</p>
-          </td></tr>
-        </table>
-      </td>
-      <td width="50%" style="padding:0 0 0 6px;vertical-align:top;">
-        <table width="100%" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;">
-          <tr><td style="padding:14px 16px;">
-            <p style="margin:0 0 4px;font-size:18px;">&#129302;</p>
-            <p style="margin:0 0 2px;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;font-weight:bold;">Assistente IA</p>
-            <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;">Tire duvidas financeiras</p>
-          </td></tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+  <!-- PRÓXIMOS PASSOS -->
+  <tr><td style="background:#12172a;padding:28px 40px;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <p style="margin:0 0 20px;font-size:11px;letter-spacing:3px;color:#D4AF37;text-transform:uppercase;font-family:Arial,sans-serif;">&#128640; Seus Próximos Passos</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+      <tr>
+        <td width="36" style="vertical-align:top;padding-top:2px;">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,#D4AF37,#B8942A);border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;color:#0A0E17;font-family:Arial,sans-serif;">1</div>
+        </td>
+        <td style="vertical-align:top;padding-left:14px;">
+          <p style="margin:0 0 3px;font-size:14px;color:#F4E5C3;font-weight:bold;font-family:Arial,sans-serif;">Acesse o sistema</p>
+          <p style="margin:0;font-size:12px;color:#8A95A3;line-height:1.6;font-family:Arial,sans-serif;">Entre com o email e senha acima no Stiga Finance</p>
+        </td>
+      </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
+      <tr>
+        <td width="36" style="vertical-align:top;padding-top:2px;">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,#D4AF37,#B8942A);border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;color:#0A0E17;font-family:Arial,sans-serif;">2</div>
+        </td>
+        <td style="vertical-align:top;padding-left:14px;">
+          <p style="margin:0 0 3px;font-size:14px;color:#F4E5C3;font-weight:bold;font-family:Arial,sans-serif;">Assista aos tutoriais</p>
+          <p style="margin:0;font-size:12px;color:#8A95A3;line-height:1.6;font-family:Arial,sans-serif;">Aprenda a usar todas as funcionalidades com nossas aulas</p>
+        </td>
+      </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="36" style="vertical-align:top;padding-top:2px;">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,#D4AF37,#B8942A);border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;color:#0A0E17;font-family:Arial,sans-serif;">3</div>
+        </td>
+        <td style="vertical-align:top;padding-left:14px;">
+          <p style="margin:0 0 3px;font-size:14px;color:#F4E5C3;font-weight:bold;font-family:Arial,sans-serif;">Comece a usar</p>
+          <p style="margin:0;font-size:12px;color:#8A95A3;line-height:1.6;font-family:Arial,sans-serif;">Cadastre seus primeiros lançamentos e veja sua vida financeira se transformar</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
 
-  <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.3),transparent);margin-bottom:28px;"></div>
+  <!-- BOTÕES -->
+  <tr><td style="background:#12172a;padding:8px 40px 36px;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="48%" style="padding-right:8px;">
+          <a href="https://stigasistemas.github.io/stiga-finance/" style="display:block;background:linear-gradient(135deg,#D4AF37,#B8942A);color:#0A0E17;text-decoration:none;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;padding:16px 12px;border-radius:10px;text-align:center;box-shadow:0 6px 20px rgba(212,175,55,0.3);">
+            &#128187; Acessar o Sistema
+          </a>
+        </td>
+        <td width="52%" style="padding-left:8px;">
+          <a href="https://stigasistemas.github.io/stiga-feedbacks/" style="display:block;background:transparent;color:#D4AF37;text-decoration:none;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;padding:15px 12px;border-radius:10px;text-align:center;border:1px solid rgba(212,175,55,0.4);">
+            &#127916; Ver Tutoriais
+          </a>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
 
-  <!-- Credenciais -->
-  <p style="margin:0 0 14px;font-size:10px;letter-spacing:3px;color:#D4AF37;text-transform:uppercase;font-family:Arial,sans-serif;">Suas credenciais de acesso</p>
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(0,0,0,0.45);border:1px solid rgba(212,175,55,0.3);border-radius:14px;margin-bottom:16px;">
-    <tr><td style="padding:18px 24px 6px;">
-      <p style="margin:0 0 4px;font-size:10px;color:#8A95A3;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:1px;">Email</p>
-      <p style="margin:0;font-size:15px;color:#F4E5C3;font-family:'Courier New',monospace;">${email}</p>
-    </td></tr>
-    <tr><td style="padding:14px 24px 20px;border-top:1px solid rgba(212,175,55,0.08);">
-      <p style="margin:0 0 4px;font-size:10px;color:#8A95A3;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:1px;">Senha</p>
-      <p style="margin:0;font-size:22px;color:#D4AF37;font-family:'Courier New',monospace;letter-spacing:3px;font-weight:bold;">${password}</p>
-    </td></tr>
-  </table>
+  <!-- DIVISOR -->
+  <tr><td style="background:#12172a;padding:0 40px;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.25),transparent);"></div>
+  </td></tr>
 
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.2);border-left:3px solid #D4AF37;border-radius:8px;margin-bottom:28px;">
-    <tr><td style="padding:12px 16px;">
-      <p style="margin:0;font-size:12px;color:#F4E5C3;font-family:Arial,sans-serif;line-height:1.6;">
-        &#9888; <strong>Guarde suas credenciais em local seguro.</strong><br>
-        <span style="color:#8A95A3;font-size:12px;">Recomendamos alterar sua senha apos o primeiro acesso.</span>
-      </p>
-    </td></tr>
-  </table>
+  <!-- O QUE VOCÊ TEM ACESSO -->
+  <tr><td style="background:#12172a;padding:28px 40px;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <p style="margin:0 0 18px;font-size:11px;letter-spacing:3px;color:#D4AF37;text-transform:uppercase;font-family:Arial,sans-serif;">&#11088; O Que Você Tem Acesso</p>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="50%" style="padding:0 6px 10px 0;vertical-align:top;">
+          <table width="100%" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;">
+            <tr><td style="padding:14px 16px;">
+              <p style="margin:0 0 4px;font-size:20px;">&#128179;</p>
+              <p style="margin:0 0 3px;font-size:12px;color:#F4E5C3;font-weight:bold;font-family:Arial,sans-serif;">Controle de Gastos</p>
+              <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;">Entradas, saídas e categorias</p>
+            </td></tr>
+          </table>
+        </td>
+        <td width="50%" style="padding:0 0 10px 6px;vertical-align:top;">
+          <table width="100%" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;">
+            <tr><td style="padding:14px 16px;">
+              <p style="margin:0 0 4px;font-size:20px;">&#128202;</p>
+              <p style="margin:0 0 3px;font-size:12px;color:#F4E5C3;font-weight:bold;font-family:Arial,sans-serif;">Gráficos e Relatórios</p>
+              <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;">Visualize sua saúde financeira</p>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td width="50%" style="padding:0 6px 0 0;vertical-align:top;">
+          <table width="100%" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;">
+            <tr><td style="padding:14px 16px;">
+              <p style="margin:0 0 4px;font-size:20px;">&#127919;</p>
+              <p style="margin:0 0 3px;font-size:12px;color:#F4E5C3;font-weight:bold;font-family:Arial,sans-serif;">Metas Financeiras</p>
+              <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;">Defina e conquiste objetivos</p>
+            </td></tr>
+          </table>
+        </td>
+        <td width="50%" style="padding:0 0 0 6px;vertical-align:top;">
+          <table width="100%" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.12);border-radius:10px;">
+            <tr><td style="padding:14px 16px;">
+              <p style="margin:0 0 4px;font-size:20px;">&#129302;</p>
+              <p style="margin:0 0 3px;font-size:12px;color:#F4E5C3;font-weight:bold;font-family:Arial,sans-serif;">Assistente IA</p>
+              <p style="margin:0;font-size:11px;color:#8A95A3;font-family:Arial,sans-serif;">Tire dúvidas financeiras</p>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
 
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr><td align="center">
-      <a href="https://stigasistemas.github.io/stiga-finance/" style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#B8942A);color:#0A0E17;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;padding:16px 48px;border-radius:10px;box-shadow:0 6px 24px rgba(212,175,55,0.35);">
-        ACESSAR O SISTEMA AGORA
-      </a>
-    </td></tr>
-  </table>
-</td></tr>
+  <!-- MENSAGEM PESSOAL -->
+  <tr><td style="background:linear-gradient(160deg,#0f1420,#1a1f2e);padding:32px 40px;text-align:center;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <div style="width:40px;height:1px;background:linear-gradient(90deg,transparent,#D4AF37);margin:0 auto 20px;"></div>
+    <p style="margin:0 0 16px;font-size:15px;color:#F4E5C3;font-family:Georgia,serif;font-style:italic;line-height:1.9;">
+      "Obrigado por confiar no <strong style="color:#D4AF37;">Stiga Finance</strong>, ${firstName}!<br>
+      Você acaba de dar um passo importante para transformar<br>
+      sua relação com o dinheiro. Estamos aqui para te ajudar<br>
+      em cada etapa dessa jornada. Seja bem-vindo à família!"
+    </p>
+    <p style="margin:0;font-size:13px;color:#D4AF37;font-weight:bold;font-family:Arial,sans-serif;">— Equipe Stiga Sistemas 💛</p>
+    <div style="width:40px;height:1px;background:linear-gradient(90deg,#D4AF37,transparent);margin:20px auto 0;"></div>
+  </td></tr>
 
-<!-- MENSAGEM PESSOAL -->
-<tr><td style="background:linear-gradient(160deg,#0f1420,#1a1f2e);border:1px solid rgba(212,175,55,0.25);border-top:none;border-bottom:none;padding:32px 40px;text-align:center;">
-  <p style="margin:0 0 6px;font-size:22px;">&#10024;</p>
-  <p style="margin:0 0 14px;font-size:15px;color:#F4E5C3;font-family:Georgia,serif;font-style:italic;line-height:1.8;">
-    "Muito obrigado pela sua confianca, ${firstName}!<br>
-    Voce tomou uma decisao incrivel ao investir no controle<br>
-    da sua vida financeira. Estamos aqui para te ajudar em<br>
-    cada passo dessa jornada. Seja muito bem-vindo!"
-  </p>
-  <p style="margin:0;font-size:13px;color:#D4AF37;font-family:Arial,sans-serif;font-weight:bold;">— Equipe Stiga Sistemas &#128153;</p>
-</td></tr>
+  <!-- SUPORTE -->
+  <tr><td style="background:#0f1420;padding:24px 40px;border-left:1px solid rgba(212,175,55,0.2);border-right:1px solid rgba(212,175,55,0.2);">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="text-align:center;">
+          <p style="margin:0 0 6px;font-size:13px;color:#F4E5C3;font-weight:bold;font-family:Arial,sans-serif;">&#128587; Precisa de Ajuda?</p>
+          <p style="margin:0 0 10px;font-size:12px;color:#8A95A3;font-family:Arial,sans-serif;">Nossa equipe está pronta para te atender</p>
+          <a href="mailto:stigasistemas@gmail.com" style="display:inline-block;color:#D4AF37;text-decoration:none;font-size:13px;font-family:Arial,sans-serif;font-weight:bold;border-bottom:1px solid rgba(212,175,55,0.3);padding-bottom:2px;">stigasistemas@gmail.com</a>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
 
-<!-- SUPORTE -->
-<tr><td style="background:#0f1420;border:1px solid rgba(212,175,55,0.25);border-top:1px solid rgba(212,175,55,0.1);padding:20px 40px;text-align:center;">
-  <p style="margin:0 0 4px;font-size:12px;color:#8A95A3;font-family:Arial,sans-serif;">Alguma duvida? Estamos prontos para ajudar!</p>
-  <a href="mailto:suporte@stigasistemas.com.br" style="color:#D4AF37;text-decoration:none;font-size:13px;font-family:Arial,sans-serif;font-weight:bold;">suporte@stigasistemas.com.br</a>
-</td></tr>
+  <!-- RODAPÉ DOURADO -->
+  <tr><td style="background:linear-gradient(90deg,#B8942A,#D4AF37,#F4E5C3,#D4AF37,#B8942A);height:2px;"></td></tr>
 
-<!-- FOOTER -->
-<tr><td style="background:linear-gradient(135deg,#B8942A,#D4AF37);height:2px;"></td></tr>
-<tr><td style="background:#080b12;border-radius:0 0 20px 20px;border:1px solid rgba(212,175,55,0.15);border-top:none;padding:20px 40px;text-align:center;">
-  <p style="margin:0 0 4px;font-size:11px;color:#4a5568;font-family:Arial,sans-serif;">© ${year} Stiga Sistemas. Todos os direitos reservados.</p>
-  <p style="margin:0;font-size:10px;color:#2d3748;font-family:Arial,sans-serif;">Este email foi enviado automaticamente apos sua compra.</p>
-</td></tr>
+  <!-- FOOTER -->
+  <tr><td style="background:#080b12;border-radius:0 0 16px 16px;border:1px solid rgba(212,175,55,0.12);border-top:none;padding:20px 40px;text-align:center;">
+    <p style="margin:0 0 4px;font-size:11px;color:#4a5568;font-family:Arial,sans-serif;">© ${year} Stiga Sistemas. Todos os direitos reservados.</p>
+    <p style="margin:0;font-size:10px;color:#2d3748;font-family:Arial,sans-serif;">Este email foi enviado automaticamente após sua compra. Por favor, não responda este email.</p>
+  </td></tr>
 
 </table>
 </td></tr>
@@ -233,7 +301,6 @@ module.exports = async (req, res) => {
     // 🔒 VERIFICAR ASSINATURA DA KIWIFY
     const isValid = verifyKiwifySignature(req);
     if (!isValid) {
-        console.error('❌ Assinatura inválida — requisição bloqueada');
         return res.status(401).json({ error: 'Assinatura inválida' });
     }
 
@@ -287,7 +354,7 @@ module.exports = async (req, res) => {
                 }
             }, { merge: true });
         } catch (fsErr) {
-            console.error('⚠️ Erro Firestore (nao critico):', fsErr.message);
+            console.error('⚠️ Erro Firestore:', fsErr.message);
         }
 
         // ── Enviar email ──
@@ -299,7 +366,7 @@ module.exports = async (req, res) => {
         await transporter.sendMail({
             from: `"Stiga Finance" <${emailUser}>`,
             to: email,
-            subject: 'Bem-vindo ao Stiga Finance - Suas Credenciais de Acesso',
+            subject: `✅ Bem-vindo ao Stiga Finance, ${name.split(' ')[0]}! Suas credenciais de acesso`,
             html: buildEmailHTML(name, email, password)
         });
 
