@@ -1966,21 +1966,21 @@ function renderGoalsList() {
         const remaining = tgt - cur;
         const color = remaining <= 0 ? 'var(--success)' : 'var(--gold-primary)';
         return `
-        <div style="margin-bottom:14px;padding:14px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <span style="color:var(--text-primary);font-weight:600;font-size:1.2em;">${g.name}</span>
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:1.5em;color:${color};font-weight:700;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;">${pct}% \u2014 ${formatCurrency(cur)} / ${formatCurrency(tgt)}</span>
-                    <button onclick="deleteGoal(${i})" style="padding:3px 8px;font-size:0.8em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;">&times;</button>
+        <div style="margin-bottom:14px;padding:14px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;box-sizing:border-box;width:100%;overflow:hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px;min-width:0;">
+                <div style="flex:1;min-width:0;">
+                    <span style="color:var(--text-primary);font-weight:600;font-size:1.1em;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${g.name}</span>
+                    <span style="font-size:1.05em;color:${color};font-weight:700;font-family:'Playfair Display',serif;font-variant-numeric:lining-nums tabular-nums;display:block;word-break:break-word;line-height:1.4;">${pct}% \u2014 ${formatCurrency(cur)} / ${formatCurrency(tgt)}</span>
                 </div>
+                <button onclick="deleteGoal(${i})" style="flex-shrink:0;width:30px;height:30px;min-width:30px;padding:0;font-size:1em;border-radius:5px;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.4);color:#E74C3C;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
             </div>
             <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:6px;overflow:hidden;margin-bottom:10px;">
                 <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;transition:width 0.5s;"></div>
             </div>
-            <div style="display:flex;gap:8px;">
+            <div style="display:flex;gap:8px;align-items:center;">
                 <input type="number" id="goalAdd_${i}" placeholder="Valor a adicionar" step="0.01" min="0"
-                    style="flex:1;padding:10px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--glass-border);border-radius:7px;color:var(--text-primary);font-size:1em;">
-                <button onclick="addToGoalDirect(${i})" style="padding:10px 18px;border-radius:7px;background:linear-gradient(135deg,var(--gold-dark),var(--gold-primary));border:none;color:#0A0E17;font-weight:700;cursor:pointer;font-size:1em;">+ Adicionar</button>
+                    style="flex:1;min-width:0;padding:10px 12px;background:rgba(0,0,0,0.3);border:1px solid var(--glass-border);border-radius:7px;color:var(--text-primary);font-size:1em;box-sizing:border-box;">
+                <button onclick="addToGoalDirect(${i})" style="flex-shrink:0;white-space:nowrap;padding:10px 14px;border-radius:7px;background:linear-gradient(135deg,var(--gold-dark),var(--gold-primary));border:none;color:#0A0E17;font-weight:700;cursor:pointer;font-size:0.95em;">+ Adicionar</button>
             </div>
             ${g.deadline ? '<small style="color:var(--text-secondary);margin-top:8px;display:block;font-size:0.85em;">Prazo: ' + formatDate(g.deadline) + '</small>' : ''}
         </div>`;
